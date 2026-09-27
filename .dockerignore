@@ -1,0 +1,39 @@
+# Secrets — never ship into the build context
+.env
+.env.*
+!.env.example
+
+# Git metadata
+.git
+.gitignore
+.github
+
+# Local dev / build artifacts (rebuilt inside the container)
+node_modules
+build
+.svelte-kit
+coverage
+
+# The backend has its own Dockerfile and build context
+backend
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+local
+.claude
+
+# Docs
+docs
+*.md
+!README.md
+
+# Misc
+.prettier*
+.editorconfig
+.pre-commit-config.yaml
+Dockerfile
+docker-compose.yml
+Makefile
+data/

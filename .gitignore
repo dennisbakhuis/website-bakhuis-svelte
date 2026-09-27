@@ -1,0 +1,21 @@
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+.DS_Store
+.claude/
+/local/
+/coverage/
+/backend/.venv/
+/backend/.media/
+/backend/.mypy_cache/
+/backend/.ruff_cache/
+/backend/.pytest_cache/
+__pycache__/
+*.pyc
+
+# raw dive-log sources; the curated set lives in ../divelog-data
+/data/

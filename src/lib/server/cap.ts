@@ -1,0 +1,92 @@
+import { createHash } from 'node:crypto';
+import { env } from '$env/dynamic/private';
+import { env as pubEnv } from '$env/dynamic/public';
+import { building } from '$app/environment';
+import { consumeToken } from '$lib/server/cap-store';
+import { isProductionHostname } from '$lib/server/config';
+
+// The gate uses the runtime PUBLIC_SITE_URL hostname rather than the `dev`
+// flag from `$app/environment`, because `dev` is a compile-time constant —
+// the same production bundle runs on both the dev and prod hosts, so a
+// build-time check can't tell them apart. Skipped during `building` (vite
+// analyse pass: env not loaded). Fail-closed if PUBLIC_SITE_URL is missing
+// or unparseable so a misconfigured prod still trips the guard.
+function isRealProductionHost(): boolean {
+  if (building) return false;
+  const siteUrl = pubEnv.PUBLIC_SITE_URL;
+  if (!siteUrl) return true;
+  try {
+    return isProductionHostname(new URL(siteUrl).hostname);
+  } catch {
+    return true;
+  }
+}
+
+// E2E escape valve: run `node build` against a prod-like host but with bot
+// protection disabled. Setting CAP_DUMMY_MODE=always_pass bypasses the
+// production guards. NEVER set this in real production.
+const dummyMode = env.CAP_DUMMY_MODE === 'always_pass';
+const capEnabled = (env.CAP_ENABLED ?? 'false').toLowerCase() === 'true';
+
+const rawSecret = env.CAP_SECRET ?? '';
+const publicEndpoint = pubEnv.PUBLIC_CAP_API_ENDPOINT ?? '';
+
+if (isRealProductionHost() && !dummyMode) {
+  if (!capEnabled) {
+    throw new Error(
+      'CAP_ENABLED must be exactly "true" in production. Refusing to start with bot protection disabled.',
+    );
+  }
+  if (Buffer.byteLength(rawSecret, 'utf8') < 16) {
+    throw new Error('CAP_SECRET must be set to ≥16 bytes in production.');
+  }
+  if (!publicEndpoint) {
+    throw new Error('PUBLIC_CAP_API_ENDPOINT must be set in production.');
+  }
+}
+
+export function isCapEnabled(): boolean {
+  return capEnabled && !dummyMode;
+}
+
+export function getCapSecret(): string {
+  return rawSecret;
+}
+
+function sha256Hex(input: string): string {
+  return createHash('sha256').update(input).digest('hex');
+}
+
+// capjs-core issues `${id}:${verToken}` to the user and stores
+// `${id}:${sha256(verToken)}` server-side. Recompute it from the submitted
+// token, then look it up + consume from our store.
+function tokenKeyFromSubmitted(token: string): string | null {
+  const sep = token.indexOf(':');
+  if (sep <= 0 || sep === token.length - 1) return null;
+  const id = token.slice(0, sep);
+  const verToken = token.slice(sep + 1);
+  return `${id}:${sha256Hex(verToken)}`;
+}
+
+export async function verifyCapToken(token: string): Promise<boolean> {
+  if (!capEnabled || dummyMode) {
+    return true;
+  }
+
+  if (!token) {
+    console.warn('cap token missing');
+    return false;
+  }
+
+  const tokenKey = tokenKeyFromSubmitted(token);
+  if (!tokenKey) {
+    console.warn('cap token malformed');
+    return false;
+  }
+
+  const ok = consumeToken(tokenKey);
+  if (!ok) {
+    console.warn('cap token unknown or already consumed');
+  }
+  return ok;
+}

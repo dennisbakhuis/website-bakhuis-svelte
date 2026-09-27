@@ -1,0 +1,59 @@
+name: PR source gate
+
+# Branch protection enforces "require a pull request before merging" on
+# main, but GitHub has no native setting for "PR head_ref must equal X".
+# This workflow fills that gap: a PR targeting main must originate from
+# the `dev` branch, or the check fails — and the failing check blocks
+# the merge button when this workflow is configured as a required
+# status check on main.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guard:
+    name: head must be dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject PRs to main from branches other than dev
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if [ "$HEAD_REF" = "dev" ]; then
+            echo "✓ PR head is dev — allowed."
+            exit 0
+          fi
+          echo "::error::PRs into main must originate from the 'dev' branch. This PR's head is '$HEAD_REF'."
+          echo "Promote your changes through dev first, then open a dev → main PR."
+          exit 1
+
+  version-bumped:
+    # docker-publish on main fast-fails if VERSION already exists in GHCR.
+    # Catch that pre-merge so we don't have to chase a follow-up bump PR.
+    name: VERSION must be bumped
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Fetch base ref
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch --depth=1 origin "$BASE_REF"
+      - name: Compare VERSION against base
+        run: |
+          HEAD_VERSION=$(cat VERSION)
+          BASE_VERSION=$(git show "origin/${{ github.base_ref }}:VERSION")
+          echo "head=$HEAD_VERSION base=$BASE_VERSION"
+          if [ "$HEAD_VERSION" = "$BASE_VERSION" ]; then
+            echo "::error::VERSION on this PR ($HEAD_VERSION) matches ${{ github.base_ref }} ($BASE_VERSION). Bump VERSION (and run 'pnpm version:sync') before merging — docker-publish refuses to overwrite an existing GHCR tag."
+            exit 1
+          fi
+          echo "✓ VERSION bumped: $BASE_VERSION → $HEAD_VERSION."
