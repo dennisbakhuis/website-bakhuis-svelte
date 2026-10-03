@@ -37,6 +37,7 @@ export type DiveInput = {
   types_raw: string | null;
   gas: string;
   o2_pct: number | null;
+  o2_measured_pct: number | null;
   he_pct: number | null;
   gas_raw: string | null;
   mode: string;
@@ -92,6 +93,7 @@ export function diveToInput(dive: DiveAdmin): DiveInput {
     types_raw: dive.types_raw,
     gas: dive.gas,
     o2_pct: dive.o2_pct,
+    o2_measured_pct: dive.o2_measured_pct,
     he_pct: dive.he_pct,
     gas_raw: dive.gas_raw,
     mode: dive.mode,
@@ -147,6 +149,7 @@ export function emptyDiveInput(number: number): DiveInput {
     types_raw: null,
     gas: 'nitrox',
     o2_pct: 32,
+    o2_measured_pct: null,
     he_pct: null,
     gas_raw: null,
     mode: 'OC',
@@ -196,6 +199,7 @@ export function cleanInput(form: DiveInput): DiveInput {
     'thermocline_m',
     'visibility_m',
     'o2_pct',
+    'o2_measured_pct',
     'he_pct',
     'weights_kg',
     'pressure_in_bar',
@@ -210,6 +214,7 @@ export function cleanInput(form: DiveInput): DiveInput {
   const tankNumeric = [
     'volume_l',
     'o2_pct',
+    'o2_measured_pct',
     'he_pct',
     'pressure_in_bar',
     'pressure_out_bar',
@@ -253,6 +258,7 @@ export const TEMPLATE_FIELDS = [
   'gear_setup_id',
   'gas',
   'o2_pct',
+  'o2_measured_pct',
   'he_pct',
   'gas_raw',
   'mode',
@@ -299,6 +305,7 @@ export function emptyTank(role: Tank['role'] = 'back'): Tank {
     volume_l: role === 'back' ? 24 : 11.1,
     gas: role === 'deco' ? 'oxygen' : 'nitrox',
     o2_pct: role === 'deco' ? 100 : 32,
+    o2_measured_pct: null,
     he_pct: null,
     pressure_in_bar: null,
     pressure_out_bar: null,
@@ -311,6 +318,7 @@ export function legacyTanks(dive: {
   cylinder: string | null;
   gas: string;
   o2_pct: number | null;
+  o2_measured_pct: number | null;
   he_pct: number | null;
   pressure_in_bar: number | null;
   pressure_out_bar: number | null;
@@ -322,6 +330,7 @@ export function legacyTanks(dive: {
       volume_l: null,
       gas: (['air', 'nitrox', 'trimix'].includes(dive.gas) ? dive.gas : 'air') as TankGas,
       o2_pct: dive.o2_pct,
+      o2_measured_pct: dive.o2_measured_pct,
       he_pct: dive.he_pct,
       pressure_in_bar: dive.pressure_in_bar,
       pressure_out_bar: dive.pressure_out_bar,

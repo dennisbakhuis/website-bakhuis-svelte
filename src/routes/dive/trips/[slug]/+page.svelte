@@ -3,6 +3,8 @@
   import Markdown from '$lib/components/Markdown.svelte';
   import DiveTable from '$lib/components/dive/DiveTable.svelte';
   import WorldMap from '$lib/components/dive/WorldMap.svelte';
+  import DiveGlobe from '$lib/components/dive/DiveGlobe.svelte';
+  import { boundsOf } from '$lib/map/globe';
   import DetailTop from '$lib/components/dive/DetailTop.svelte';
   import {
     flagEmoji,
@@ -18,6 +20,7 @@
   const stats = $derived(trip.stats);
   const scale = $derived(listScale(data.dives));
   const divingDays = $derived(new Set(data.dives.map((d) => d.date)).size);
+  const fit = $derived(boundsOf(data.map_sites));
 </script>
 
 <section class="trip container detail">
@@ -63,12 +66,14 @@
 
   {#if data.map && data.map.dots.length}
     <div class="trip-map">
-      <WorldMap
-        map={data.map}
-        compact
-        label="Map of {pluralize(data.map.dots.length, 'dive site')} of {trip.name}"
-        onSelect={(slug) => slug && goto(`/dive/sites/${slug}`)}
-      />
+      <DiveGlobe sites={data.map_sites} countries={trip.countries} dives={data.dives} {fit}>
+        <WorldMap
+          map={data.map}
+          compact
+          label="Map of {pluralize(data.map.dots.length, 'dive site')} of {trip.name}"
+          onSelect={(slug) => slug && goto(`/dive/sites/${slug}`)}
+        />
+      </DiveGlobe>
     </div>
   {/if}
 

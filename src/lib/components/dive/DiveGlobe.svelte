@@ -39,6 +39,7 @@
     activeSite = '',
     size = 'dives',
     colour = 'type',
+    fit = null,
     view = $bindable(null),
     onSelect,
     onOptions,
@@ -53,6 +54,8 @@
     activeSite?: string;
     size?: SizeMode;
     colour?: ColourMode;
+    /** Frame these bounds at first instead of the whole spinning world, as a trip page wants. */
+    fit?: BBox | null;
     /**
      * The camera, kept in sync with the globe; set from outside (a restored page
      * snapshot) it moves the globe there and skips the intro spin.
@@ -69,6 +72,7 @@
   const SPIN_DEGREES = 8;
   const SPIN_MS = 4000;
   const POPUP_DIVES = 6;
+  const FIT_OPTIONS = { padding: 60, maxZoom: 7, pitch: 0, bearing: 0 };
   const LABELS_KEY = 'dive-globe-labels';
 
   let container: HTMLDivElement | undefined = $state();
@@ -209,6 +213,10 @@
   function flyHome() {
     stopSpin();
     closePopup();
+    if (fit) {
+      map?.fitBounds(fit, { ...FIT_OPTIONS, duration: 1600 });
+      return;
+    }
     resumeSpin = !reducedMotion();
     map?.flyTo({ ...HOME_VIEW, duration: 1600 });
   }
@@ -216,7 +224,7 @@
   function flyTo(bounds: BBox) {
     stopSpin();
     closePopup();
-    map?.fitBounds(bounds, { padding: 60, maxZoom: 7, pitch: 0, bearing: 0, duration: 1600 });
+    map?.fitBounds(bounds, { ...FIT_OPTIONS, duration: 1600 });
   }
 
   function select(slug: string) {
@@ -268,7 +276,8 @@
           },
           layers: layers('protomaps', siteFlavor(), { lang: 'en' }),
         },
-        ...(view ?? HOME_VIEW),
+        ...(view ?? (fit ? {} : HOME_VIEW)),
+        ...(view || !fit ? {} : { bounds: fit, fitBoundsOptions: FIT_OPTIONS }),
         minZoom: 0.8,
         maxZoom: MAX_ZOOM,
         maxPitch: 60,
@@ -397,7 +406,7 @@
         loaded = true;
         ready = true;
 
-        if (!reducedMotion() && !view) {
+        if (!reducedMotion() && !view && !fit) {
           spinning = true;
           spin();
         }
@@ -564,20 +573,22 @@
           </ul>
         {/if}
         <footer>
-          <button
-            type="button"
-            class="chip"
-            class:active={activeSite === site.slug}
-            onclick={() => select(site.slug)}
-          >
-            {#if activeSite === site.slug}
-              Unpin the log ×
-            {:else if selectedDives.length > POPUP_DIVES}
-              All {selectedDives.length} in the log ↓
-            {:else}
-              Pin the log to this site ↓
-            {/if}
-          </button>
+          {#if onSelect}
+            <button
+              type="button"
+              class="chip"
+              class:active={activeSite === site.slug}
+              onclick={() => select(site.slug)}
+            >
+              {#if activeSite === site.slug}
+                Unpin the log ×
+              {:else if selectedDives.length > POPUP_DIVES}
+                All {selectedDives.length} in the log ↓
+              {:else}
+                Pin the log to this site ↓
+              {/if}
+            </button>
+          {/if}
           <a class="chip" href="/dive/sites/{site.slug}">Site page →</a>
         </footer>
       </aside>
@@ -586,7 +597,7 @@
 
   {#if ready}
     <div class="chips">
-      <button type="button" class="chip" onclick={flyHome}>🌍 World</button>
+      <button type="button" class="chip" onclick={flyHome}>{fit ? '↺ Trip' : '🌍 World'}</button>
       {#each targets as target (target.code)}
         <button type="button" class="chip" onclick={() => flyTo(target.bounds)}>
           {target.label} <span class="num">{target.dives}</span>
@@ -596,7 +607,7 @@
   {/if}
 
   <MapKey {colour} {scale} hint={sizeHint} />
-  {#if onOptions}
+  {#if ready || onOptions}
     <MapOptions {size} {colour} labels={ready ? labels : null} {onOptions} onLabels={setLabels} />
   {/if}
 

@@ -503,6 +503,15 @@
             </select>
           </label>
           <label>O₂ %<input type="number" min="0" max="100" bind:value={tank.o2_pct} /></label>
+          <label
+            >Measured %<input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              bind:value={tank.o2_measured_pct}
+            /></label
+          >
           <label>He %<input type="number" min="0" max="100" bind:value={tank.he_pct} /></label>
           <label>In (bar)<input type="number" bind:value={tank.pressure_in_bar} /></label>
           <label>Out (bar)<input type="number" bind:value={tank.pressure_out_bar} /></label>

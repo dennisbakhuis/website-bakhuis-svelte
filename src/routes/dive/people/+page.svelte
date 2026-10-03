@@ -101,7 +101,9 @@
               {#if person.stats.first_dive}
                 {@const first = person.stats.first_dive.slice(0, 4)}
                 {@const last = person.stats.last_dive?.slice(0, 4)}
-                {sort === 'recent' && last && last !== first ? `${first}–${last}` : `since ${first}`}
+                {sort === 'recent' && last && last !== first
+                  ? `${first}–${last}`
+                  : `since ${first}`}
               {/if}
             </span>
             <span class="meta faint num">

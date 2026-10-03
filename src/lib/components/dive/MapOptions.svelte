@@ -18,30 +18,33 @@
     colour: ColourMode;
     /** Whether site names show next to the dots; null hides the switch (the static map has none). */
     labels?: boolean | null;
-    onOptions: (patch: MapOptionsPatch) => void;
+    /** Without it the size and colour selects stay out, leaving only the label switch. */
+    onOptions?: (patch: MapOptionsPatch) => void;
     onLabels?: (on: boolean) => void;
   } = $props();
 </script>
 
 <div class="options">
-  <label>
-    Size by
-    <select
-      value={size}
-      onchange={(e) => onOptions({ mapSize: e.currentTarget.value as SizeMode })}
-    >
-      {#each SIZE_MODES as m (m.mode)}<option value={m.mode}>{m.label}</option>{/each}
-    </select>
-  </label>
-  <label>
-    Colour by
-    <select
-      value={colour}
-      onchange={(e) => onOptions({ mapColour: e.currentTarget.value as ColourMode })}
-    >
-      {#each COLOUR_MODES as m (m.mode)}<option value={m.mode}>{m.label}</option>{/each}
-    </select>
-  </label>
+  {#if onOptions}
+    <label>
+      Size by
+      <select
+        value={size}
+        onchange={(e) => onOptions?.({ mapSize: e.currentTarget.value as SizeMode })}
+      >
+        {#each SIZE_MODES as m (m.mode)}<option value={m.mode}>{m.label}</option>{/each}
+      </select>
+    </label>
+    <label>
+      Colour by
+      <select
+        value={colour}
+        onchange={(e) => onOptions?.({ mapColour: e.currentTarget.value as ColourMode })}
+      >
+        {#each COLOUR_MODES as m (m.mode)}<option value={m.mode}>{m.label}</option>{/each}
+      </select>
+    </label>
+  {/if}
   {#if labels !== null}
     <label class="switch">
       <input

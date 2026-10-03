@@ -62,6 +62,11 @@
     ].filter(present),
   );
 
+  /** " · measured 29.2 %" when the analyser read something other than the fill ordered. */
+  function measured(pct: number | null): string {
+    return pct === null ? '' : ` · measured ${pct} %`;
+  }
+
   const ROLE_LABEL: Record<string, string> = {
     back: 'Back gas',
     stage: 'Stage',
@@ -76,7 +81,7 @@
       const label = `${ROLE_LABEL[tank.role] ?? tank.role}${same ? ` ${dive.tanks.slice(0, i + 1).filter((t) => t.role === tank.role).length}` : ''}`;
       const parts = [
         tank.cylinder + (tank.volume_l ? ` (${tank.volume_l} L)` : ''),
-        gasLabel(tank.gas, tank.o2_pct, tank.he_pct),
+        gasLabel(tank.gas, tank.o2_pct, tank.he_pct) + measured(tank.o2_measured_pct),
       ];
       if (tank.pressure_in_bar !== null)
         parts.push(`${tank.pressure_in_bar} → ${tank.pressure_out_bar ?? '?'} bar`);
@@ -91,7 +96,7 @@
         : [
             {
               label: 'Gas',
-              value: dive.gas_raw ?? gasLabel(dive.gas, dive.o2_pct, dive.he_pct),
+              value: gasLabel(dive.gas, dive.o2_pct, dive.he_pct) + measured(dive.o2_measured_pct),
               numeric: false,
             },
             !!dive.cylinder && { label: 'Cylinder', value: dive.cylinder, numeric: false },

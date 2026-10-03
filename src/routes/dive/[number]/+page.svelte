@@ -468,8 +468,12 @@
             <dt>Operator / guide</dt>
             <dd class="small">{dive.private.operator}</dd>
           </div>{/if}
+        {#if dive.gas_raw}<div>
+            <dt>Paper log · gas</dt>
+            <dd class="small">{dive.gas_raw}</dd>
+          </div>{/if}
         {#if dive.private.site_name_raw}<div>
-            <dt>Site as written</dt>
+            <dt>Paper log · site</dt>
             <dd class="small">
               {dive.private.site_name_raw}{dive.private.area_raw
                 ? `, ${dive.private.area_raw}`

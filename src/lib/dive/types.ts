@@ -316,6 +316,8 @@ export type Tank = {
   volume_l: number | null;
   gas: TankGas;
   o2_pct: number | null;
+  /** What the analyser read, when it differed from the fill ordered. */
+  o2_measured_pct: number | null;
   he_pct: number | null;
   pressure_in_bar: number | null;
   pressure_out_bar: number | null;
@@ -355,6 +357,7 @@ export type Dive = {
   types_raw: string | null;
   gas: string;
   o2_pct: number | null;
+  o2_measured_pct: number | null;
   he_pct: number | null;
   gas_raw: string | null;
   mode: string;
