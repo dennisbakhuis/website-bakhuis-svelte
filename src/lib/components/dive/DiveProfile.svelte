@@ -1,13 +1,31 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { ProfileSample } from '$lib/dive/types';
+  import type { ProfileMeta, ProfileSample } from '$lib/dive/types';
+  import {
+    ceilingSteps,
+    clock,
+    decoSpans,
+    gasSwitches,
+    profileFacts,
+    sampleAt,
+  } from '$lib/dive/profile-view';
   import { reducedMotion } from '$lib/anim/motion';
 
-  let { samples, maxDepth }: { samples: ProfileSample[]; maxDepth: number } = $props();
+  let {
+    samples,
+    maxDepth,
+    meta = null,
+    avgDepth = null,
+  }: {
+    samples: ProfileSample[];
+    maxDepth: number;
+    meta?: ProfileMeta | null;
+    avgDepth?: number | null;
+  } = $props();
 
   const W = 800;
   const H = 260;
-  const PAD = { l: 40, r: 44, t: 12, b: 28 };
+  const PAD = { l: 40, r: 44, t: 18, b: 28 };
 
   const tMax = $derived(Math.max(...samples.map((s) => s.t), 1));
   const dMax = $derived(Math.max(maxDepth, ...samples.map((s) => s.d)) * 1.08);
@@ -25,9 +43,13 @@
   const yTemp = (temp: number) =>
     PAD.t + (1 - (temp - tempRange[0]) / (tempRange[1] - tempRange[0] || 1)) * (H - PAD.t - PAD.b);
 
-  const depthPath = $derived(
-    samples.map((s, i) => `${i ? 'L' : 'M'}${x(s.t).toFixed(1)} ${y(s.d).toFixed(1)}`).join(' '),
-  );
+  function linePath(points: ProfileSample[]): string {
+    return points
+      .map((s, i) => `${i ? 'L' : 'M'}${x(s.t).toFixed(1)} ${y(s.d).toFixed(1)}`)
+      .join(' ');
+  }
+
+  const depthPath = $derived(linePath(samples));
   const areaPath = $derived(
     `${depthPath} L${x(samples[samples.length - 1].t).toFixed(1)} ${y(0)} L${x(samples[0].t).toFixed(1)} ${y(0)} Z`,
   );
@@ -37,8 +59,54 @@
       .join(' '),
   );
 
+  const ceiling = $derived(ceilingSteps(samples));
+  const ceilingArea = $derived(
+    ceiling
+      .map(
+        (c) =>
+          `M${x(c.from).toFixed(1)} ${y(0)} L${x(c.from).toFixed(1)} ${y(c.depth).toFixed(1)} L${x(c.to).toFixed(1)} ${y(c.depth).toFixed(1)} L${x(c.to).toFixed(1)} ${y(0)} Z`,
+      )
+      .join(' '),
+  );
+  const ceilingEdge = $derived(
+    ceiling
+      .map(
+        (c) =>
+          `M${x(c.from).toFixed(1)} ${y(c.depth).toFixed(1)} L${x(c.to).toFixed(1)} ${y(c.depth).toFixed(1)}`,
+      )
+      .join(' '),
+  );
+  const decoPaths = $derived(
+    decoSpans(samples).map((span) =>
+      linePath(samples.filter((s) => s.t >= span.from && s.t <= span.to)),
+    ),
+  );
+  const switches = $derived(
+    gasSwitches(meta).map((s) => ({ ...s, x: x(s.t), depth: sampleAt(samples, s.t)?.d ?? 0 })),
+  );
+  const breaks = $derived(
+    (meta?.surface_breaks ?? [])
+      .filter((b) => b.length === 2 && b[1] > b[0])
+      .map(([from, to]) => ({ from, to, x0: x(from), x1: x(to) })),
+  );
+  const facts = $derived(profileFacts(meta, avgDepth));
+
   const depthTicks = $derived([0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(f * dMax)));
   const timeTicks = $derived(Array.from({ length: 6 }, (_, i) => Math.round((i / 5) * tMax)));
+
+  let svg = $state<SVGSVGElement>();
+  let hovered = $state<ProfileSample | null>(null);
+
+  function probe(event: PointerEvent) {
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const view = ((event.clientX - rect.left) / rect.width) * W;
+    const t = ((view - PAD.l) / (W - PAD.l - PAD.r)) * tMax;
+    hovered = sampleAt(samples, Math.min(Math.max(t, 0), tMax));
+  }
+
+  const readoutLeft = $derived(hovered ? (x(hovered.t) / W) * 100 : 0);
+  const readoutFlip = $derived(readoutLeft > 62);
 
   let pathEl = $state<SVGPathElement>();
   let areaEl = $state<SVGPathElement>();
@@ -57,46 +125,129 @@
 </script>
 
 <figure class="profile card">
-  <svg
-    viewBox="0 0 {W} {H}"
-    role="img"
-    aria-label="Depth profile: {maxDepth} metres maximum over {Math.round(tMax / 60)} minutes"
-  >
-    {#each depthTicks as tick (tick)}
-      <line x1={PAD.l} x2={W - PAD.r} y1={y(tick)} y2={y(tick)} class="grid" />
-      <text x={PAD.l - 6} y={y(tick) + 4} class="axis" text-anchor="end">{tick} m</text>
-    {/each}
-    {#each timeTicks as tick (tick)}
-      <text x={x(tick)} y={H - 8} class="axis" text-anchor="middle">{Math.round(tick / 60)}′</text>
-    {/each}
-    <path d={areaPath} class="area" bind:this={areaEl} />
-    <path d={depthPath} class="line" bind:this={pathEl} />
-    {#if temps.length > 1}
-      <path d={tempPath} class="temp" />
-      <text x={W - PAD.r + 6} y={yTemp(tempRange[1] - 1) + 4} class="axis temp-label"
-        >{Math.round(tempRange[1] - 1)} °C</text
-      >
-      <text x={W - PAD.r + 6} y={yTemp(tempRange[0] + 1) + 4} class="axis temp-label"
-        >{Math.round(tempRange[0] + 1)} °C</text
-      >
-    {/if}
-  </svg>
+  <div class="stage">
+    <svg
+      bind:this={svg}
+      viewBox="0 0 {W} {H}"
+      role="img"
+      aria-label="Depth profile: {maxDepth} metres maximum over {Math.round(tMax / 60)} minutes"
+      onpointermove={probe}
+      onpointerdown={probe}
+      onpointerleave={() => (hovered = null)}
+    >
+      {#each depthTicks as tick (tick)}
+        <line x1={PAD.l} x2={W - PAD.r} y1={y(tick)} y2={y(tick)} class="grid" />
+        <text x={PAD.l - 6} y={y(tick) + 4} class="axis" text-anchor="end">{tick} m</text>
+      {/each}
+      {#each timeTicks as tick (tick)}
+        <text x={x(tick)} y={H - 8} class="axis" text-anchor="middle">{Math.round(tick / 60)}′</text
+        >
+      {/each}
+
+      {#each breaks as b (b.from)}
+        <rect
+          class="break"
+          x={b.x0}
+          y={PAD.t}
+          width={Math.max(b.x1 - b.x0, 1)}
+          height={H - PAD.t - PAD.b}
+        />
+        <text x={(b.x0 + b.x1) / 2} y={PAD.t + 12} class="axis break-label" text-anchor="middle"
+          >surface</text
+        >
+      {/each}
+
+      {#if ceiling.length}
+        <path d={ceilingArea} class="ceiling" />
+        <path d={ceilingEdge} class="ceiling-edge" />
+      {/if}
+
+      <path d={areaPath} class="area" bind:this={areaEl} />
+      <path d={depthPath} class="line" bind:this={pathEl} />
+      {#each decoPaths as d, i (i)}
+        <path {d} class="deco" />
+      {/each}
+
+      {#if temps.length > 1}
+        <path d={tempPath} class="temp" />
+        <text x={W - PAD.r + 6} y={yTemp(tempRange[1] - 1) + 4} class="axis temp-label"
+          >{Math.round(tempRange[1] - 1)} °C</text
+        >
+        <text x={W - PAD.r + 6} y={yTemp(tempRange[0] + 1) + 4} class="axis temp-label"
+          >{Math.round(tempRange[0] + 1)} °C</text
+        >
+      {/if}
+
+      {#each switches as s (s.t)}
+        <line class="switch" x1={s.x} x2={s.x} y1={PAD.t} y2={y(s.depth)} />
+        <circle class="switch-dot" cx={s.x} cy={y(s.depth)} r="4" />
+        <text class="axis switch-label" x={s.x} y={PAD.t - 5} text-anchor="middle">{s.label}</text>
+      {/each}
+
+      {#if hovered}
+        <line class="cursor" x1={x(hovered.t)} x2={x(hovered.t)} y1={PAD.t} y2={H - PAD.b} />
+        <circle class="cursor-dot" cx={x(hovered.t)} cy={y(hovered.d)} r="4.5" />
+      {/if}
+    </svg>
+
+    <div
+      class="readout num"
+      class:visible={hovered}
+      class:flip={readoutFlip}
+      style="left: {readoutLeft}%"
+      aria-live="polite"
+    >
+      {#if hovered}
+        <strong>{clock(hovered.t)} · {hovered.d.toFixed(1)} m</strong>
+        {#if typeof hovered.temp === 'number'}<span>{hovered.temp} °C</span>{/if}
+        {#if hovered.stop}
+          <span class="warm">ceiling {hovered.stop} m</span>
+        {:else if typeof hovered.ndl === 'number'}
+          <span>NDL {hovered.ndl >= 99 ? '99+' : hovered.ndl} min</span>
+        {/if}
+        {#if typeof hovered.tts === 'number' && hovered.tts > 0}<span>TTS {hovered.tts} min</span
+          >{/if}
+      {/if}
+    </div>
+  </div>
+
+  {#if facts.length}
+    <dl class="facts">
+      {#each facts as fact (fact.label)}
+        <div>
+          <dt>{fact.label}</dt>
+          <dd class="num">{fact.value}</dd>
+          {#if fact.note}<span class="note">{fact.note}</span>{/if}
+        </div>
+      {/each}
+    </dl>
+  {/if}
+
   <figcaption>
     <span><i class="sw depth"></i> depth</span>
     {#if temps.length > 1}<span><i class="sw temp"></i> water temperature</span>{/if}
+    {#if ceiling.length}<span><i class="sw ceiling"></i> deco ceiling</span>{/if}
+    {#if decoPaths.length}<span><i class="sw deco"></i> in deco</span>{/if}
+    {#if switches.length}<span><i class="sw switch"></i> gas switch</span>{/if}
+    <span class="how">hover or touch the chart for the computer's readout</span>
   </figcaption>
 </figure>
 
 <style>
   .profile {
     margin: 0;
-    padding: 16px 12px 8px;
+    padding: 16px 12px 12px;
     background: var(--color-bg-elevated);
+  }
+  .stage {
+    position: relative;
   }
   svg {
     width: 100%;
     height: auto;
     display: block;
+    touch-action: pan-y;
+    cursor: crosshair;
   }
   .grid {
     stroke: var(--color-border);
@@ -117,6 +268,29 @@
     stroke-linejoin: round;
     stroke-linecap: round;
   }
+  .deco {
+    fill: none;
+    stroke: var(--color-error);
+    stroke-width: 2.6;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .ceiling {
+    fill: color-mix(in srgb, var(--color-error) 16%, transparent);
+  }
+  .ceiling-edge {
+    fill: none;
+    stroke: var(--color-error);
+    stroke-width: 1.2;
+    stroke-dasharray: 3 3;
+  }
+  .break {
+    fill: color-mix(in srgb, var(--color-text) 5%, transparent);
+  }
+  .break-label {
+    fill: var(--color-text-faint);
+    font-size: 10px;
+  }
   .temp {
     fill: none;
     stroke: var(--color-warm);
@@ -127,13 +301,73 @@
   .temp-label {
     fill: var(--color-warm);
   }
+  .switch {
+    stroke: var(--color-success);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+  }
+  .switch-dot {
+    fill: var(--color-success);
+    stroke: var(--color-bg-elevated);
+    stroke-width: 1.5;
+  }
+  .switch-label {
+    fill: var(--color-success);
+    font-size: 10.5px;
+  }
+  .cursor {
+    stroke: var(--color-text-muted);
+    stroke-width: 1;
+  }
+  .cursor-dot {
+    fill: var(--color-text);
+    stroke: var(--color-bg-elevated);
+    stroke-width: 1.5;
+  }
+  .readout {
+    position: absolute;
+    top: 8px;
+    transform: translateX(12px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    border: 1px solid var(--color-border-strong);
+    box-shadow: var(--shadow-sm);
+    font-size: 12px;
+    color: var(--color-text-muted);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+    white-space: nowrap;
+  }
+  .readout.flip {
+    transform: translateX(calc(-100% - 12px));
+  }
+  .readout.visible {
+    opacity: 1;
+  }
+  .readout strong {
+    color: var(--color-text);
+    font-weight: 500;
+  }
+  .readout .warm {
+    color: var(--color-error);
+  }
   figcaption {
     display: flex;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 6px 16px;
     padding: 8px 6px 0;
     font-size: 12px;
     color: var(--color-text-muted);
     font-family: var(--font-mono);
+  }
+  .how {
+    margin-left: auto;
+    color: var(--color-text-faint);
   }
   .sw {
     display: inline-block;
@@ -147,5 +381,48 @@
   }
   .sw.temp {
     background: var(--color-warm);
+  }
+  .sw.deco {
+    background: var(--color-error);
+    height: 3px;
+  }
+  .sw.ceiling {
+    height: 8px;
+    background: color-mix(in srgb, var(--color-error) 28%, transparent);
+    border-bottom: 1px dashed var(--color-error);
+  }
+  .sw.switch {
+    background: var(--color-success);
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 12px 16px;
+    margin: 14px 0 0;
+    padding: 12px 6px 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .facts dt {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .facts dd {
+    margin: 2px 0 0;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  .note {
+    display: block;
+    font-size: 11.5px;
+    color: var(--color-text-faint);
+  }
+  @media (max-width: 480px) {
+    .how {
+      display: none;
+    }
   }
 </style>

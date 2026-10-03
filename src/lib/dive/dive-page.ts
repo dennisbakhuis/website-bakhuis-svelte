@@ -19,6 +19,35 @@ export function typesRawAddsNothing(typesRaw: string | null | undefined, tags: s
   return tokens(typesRaw).every((t) => known.has(t));
 }
 
+/**
+ * Whether the paper log's buddy column only repeats the linked people, so the
+ * owner block can skip it. Names are matched loosely: "Kim" covers "Kim Jansen",
+ * a nickname in brackets is ignored, and any alias of a person counts.
+ */
+export function buddyRawAddsNothing(
+  buddyRaw: string | null | undefined,
+  people: {
+    first_name: string;
+    last_name: string | null;
+    alias: string | null;
+    aliases: string[];
+  }[],
+): boolean {
+  if (!buddyRaw) return true;
+  const known = people.flatMap((p) =>
+    [`${p.first_name} ${p.last_name ?? ''}`, p.alias ?? '', ...p.aliases]
+      .map((n) => n.toLowerCase().trim())
+      .filter(Boolean),
+  );
+  return buddyRaw
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .split(/[/,&+]| en | and /)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .every((token) => known.some((name) => name === token || name.startsWith(`${token} `)));
+}
+
 export type ProfileSpark = { line: string; area: string };
 
 /**

@@ -26,7 +26,12 @@
     routeKeys,
     routeLength,
   } from '$lib/dive/sitemap';
-  import { routeLine, sameDepth, typesRawAddsNothing } from '$lib/dive/dive-page';
+  import {
+    buddyRawAddsNothing,
+    routeLine,
+    sameDepth,
+    typesRawAddsNothing,
+  } from '$lib/dive/dive-page';
 
   const MAX_FACT_PILLS = 3;
 
@@ -386,7 +391,12 @@
           </p>
         {/if}
       </div>
-      <DiveProfile samples={dive.profile} maxDepth={dive.max_depth_m} />
+      <DiveProfile
+        samples={dive.profile}
+        maxDepth={dive.max_depth_m}
+        meta={dive.profile_meta}
+        avgDepth={dive.avg_depth_m}
+      />
       {#if provenance}<p class="provenance">{provenance}</p>{/if}
     </section>
   {/if}
@@ -445,12 +455,13 @@
                 .join(' · ')}
             </dd>
           </div>{/if}
-        {#if dive.private.buddy_raw}<div>
-            <dt>Buddy as written</dt>
+        {#if dive.private.buddy_raw && !buddyRawAddsNothing(dive.private.buddy_raw, dive.private.people)}<div
+          >
+            <dt>Paper log · buddies</dt>
             <dd class="small">{dive.private.buddy_raw}</dd>
           </div>{/if}
         {#if dive.private.buddy_role}<div>
-            <dt>Buddy role</dt>
+            <dt>Paper log · role</dt>
             <dd class="small">{dive.private.buddy_role}</dd>
           </div>{/if}
         {#if dive.private.operator}<div class="wide">

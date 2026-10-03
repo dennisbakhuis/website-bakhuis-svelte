@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { profileSpark, routeLine, sameDepth, typesRawAddsNothing } from './dive-page';
+import {
+  buddyRawAddsNothing,
+  profileSpark,
+  routeLine,
+  sameDepth,
+  typesRawAddsNothing,
+} from './dive-page';
 
 describe('typesRawAddsNothing', () => {
   it('is true for empty input', () => {
@@ -14,6 +20,34 @@ describe('typesRawAddsNothing', () => {
 
   it('is false when a ticked type is not a tag', () => {
     expect(typesRawAddsNothing('cave / photo', ['cave'])).toBe(false);
+  });
+});
+
+describe('buddyRawAddsNothing', () => {
+  const person = (first: string, last: string | null = null, aliases: string[] = []) => ({
+    first_name: first,
+    last_name: last,
+    alias: null,
+    aliases,
+  });
+  const team = [person('Patrick', 'de Vries'), person('Xavier', 'Visser'), person('Kim', 'Jansen')];
+
+  it('is true for empty input and for first names of linked people', () => {
+    expect(buddyRawAddsNothing(null, team)).toBe(true);
+    expect(buddyRawAddsNothing('Patrick / Xavier', team)).toBe(true);
+    expect(buddyRawAddsNothing('Kim Jansen', team)).toBe(true);
+  });
+
+  it('ignores a nickname in brackets and accepts aliases', () => {
+    expect(buddyRawAddsNothing('Andrea Rossi (mara)', [person('Andrea', 'Rossi')])).toBe(
+      true,
+    );
+    expect(buddyRawAddsNothing('JP', [person('Jean-Paul', 'X', ['JP'])])).toBe(true);
+  });
+
+  it('is false when the page names someone who is not linked', () => {
+    expect(buddyRawAddsNothing('Kim / Dirk', team)).toBe(false);
+    expect(buddyRawAddsNothing('Kimberly', team)).toBe(false);
   });
 });
 

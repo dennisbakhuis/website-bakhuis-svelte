@@ -207,19 +207,33 @@ export type ProfileSample = {
   t: number;
   d: number;
   temp?: number | null;
+  /** No-decompression limit in minutes at that moment, as the computer showed it. */
   ndl?: number | null;
+  /** First stop (ceiling) depth in metres while in deco; absent otherwise. */
   stop?: number | null;
+  /** Time to surface in minutes, stops included. */
+  tts?: number | null;
 };
 
 export type ProfileMeta = {
   gf: string | null;
   deco_model: string | null;
   deco: boolean;
+  /** `[seconds, gas]` pairs; the gas is the O₂ percentage, or "O2/He" for trimix. */
   gas_switches: unknown[][];
+  /** `[from, to]` second pairs spent at the surface mid-dive. */
+  surface_breaks: number[][];
   temp_min_c: number | null;
   temp_max_c: number | null;
   sample_interval_s: number | null;
   partial: string | null;
+  samples: number | null;
+  deco_min: number | null;
+  deepest_stop_m: number | null;
+  first_stop_s: number | null;
+  max_ascent_m_min: number | null;
+  max_descent_m_min: number | null;
+  time_at_max_s: number | null;
 };
 
 export type PersonPublic = { slug: string; name: string; avatar_url: string | null };
