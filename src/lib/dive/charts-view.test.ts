@@ -186,26 +186,26 @@ describe('waterByCountry', () => {
 });
 
 describe('rhythmTiles', () => {
-  it('reports recency, frequency, the peak year, the longest break and trips', () => {
+  it('reports recency, frequency, the peak year, the longest streak and trips', () => {
     const tiles = rhythmTiles(all, '2022-09-13');
     expect(tiles.map((t) => [t.label, t.value, t.note])).toEqual([
       ['Since last dive', '12 days', '1 Sept 2022'],
       ['Past year', '4 dives', '5 h underwater'],
       ['Dive days', '6 days', 'up to 2 dives in a day'],
       ['Busiest year', '2022', '4 dives · 5 h'],
-      ['Longest break', '18 months', 'Aug 2020 – Feb 2022'],
+      ['Longest streak', '1 day', 'one day at a time'],
       ['Trips', '1 trip', '3 dives a trip'],
     ]);
     expect(tiles[3].group).toBe(false);
   });
 
-  it('handles today, yesterday, short breaks and a single dive', () => {
+  it('handles today, yesterday, a two-day streak and a single dive', () => {
     expect(rhythmTiles([], '2022-09-13')).toEqual([]);
     const two = [dive(1, '2022-09-12'), dive(2, '2022-09-13')];
     const tiles = rhythmTiles(two, '2022-09-13');
     expect(tiles[0].value).toBe('today');
     expect(tiles[2].note).toBe('one dive a day');
-    expect(tiles[4]).toMatchObject({ value: '1 day', note: '12 Sept 2022 – 13 Sept 2022' });
+    expect(tiles[4]).toMatchObject({ value: '2 days', note: 'in a row, 12–13 Sep 2022' });
     expect(tiles.find((t) => t.label === 'Trips')).toBeUndefined();
     expect(rhythmTiles([dive(1, '2022-09-12')], '2022-09-13')[0].value).toBe('1 day');
     expect(spanLabel(59)).toBe('59 days');
@@ -216,6 +216,7 @@ describe('rhythmTiles', () => {
       'Past year',
       'Dive days',
       'Busiest year',
+      'Longest streak',
     ]);
   });
 });

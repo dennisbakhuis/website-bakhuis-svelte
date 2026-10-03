@@ -483,8 +483,8 @@
   /* Tiles */
   .tiles {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-    gap: 18px 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 12px;
     margin: 0;
   }
   .tile dt {
@@ -494,6 +494,7 @@
     text-transform: uppercase;
     color: var(--color-text-faint);
     margin-bottom: 4px;
+    white-space: nowrap;
   }
   .tile dd {
     margin: 0;
@@ -507,6 +508,7 @@
     font-weight: 600;
     line-height: 1.1;
     color: var(--color-text);
+    white-space: nowrap;
   }
   .tile small {
     font-size: 11.5px;

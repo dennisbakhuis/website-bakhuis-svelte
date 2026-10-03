@@ -6,7 +6,7 @@
  */
 import type { DiveFilter } from './filter';
 import type { StatTile } from './stats-view';
-import { formatDate, formatMonthYear, pluralize } from './format';
+import { formatDate, formatDateRange, pluralize } from './format';
 import { parseDay } from './timeline';
 
 /** The list fields the charts read; `DiveListItem` satisfies it. */
@@ -297,7 +297,7 @@ function yearBefore(iso: string): string {
 
 /**
  * How the diving goes in time: how recent, how often, when it peaked and the
- * longest stretch out of the water. Over the selection, so a filter answers
+ * longest run of days in a row. Over the selection, so a filter answers
  * "when did I last dive a cave" as well.
  */
 export function rhythmTiles(dives: ChartDive[], today: string): StatTile[] {
@@ -348,21 +348,24 @@ export function rhythmTiles(dives: ChartDive[], today: string): StatTile[] {
     group: false,
   });
 
-  if (sorted.length > 1) {
-    let gap = { days: 0, from: sorted[0].date, to: sorted[0].date };
-    for (let i = 1; i < sorted.length; i++) {
-      const days = daysBetween(sorted[i - 1].date, sorted[i].date);
-      if (days > gap.days) gap = { days, from: sorted[i - 1].date, to: sorted[i].date };
-    }
-    tiles.push({
-      label: 'Longest break',
-      value: spanLabel(gap.days),
-      note:
-        gap.days >= 60
-          ? `${formatMonthYear(gap.from)} – ${formatMonthYear(gap.to)}`
-          : `${formatDate(gap.from)} – ${formatDate(gap.to)}`,
-    });
+  const days = [...perDay.keys()].sort();
+  let streak = { days: 1, from: days[0], to: days[0] };
+  let run = { days: 1, from: days[0] };
+  for (let i = 1; i < days.length; i++) {
+    run =
+      daysBetween(days[i - 1], days[i]) === 1
+        ? { days: run.days + 1, from: run.from }
+        : { days: 1, from: days[i] };
+    if (run.days > streak.days) streak = { ...run, to: days[i] };
   }
+  tiles.push({
+    label: 'Longest streak',
+    value: pluralize(streak.days, 'day'),
+    note:
+      streak.days > 1
+        ? `in a row, ${formatDateRange(streak.from, streak.to)}`
+        : 'one day at a time',
+  });
 
   const trips = new Set(sorted.flatMap((d) => (d.trip ? [d.trip.slug] : [])));
   if (trips.size) {
