@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { apiOrError } from '$lib/server/api';
-import type { Person } from '$lib/dive/types';
+import type { PersonPrivate } from '$lib/dive/types';
 
 export const load: PageServerLoad = async (event) => ({
-  people: await apiOrError<Person[]>(event, '/api/v1/admin/people'),
+  people: await apiOrError<PersonPrivate[]>(event, '/api/v1/admin/people'),
 });

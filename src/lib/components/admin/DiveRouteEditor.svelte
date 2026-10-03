@@ -5,10 +5,14 @@
     annotationSummary,
     defaultTitle,
     emptyAnnotation,
-    fitAnnotation,
+    extendRoute,
+    extendRouteAlong,
+    findNode,
+    pathLength,
     removePin,
+    routeEnd,
     routeKeys,
-    toggleRouteLeg,
+    trimRoute,
     updatePin,
     type DiveMapAnnotation,
     type DiveMapPin,
@@ -19,14 +23,11 @@
   let {
     maps,
     value,
-    drawnOn = null,
     onChange,
   }: {
-    /** The site's current maps. */
+    /** The site's drawn maps. */
     maps: SiteMapOut[];
     value: DiveMapAnnotation | null;
-    /** The revision the existing annotation was drawn on, when it is not current. */
-    drawnOn?: SiteMapOut | null;
     onChange: (annotation: DiveMapAnnotation | null) => void;
   } = $props();
 
@@ -34,15 +35,77 @@
   let tool = $state<Tool>('route');
   let selectedPin = $state<string | null>(null);
 
-  const chosen = $derived(value ? maps.find((m) => m.id === value.map_id) : undefined);
-  // Draw on the revision the annotation was made on until the owner moves it forward.
-  const map = $derived(
-    value && drawnOn && drawnOn.id === value.map_id && drawnOn.revision === value.revision
-      ? drawnOn
-      : chosen,
-  );
-  const behind = $derived(!!value && !!chosen && chosen.revision !== value.revision);
+  const map = $derived(value ? maps.find((m) => m.id === value.map_id) : undefined);
   const route = $derived(value ? routeKeys(value) : new Set<string>());
+  // A stick map's route follows the drawn line; a site map takes a free-drawn track.
+  const free = $derived(map?.kind === 'sitemap');
+  // How many legs (or track points) each click added, so one click can be taken back.
+  let steps = $state<number[]>([]);
+  const end = $derived(value && map ? routeEnd(map, value) : null);
+  const endLabel = $derived.by(() => {
+    const node = end && map ? findNode(map, end) : undefined;
+    return node ? node.label || node.id : '';
+  });
+  const hasRoute = $derived(!!value && (value.route.length > 0 || value.path.length > 0));
+  const canTurnHere = $derived.by(() => {
+    if (!value) return false;
+    if (free) return value.path.length > 0 && value.turn_at !== value.path.length - 1;
+    return !!end && value.turn !== end;
+  });
+
+  function step(next: DiveMapAnnotation) {
+    if (!value) return;
+    const added = free
+      ? next.path.length - value.path.length
+      : next.route.length - value.route.length;
+    if (added > 0) steps = [...steps, added];
+    onChange(next);
+  }
+
+  function addPoint(x: number, y: number) {
+    if (!value) return;
+    const point = { x: Math.round(x * 2) / 2, y: Math.round(y * 2) / 2 };
+    step({ ...value, path: [...value.path, point] });
+  }
+
+  function back() {
+    if (!value || !steps.length) return;
+    const last = steps[steps.length - 1];
+    steps = steps.slice(0, -1);
+    if (!free) {
+      onChange(trimRoute(value, last));
+      return;
+    }
+    const path = value.path.slice(0, Math.max(0, value.path.length - last));
+    const turnAt = value.turn_at !== null && value.turn_at < path.length ? value.turn_at : null;
+    onChange({ ...value, path, turn_at: turnAt });
+  }
+
+  function turnHere() {
+    if (!value) return;
+    if (free) onChange({ ...value, turn_at: value.path.length ? value.path.length - 1 : null });
+    else onChange({ ...value, turn: end });
+  }
+
+  function nearestPoint(x: number, y: number): number | null {
+    if (!value?.path.length) return null;
+    let best = 0;
+    let bestDist = Infinity;
+    value.path.forEach((p, i) => {
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    });
+    return best;
+  }
+
+  function clear() {
+    if (!value) return;
+    steps = [];
+    onChange({ ...value, route: [], turn: null, path: [], turn_at: null });
+  }
   const pin = $derived(
     value && selectedPin ? value.pins.find((p) => p.id === selectedPin) : undefined,
   );
@@ -51,18 +114,23 @@
     const target = maps.find((m) => m.id === id);
     onChange(target ? emptyAnnotation(target) : null);
     selectedPin = null;
+    steps = [];
   }
 
   function onEdgeClick(edge: MapEdge) {
-    if (!value) return;
-    onChange(toggleRouteLeg(value, edge.from, edge.to));
+    if (!value || !map || tool !== 'route' || free) return;
+    step(extendRouteAlong(map, value, edge));
   }
 
   function onNodeClick(id: string) {
-    if (!value) return;
-    if (tool === 'turn' || tool === 'route') {
-      if (tool === 'turn') onChange({ ...value, turn: value.turn === id ? null : id });
+    if (!value || !map) return;
+    if (free) {
+      const node = findNode(map, id);
+      if (node && tool === 'route') addPoint(node.x, node.y);
+      return;
     }
+    if (tool === 'turn') onChange({ ...value, turn: value.turn === id ? null : id });
+    else if (tool === 'route') step(extendRoute(map, value, id));
   }
 
   function onCanvasClick(x: number, y: number) {
@@ -73,16 +141,20 @@
       selectedPin = added.id;
       return;
     }
+    if (free && tool === 'route') {
+      addPoint(x, y);
+      return;
+    }
+    if (free && tool === 'turn') {
+      const at = nearestPoint(x, y);
+      onChange({ ...value, turn_at: value.turn_at === at ? null : at });
+      return;
+    }
     selectedPin = null;
   }
 
   function onPinClick(p: DiveMapPin) {
     selectedPin = selectedPin === p.id ? null : p.id;
-  }
-
-  function moveToCurrent() {
-    if (!value || !chosen) return;
-    onChange({ ...fitAnnotation(chosen, value), revision: chosen.revision });
   }
 </script>
 
@@ -93,7 +165,7 @@
       <select value={value?.map_id ?? ''} onchange={(e) => choose(e.currentTarget.value)}>
         <option value="">— none —</option>
         {#each maps as m (m.id)}
-          <option value={m.id}>{m.title || defaultTitle(m.kind)} · rev {m.revision}</option>
+          <option value={m.id}>{m.title || defaultTitle(m.kind)}</option>
         {/each}
       </select>
     </label>
@@ -107,7 +179,8 @@
           role="radio"
           aria-checked={tool === 'route'}
           onclick={() => (tool = 'route')}
-          title="Click the lines you swam">Route</button
+          title={free ? 'Click along the way you swam' : 'Click the stations you passed, in order'}
+          >Route</button
         >
         <button
           type="button"
@@ -130,35 +203,68 @@
           title="Click anywhere to drop a numbered note">Note pin</button
         >
       </div>
+      {#if tool === 'route'}
+        <div class="tools">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            disabled={!steps.length}
+            onclick={back}
+            title="Take back the last click">↶ Back</button
+          >
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            disabled={!canTurnHere}
+            onclick={turnHere}
+            title="The dive turned where the route now ends">Turned here</button
+          >
+          <button type="button" class="btn btn-ghost btn-sm" disabled={!hasRoute} onclick={clear}
+            >Clear route</button
+          >
+        </div>
+      {/if}
       <button type="button" class="btn btn-ghost btn-sm" onclick={() => choose('')}>Remove</button>
     {/if}
   </div>
 
   {#if value && map}
-    {#if behind}
-      <p class="behind">
-        Drawn on revision {value.revision}; the map is now at revision {chosen?.revision}.
-        <button type="button" class="link" onclick={moveToCurrent}>Move to the current map</button>
-        (legs that no longer exist are dropped).
-      </p>
-    {/if}
     <SiteMapView
       {map}
       editable
       {route}
+      legs={value.route}
+      path={value.path}
+      pathTurn={value.turn_at}
       turn={value.turn}
       pins={value.pins}
       selection={{ pin: selectedPin ?? undefined }}
-      {onEdgeClick}
+      onEdgeClick={free ? undefined : onEdgeClick}
       {onNodeClick}
       {onCanvasClick}
       {onPinClick}
     />
     <p class="hint">
-      {#if tool === 'route'}
-        Click lines to mark what you swam. {annotationSummary(map, value) || 'Nothing marked yet.'}
+      {#if tool === 'route' && free}
+        {#if value.path.length}
+          Track of {value.path.length} points, {Math.round(pathLength(value.path))} m. Click where you
+          swam next, or an object to swim to it; click your exit to close the loop.
+        {:else}
+          Click along the way you swam, from the entry; every click adds a point. Objects can be
+          clicked too.
+        {/if}
+      {:else if tool === 'route'}
+        {#if value.route.length}
+          Route ends at <strong>{endLabel}</strong>. Click the next station you reached; to come
+          back the same way, click where you got out. {annotationSummary(map, value)}
+        {:else}
+          Click the first station you reached from the entrance; the line in between fills in. Keep
+          clicking in the order you swam, and click a line to add just that leg.
+        {/if}
       {:else if tool === 'turn'}
-        Click the station where you turned the dive.
+        {free
+          ? 'Click the point of the track where you turned the dive.'
+          : 'Click the station where you turned the dive.'}
       {:else}
         Click the map to drop a note, then write it below.
       {/if}
@@ -195,8 +301,6 @@
         onchange={(e) => onChange({ ...value!, note: e.currentTarget.value })}
       />
     </label>
-  {:else if maps.length === 0}
-    <p class="muted">This site has no drawn maps yet. Add one under Sites first.</p>
   {/if}
 </div>
 
@@ -219,25 +323,10 @@
     display: flex;
     gap: 4px;
   }
-  .hint,
-  .muted {
+  .hint {
     font-size: 13px;
     color: var(--color-text-muted);
     margin: 0;
-  }
-  .behind {
-    font-size: 13px;
-    color: var(--color-warm);
-    margin: 0;
-  }
-  .link {
-    background: none;
-    border: 0;
-    padding: 0;
-    color: var(--color-accent);
-    text-decoration: underline;
-    cursor: pointer;
-    font: inherit;
   }
   .pin-row {
     display: flex;

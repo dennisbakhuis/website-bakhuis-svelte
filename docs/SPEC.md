@@ -35,31 +35,33 @@ content, blog editing in the browser (blog stays in git).
 
 ## 2. Locked decisions
 
-| Decision        | Value                                                                                                    |
-| --------------- | -------------------------------------------------------------------------------------------------------- |
-| Frontend        | SvelteKit 2 + Svelte 5 (runes) + TypeScript strict, `@sveltejs/adapter-node`, port 3000                  |
-| Package manager | pnpm, Node 22 (`.nvmrc`), `VERSION` file + `scripts/sync-version.mjs`                                    |
-| Backend         | Python 3.13 + FastAPI + Pydantic v2 + SQLAlchemy 2 (async) + Alembic, uv, port 8000, `/api/*` only       |
-| Database        | Postgres (the `voetlink-postgres` image with wal-g → S3 WAL archive), one DB per env                     |
-| Media           | Hetzner Object Storage (S3) buckets `bakhuis-{prod,dev}-media`; served via the backend under `/media/*`  |
-| Auth            | Single owner. Passkey (WebAuthn) login + magic-link e-mail fallback, session cookie, rate-limited        |
-| Content         | Blog/TIL as Markdown via mdsvex in `src/content/{blog,til}/` — git is the CMS for writing                |
-| Animation       | anime.js v4 (front page + a few tasteful touches elsewhere), `prefers-reduced-motion` honoured           |
-| Public maps     | Self-hosted world map (Natural Earth TopoJSON + SVG projection), no third-party tiles — keeps CSP strict |
-| Admin maps      | MapLibre GL + vector tiles from a single allow-listed origin, only under `/admin` (route-scoped CSP)     |
-| Styling         | Plain CSS custom properties (`src/lib/styles/tokens.css`), self-hosted fonts via `@fontsource`           |
-| Analytics       | Umami, server-side relay as in the other sites; no cookies for visitors, no consent banner               |
-| Site language   | English UI and content (**TBD** — see §11)                                                               |
-| Domain          | `dennisbakhuis.nl` (prod, from `main`), `dev.dennisbakhuis.nl` (from `dev`)                              |
-| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend + postgres)     |
-| Backups         | wal-g for Postgres, S3 versioning on media buckets, restic of the raw exports to the Storage Box         |
-| Quality gates   | eslint `--max-warnings 0`, prettier, svelte-check, vitest ≥70 %; backend ruff + mypy strict + pytest     |
-| Commits         | No AI co-author trailers or footers, authored solely by Dennis                                           |
+| Decision        | Value                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| Frontend        | SvelteKit 2 + Svelte 5 (runes) + TypeScript strict, `@sveltejs/adapter-node`, port 3000                    |
+| Package manager | pnpm, Node 22 (`.nvmrc`), `VERSION` file + `scripts/sync-version.mjs`                                      |
+| Backend         | Python 3.13 + FastAPI + Pydantic v2, uv, port 8000, `/api/*` and `/media/*`                                |
+| Data            | Files in the private `divelog-data` git repo (Markdown + JSON), loaded into memory; git is the history     |
+| Media           | Hetzner Object Storage (S3) buckets `bakhuis-{prod,dev}-media`; served via the backend under `/media/*`    |
+| Auth            | Single owner. Passkey (WebAuthn) login + magic-link e-mail fallback, session cookie, rate-limited          |
+| Content         | Blog/TIL as Markdown via mdsvex in `src/content/{blog,til}/` — git is the CMS for writing                  |
+| Animation       | anime.js v4 (front page + a few tasteful touches elsewhere), `prefers-reduced-motion` honoured             |
+| Public maps     | MapLibre globe + site locators from self-hosted PMTiles under `/media/tiles`; SVG (Natural Earth) fallback |
+| Admin maps      | MapLibre GL + vector tiles from a single allow-listed origin, only under `/admin` (route-scoped CSP)       |
+| Styling         | Plain CSS custom properties (`src/lib/styles/tokens.css`), self-hosted fonts via `@fontsource`             |
+| Analytics       | Umami, server-side relay as in the other sites; no cookies for visitors, no consent banner                 |
+| Site language   | English UI and content (**TBD** — see §11)                                                                 |
+| Domain          | `dennisbakhuis.nl` (prod, from `main`), `dev.dennisbakhuis.nl` (from `dev`)                                |
+| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend + postgres)       |
+| Backups         | wal-g for Postgres, S3 versioning on media buckets, restic of the raw exports to the Storage Box           |
+| Quality gates   | eslint `--max-warnings 0`, prettier, svelte-check, vitest ≥70 %; backend ruff + mypy strict + pytest       |
+| Commits         | No AI co-author trailers or footers, authored solely by Dennis                                             |
 
-Why a runtime backend now: online editing with uploads needs auth, a database
-and durable media storage. The `voetlink` stack on the same box already solves
-all three (FastAPI, Postgres + wal-g, S3 buckets, Caddy `/api/*` proxy), so
-this site reuses that shape one-to-one rather than a static pipeline.
+Why files and not Postgres (decided 2026-09-27, replacing the earlier
+Postgres design): the log is ~700 records that change a few times a week, the
+curated dataset already _is_ files, and git gives diffable history, backup and
+a second copy for free. The backend keeps FastAPI for auth, uploads and imports
+but reads and writes the data repository directly; every admin edit is one
+commit. See `docs/RUNBOOK.md` for the layout.
 
 ---
 
@@ -150,13 +152,14 @@ and can be layered on top of the Descent hero if desired.
 
 ## 5. Dive log — `/dive`
 
-### 5.1 Data model (backend, Postgres)
+### 5.1 Data model (files in `divelog-data`; the Pydantic records in `backend/app/store/models.py` are the schema)
 
 ```
 dive          id, number, date, time_in, duration_min, max_depth_m, avg_depth_m,
               water_temp_c, air_temp_c, visibility_m, site_id, trip_id,
-              tags[] (cave, scooter/DPV, wreck, night, drift, deep, ice, altitude,
-                      training, sidemount, …), gas (air|nitrox|trimix), o2_pct, he_pct,
+              tags[] (cave, cavern, mine, wreck, night, drift, deco, dpv, boat,
+                      training — properties of the dive; water type and depth are
+                      not tags: see site.water and max_depth_m), gas (air|nitrox|trimix), o2_pct, he_pct,
               mode (OC|CCR|sidemount), suit, weights_kg, rating 1–5,
               gear_setup_id, buddies[] (→ person), guide (→ person),
               body_md (free text, markdown), visibility (public|private),

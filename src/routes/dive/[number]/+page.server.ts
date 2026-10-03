@@ -10,9 +10,10 @@ export const load: PageServerLoad = async (event) => {
   const where = dive.site ? ` at ${dive.site.name}` : '';
   return {
     dive,
+    editHref: `/admin/dives/${dive.number}`,
     meta: {
       title: `Dive #${dive.number}${dive.title ? ` — ${dive.title}` : ''} — Dennis Bakhuis`,
-      description: `${dive.max_depth_m} m for ${dive.duration_min} minutes${where} on ${dive.date}.`,
+      description: `${dive.max_depth_m} m for ${Math.round(dive.duration_min)} minutes${where} on ${dive.date}.`,
     },
   };
 };

@@ -1,14 +1,55 @@
 <script lang="ts">
+  import type { Action } from 'svelte/action';
   import type { DiveSummary } from '$lib/dive/types';
   import { counter } from '$lib/anim/counter';
+  import { reducedMotion } from '$lib/anim/motion';
+  import { formatDate } from '$lib/dive/format';
+  import { latestMatches, sparkline, type DiveTimeline } from '$lib/dive/sparkline';
 
-  let { summary }: { summary: DiveSummary | null } = $props();
+  let {
+    summary,
+    timeline = null,
+  }: { summary: DiveSummary | null; timeline?: DiveTimeline | null } = $props();
+
+  const SPARK_W = 320;
+  const SPARK_H = 44;
+  const years = $derived(timeline?.years ?? []);
+  const spark = $derived(sparkline(years, SPARK_W, SPARK_H, 3));
+  const lastDiveHref = $derived(
+    timeline?.latest && latestMatches(timeline, summary?.last_dive ?? null)
+      ? `/dive/${timeline.latest.number}`
+      : null,
+  );
+  const sparkLabel = $derived(
+    years.length && spark.peak
+      ? `Dives per year, ${years[0].year} to ${years[years.length - 1].year}; busiest year ${spark.peak.year} with ${spark.peak.dives} dives.`
+      : '',
+  );
+
+  // Server-rendered and reduced-motion visitors get the finished line; only
+  // an animating browser hides it first and draws it in when scrolled to.
+  let armed = $state(false);
+  let drawn = $state(false);
+  const drawOnView: Action<SVGSVGElement> = (node) => {
+    if (reducedMotion()) return;
+    armed = true;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        drawn = true;
+        observer.disconnect();
+      },
+      { threshold: 0.4 },
+    );
+    observer.observe(node);
+    return { destroy: () => observer.disconnect() };
+  };
 </script>
 
-<a class="tile" href="/dive">
+<div class="tile">
   <div class="tile-head">
     <span class="tile-title">Diving</span>
-    <span class="tile-link">Open the log →</span>
+    <a class="tile-link" href="/dive">Open the log →</a>
   </div>
   <p class="tile-blurb">
     Cold Dutch water, French caves, a scooter when the line is long enough. Every dive is logged —
@@ -45,19 +86,58 @@
         <dd class="num" use:counter={{ value: summary.scooter_dives }}>{summary.scooter_dives}</dd>
       </div>
     </dl>
+    {#if spark.line}
+      <figure class="spark">
+        <svg
+          viewBox="0 0 {SPARK_W} {SPARK_H}"
+          role="img"
+          aria-label={sparkLabel}
+          class:armed
+          class:drawn
+          use:drawOnView
+        >
+          <path class="spark-area" d={spark.area} />
+          <path class="spark-line" d={spark.line} pathLength="1" />
+          {#if spark.last}
+            <circle class="spark-dot" cx={spark.last.x} cy={spark.last.y} r="3" />
+          {/if}
+        </svg>
+        <figcaption class="num">
+          <span>{years[0].year}</span>
+          <span class="spark-caption">dives per year</span>
+          <span>{years[years.length - 1].year}</span>
+        </figcaption>
+      </figure>
+    {/if}
+    {#if summary.last_dive}
+      <p class="last-dive num">
+        Last dive:
+        {#if lastDiveHref}
+          <a href={lastDiveHref}
+            >{formatDate(summary.last_dive)}{summary.last_dive_site
+              ? ` · ${summary.last_dive_site}`
+              : ''}</a
+          >
+        {:else}
+          {formatDate(summary.last_dive)}{summary.last_dive_site
+            ? ` · ${summary.last_dive_site}`
+            : ''}
+        {/if}
+      </p>
+    {/if}
   {:else}
     <p class="tile-blurb muted">
       The dive log is taking a surface interval — try again in a moment.
     </p>
   {/if}
-</a>
+</div>
 
 <style>
   .tile {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
-    text-decoration: none;
     color: inherit;
   }
   .tile-head {
@@ -76,6 +156,13 @@
     font-size: 13px;
     opacity: 0.7;
     font-family: var(--font-mono);
+    color: inherit;
+    text-decoration: none;
+  }
+  .tile-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
   }
   .tile:hover .tile-link {
     opacity: 1;
@@ -102,6 +189,86 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     opacity: 0.65;
+  }
+  .spark {
+    margin: 22px 0 0;
+  }
+  .spark svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .spark-area {
+    fill: var(--color-accent-soft);
+  }
+  .spark-line {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+  .spark-dot {
+    fill: var(--color-warm);
+  }
+  .spark svg.armed .spark-line {
+    stroke-dashoffset: 1;
+  }
+  .spark svg.armed .spark-area,
+  .spark svg.armed .spark-dot {
+    opacity: 0;
+  }
+  .spark svg.armed.drawn .spark-line {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1.4s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  .spark svg.armed.drawn .spark-area,
+  .spark svg.armed.drawn .spark-dot {
+    opacity: 1;
+    transition: opacity 0.6s ease 1s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .spark svg.armed .spark-line,
+    .spark svg.armed .spark-area,
+    .spark svg.armed .spark-dot {
+      stroke-dashoffset: 0;
+      opacity: 1;
+      transition: none;
+    }
+  }
+  .spark figcaption {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    opacity: 0.6;
+  }
+  .spark-caption {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .last-dive {
+    margin: 14px 0 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    opacity: 0.75;
+  }
+  .last-dive a {
+    position: relative;
+    z-index: 1;
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+    text-underline-offset: 3px;
+  }
+  .last-dive a:hover {
+    color: var(--color-accent);
   }
   .stats dd {
     margin: 2px 0 0;

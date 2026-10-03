@@ -1,0 +1,104 @@
+<script lang="ts">
+  import { goto, invalidateAll } from '$app/navigation';
+  import { adminJson, AdminApiError } from '$lib/admin/client';
+  import { toast } from '$lib/stores/toast.svelte';
+  import RegionForm from '../RegionForm.svelte';
+
+  let { data } = $props();
+  const region = $derived(data.region);
+  let deleteError = $state('');
+
+  async function remove() {
+    if (!confirm(`Delete the region ${region.name}?`)) return;
+    deleteError = '';
+    try {
+      await adminJson(`/admin/regions/${region.id}`, 'DELETE');
+      toast.show({ kind: 'success', message: `${region.name} deleted` });
+      await goto('/admin/regions');
+    } catch (err) {
+      deleteError = err instanceof AdminApiError ? err.message : 'Could not delete';
+    }
+  }
+</script>
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="/admin/sites">Sites</a> › <a href="/admin/regions">Regions</a> ›
+  <span>{region.name}</span>
+</nav>
+<div class="head">
+  <h1>{region.name}</h1>
+  <a class="btn btn-ghost btn-sm" href="/dive/regions/{region.id}" target="_blank" rel="noopener"
+    >View ↗</a
+  >
+</div>
+
+{#key region.id}
+  <RegionForm {region} onSaved={() => invalidateAll()} />
+{/key}
+
+{#if region.sites.length}
+  <section class="sites">
+    <h2>Sites in this region</h2>
+    <ul>
+      {#each region.sites as s (s.slug)}
+        <li><a href="/dive/sites/{s.slug}" target="_blank" rel="noopener">{s.name} ↗</a></li>
+      {/each}
+    </ul>
+  </section>
+{/if}
+
+<section class="danger-zone">
+  <button type="button" class="btn btn-ghost btn-sm danger" onclick={remove}>Delete region</button>
+  {#if region.sites.length}
+    <span class="muted"
+      >Refused while {region.sites.length} site{region.sites.length === 1 ? '' : 's'} use it.</span
+    >
+  {/if}
+  {#if deleteError}<p class="error">{deleteError}</p>{/if}
+</section>
+
+<style>
+  .crumbs {
+    font-size: 13.5px;
+    color: var(--color-text-faint);
+    margin-bottom: 6px;
+  }
+  .crumbs a {
+    color: var(--color-text-muted);
+  }
+  .head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .sites {
+    margin-bottom: 24px;
+  }
+  .sites h2 {
+    font-size: 15px;
+    margin: 0 0 8px;
+  }
+  .sites ul {
+    margin: 0;
+    padding-left: 18px;
+    columns: 2;
+    font-size: 14px;
+  }
+  .muted {
+    color: var(--color-text-faint);
+    font-size: 13.5px;
+  }
+  .danger-zone {
+    border-top: 1px solid var(--color-border);
+    padding-top: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .danger:hover {
+    border-color: var(--color-error);
+    color: var(--color-error);
+  }
+</style>

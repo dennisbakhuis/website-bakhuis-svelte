@@ -26,24 +26,65 @@
       busy = false;
     }
   }
+
+  async function uploadPerdix(files: FileList | null) {
+    if (!files?.length) return;
+    busy = true;
+    error = '';
+    result = null;
+    const form = new FormData();
+    for (const file of Array.from(files)) form.append('files', file, file.name);
+    try {
+      const response = await fetch('/api/v1/admin/import/shearwater', {
+        method: 'POST',
+        body: form,
+        credentials: 'same-origin',
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { detail?: string };
+        throw new AdminApiError(response.status, body.detail ?? response.statusText);
+      }
+      result = await response.json();
+      await invalidateAll();
+    } catch (err) {
+      error = err instanceof AdminApiError ? err.message : 'Import failed';
+    } finally {
+      busy = false;
+    }
+  }
 </script>
 
 <h1>Import from a dive computer</h1>
 <p class="muted">
-  Upload a Subsurface XML export. Dives that match an existing one by date and time get their depth
-  profile attached; new ones are created as <strong>drafts</strong> for you to enrich and publish. Sites
-  come in with coordinates but without a country — fix those under Sites.
+  Drop the XML files Shearwater Cloud exports for the Perdix, one per dive. A file whose start time
+  is within ten minutes of a logged dive attaches its profile to that dive; anything else becomes a
+  <strong>draft</strong> dive with the numbers filled in, for you to give a site, buddies and a story.
+  Subsurface exports work the same way.
 </p>
 
-<label class="drop card">
-  <input
-    type="file"
-    accept=".xml,.ssrf,application/xml,text/xml"
-    onchange={(e) => upload(e.currentTarget.files)}
-    disabled={busy}
-  />
-  <span>{busy ? 'Importing…' : 'Choose a Subsurface .xml / .ssrf file'}</span>
-</label>
+<div class="drops">
+  <label class="drop card">
+    <input
+      type="file"
+      multiple
+      accept=".xml,application/xml,text/xml"
+      onchange={(e) => uploadPerdix(e.currentTarget.files)}
+      disabled={busy}
+    />
+    <strong>Shearwater Perdix</strong>
+    <span>{busy ? 'Importing…' : 'Choose one or more Perdix .xml files'}</span>
+  </label>
+  <label class="drop card">
+    <input
+      type="file"
+      accept=".xml,.ssrf,application/xml,text/xml"
+      onchange={(e) => upload(e.currentTarget.files)}
+      disabled={busy}
+    />
+    <strong>Subsurface</strong>
+    <span>{busy ? 'Importing…' : 'Choose a Subsurface .xml / .ssrf file'}</span>
+  </label>
+</div>
 
 {#if error}<p class="error">{error}</p>{/if}
 {#if result}
@@ -89,14 +130,21 @@
     color: var(--color-text-muted);
     max-width: 64ch;
   }
+  .drops {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
   .drop {
     display: flex;
+    flex-direction: column;
+    gap: 6px;
     align-items: center;
     justify-content: center;
     padding: 36px;
     border-style: dashed;
     cursor: pointer;
-    margin: 20px 0;
     background: var(--color-bg-elevated);
   }
   .drop input {

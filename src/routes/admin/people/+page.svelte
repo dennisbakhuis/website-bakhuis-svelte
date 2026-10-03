@@ -1,52 +1,62 @@
 <script lang="ts">
-  import { invalidateAll } from '$app/navigation';
-  import { adminJson } from '$lib/admin/client';
-  import type { Person } from '$lib/dive/types';
+  import { goto } from '$app/navigation';
+  import type { PersonPrivate } from '$lib/dive/types';
 
   let { data } = $props();
-  let name = $state('');
+  let query = $state('');
 
-  async function add(e: SubmitEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    await adminJson('/admin/people', 'POST', { name: name.trim(), display: 'first' });
-    name = '';
-    await invalidateAll();
-  }
+  const rows = $derived(
+    data.people.filter((p) => {
+      const q = query.toLowerCase();
+      return (
+        !q ||
+        `${p.first_name} ${p.last_name ?? ''} ${p.alias ?? ''} ${p.aliases.join(' ')} ${p.email ?? ''}`
+          .toLowerCase()
+          .includes(q)
+      );
+    }),
+  );
 
-  async function update(p: Person, patch: Partial<Person>) {
-    await adminJson(`/admin/people/${p.id}`, 'PUT', { name: p.name, display: p.display, ...patch });
-    await invalidateAll();
+  function label(p: PersonPrivate): string {
+    return p.last_name ? `${p.first_name} ${p.last_name}` : p.first_name;
   }
 </script>
 
-<h1>Dive buddies</h1>
-<p class="muted">How each person appears on the public site. Default is first name only.</p>
+<div class="head">
+  <h1>People <span class="count num">{data.people.length}</span></h1>
+  <button type="button" class="btn btn-solid btn-sm" onclick={() => goto('/admin/people/new')}
+    >+ New person</button
+  >
+</div>
+<p class="muted">
+  The public site shows the alias when there is one, otherwise the first name. Surname, e-mail and
+  notes are only ever shown to you.
+</p>
 
-<form class="add" onsubmit={add}>
-  <input type="text" placeholder="Full name" bind:value={name} />
-  <button type="submit" class="btn btn-solid btn-sm">Add</button>
-</form>
+<div class="toolbar">
+  <input type="search" placeholder="Filter…" bind:value={query} />
+</div>
 
 <table>
-  <thead><tr><th>Name</th><th>Shown as</th></tr></thead>
+  <thead><tr><th></th><th>Name</th><th>Public</th><th>Dives</th><th></th></tr></thead>
   <tbody>
-    {#each data.people as p (p.id)}
+    {#each rows as p (p.id)}
       <tr>
-        <td
-          ><input
-            type="text"
-            value={p.name}
-            onchange={(e) => update(p, { name: e.currentTarget.value })}
-          /></td
-        >
         <td>
-          <select value={p.display} onchange={(e) => update(p, { display: e.currentTarget.value })}>
-            <option value="first">first name</option>
-            <option value="full">full name</option>
-            <option value="initials">initials</option>
-            <option value="hidden">hidden</option>
-          </select>
+          <span class="avatar small">
+            {#if p.avatar_url}<img src={p.avatar_url} alt="" />{:else}{p.first_name[0]}{/if}
+          </span>
+        </td>
+        <td><a href="/admin/people/{p.id}">{label(p)}</a> <span class="muted num">{p.id}</span></td>
+        <td>{p.display === 'hidden' ? '— hidden —' : p.name}</td>
+        <td class="num">{p.dives}</td>
+        <td class="row-actions">
+          <a
+            class="btn btn-ghost btn-sm"
+            href="/dive/people/{p.slug}"
+            target="_blank"
+            rel="noopener">view ↗</a
+          >
         </td>
       </tr>
     {/each}
@@ -54,17 +64,53 @@
 </table>
 
 <style>
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .count {
+    font-size: 16px;
+    color: var(--color-text-faint);
+    font-weight: 400;
+  }
   .muted {
     color: var(--color-text-muted);
-    font-size: 14px;
+    font-size: 13.5px;
   }
-  .add {
+  .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-surface-2);
     display: flex;
-    gap: 8px;
-    max-width: 420px;
-    margin-bottom: 20px;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-accent);
+    overflow: hidden;
+    flex: none;
   }
-  td select {
-    width: auto;
+  .avatar.small {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .toolbar {
+    margin: 16px 0 12px;
+  }
+  .toolbar input {
+    max-width: 320px;
+  }
+  .row-actions {
+    text-align: right;
   }
 </style>

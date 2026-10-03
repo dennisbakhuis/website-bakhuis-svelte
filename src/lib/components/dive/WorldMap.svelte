@@ -1,7 +1,18 @@
 <script lang="ts">
   import type { MapSite } from '$lib/dive/types';
-  import { dotRadius } from '$lib/dive/stats-view';
-  import { flagEmoji } from '$lib/dive/format';
+  import {
+    colourScale,
+    dotColour,
+    dotMeasureMax,
+    dotRadiusBy,
+    SIZE_MODES,
+    type ColourMode,
+    type MapOptionsPatch,
+    type SizeMode,
+  } from '$lib/dive/stats-view';
+  import { flagEmoji, formatMinutes } from '$lib/dive/format';
+  import MapKey from './MapKey.svelte';
+  import MapOptions from './MapOptions.svelte';
 
   type Dot = MapSite & { point: { x: number; y: number } };
   type MapData = {
@@ -14,31 +25,55 @@
 
   let {
     map,
-    activeSite,
+    activeSite = '',
+    size = 'dives',
+    colour = 'type',
+    highlight = null,
+    compact = false,
+    label = '',
     onSelect,
-  }: { map: MapData; activeSite: string; onSelect: (slug: string) => void } = $props();
+    onOptions,
+  }: {
+    map: MapData;
+    activeSite?: string;
+    size?: SizeMode;
+    colour?: ColourMode;
+    /** Slugs of the sites the current filters keep; the rest fade. Null shows every site in full. */
+    highlight?: Set<string> | null;
+    /** No option strip: the small map on a person or site page, or the globe's fallback. */
+    compact?: boolean;
+    /** Accessible title; defaults to a description of the world map. */
+    label?: string;
+    onSelect?: (slug: string) => void;
+    onOptions?: (patch: MapOptionsPatch) => void;
+  } = $props();
 
-  const maxDives = $derived(Math.max(...map.dots.map((d) => d.dives), 1));
+  const max = $derived(dotMeasureMax(map.dots, size));
+  const scale = $derived(colourScale(map.dots, colour));
   let hovered = $state<Dot | null>(null);
 
-  function typeColor(type: string): string {
-    return (
-      { cave: 'var(--tag-cave)', quarry: 'var(--tag-training)', lake: 'var(--tag-drift)' }[type] ??
-      'var(--color-accent)'
-    );
+  function pick(dot: Dot) {
+    onSelect?.(activeSite === dot.slug ? '' : dot.slug);
   }
 </script>
 
-<div class="map card">
+{#snippet sizeHint()}
+  dot size = {SIZE_MODES.find((m) => m.mode === size)?.label} · click to filter
+{/snippet}
+
+<div class="map card" class:compact>
   <svg viewBox="0 0 {map.width} {map.height}" role="img" aria-labelledby="map-title" class="world">
-    <title id="map-title">World map with {map.dots.length} dive sites</title>
+    <title id="map-title">{label || `World map with ${map.dots.length} dive sites`}</title>
     <path d={map.spherePath} class="sphere" />
     <path d={map.landPath} class="land" />
     {#each map.dots as dot (dot.slug)}
+      {@const r = dotRadiusBy(dot, size, max)}
+      {@const fill = dotColour(dot, colour, scale)}
       <g
         class="site"
         class:active={activeSite === dot.slug}
-        class:dimmed={activeSite && activeSite !== dot.slug}
+        class:dimmed={(activeSite && activeSite !== dot.slug) ||
+          (highlight !== null && !highlight.has(dot.slug))}
         transform="translate({dot.point.x} {dot.point.y})"
         role="button"
         tabindex="0"
@@ -47,36 +82,38 @@
         onmouseleave={() => (hovered = null)}
         onfocus={() => (hovered = dot)}
         onblur={() => (hovered = null)}
-        onclick={() => onSelect(activeSite === dot.slug ? '' : dot.slug)}
+        onclick={() => pick(dot)}
         onkeydown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            onSelect(activeSite === dot.slug ? '' : dot.slug);
+            pick(dot);
           }
         }}
       >
-        <circle
-          class="halo"
-          r={dotRadius(dot, maxDives) * 2.2}
-          style="fill: {typeColor(dot.site_type)}"
-        />
-        <circle class="dot" r={dotRadius(dot, maxDives)} style="fill: {typeColor(dot.site_type)}" />
+        <circle class="halo" r={r * 2.2} style="fill: {fill}" />
+        <circle class="dot" {r} style="fill: {fill}" />
       </g>
     {/each}
   </svg>
-  <div class="legend">
-    <span><i style="background: var(--color-accent)"></i> sea</span>
-    <span><i style="background: var(--tag-cave)"></i> cave</span>
-    <span><i style="background: var(--tag-training)"></i> quarry</span>
-    <span><i style="background: var(--tag-drift)"></i> lake</span>
-    <span class="hint">dot size = number of dives · click to filter</span>
-  </div>
+
+  <MapKey {colour} {scale} hint={compact ? undefined : sizeHint} />
+
+  {#if !compact && onOptions}
+    <MapOptions {size} {colour} {onOptions} />
+  {/if}
+
   <div class="tooltip" class:visible={hovered} aria-live="polite">
     {#if hovered}
       <strong>{flagEmoji(hovered.country_code)} {hovered.name}</strong>
       <span class="num"
         >{hovered.dives}
-        {hovered.dives === 1 ? 'dive' : 'dives'} · max {hovered.max_depth_m} m</span
+        {hovered.dives === 1 ? 'dive' : 'dives'} · {formatMinutes(hovered.minutes)} · max {hovered.max_depth_m}
+        m</span
+      >
+      <span class="num faint"
+        >{hovered.first_year === hovered.last_year
+          ? hovered.last_year
+          : `${hovered.first_year}–${hovered.last_year}`} · {hovered.site_type}</span
       >
     {/if}
   </div>
@@ -127,31 +164,11 @@
     opacity: 0.4;
   }
   .site.dimmed {
-    opacity: 0.35;
+    opacity: 0.25;
   }
   .site.active .dot {
     stroke: var(--color-warm);
     stroke-width: 2;
-  }
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    padding: 10px 8px 4px;
-    font-size: 12.5px;
-    color: var(--color-text-muted);
-    font-family: var(--font-mono);
-  }
-  .legend i {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    margin-right: 6px;
-  }
-  .hint {
-    margin-left: auto;
-    color: var(--color-text-faint);
   }
   .tooltip {
     position: absolute;
@@ -176,5 +193,11 @@
   .tooltip .num {
     color: var(--color-text-muted);
     font-size: 12px;
+  }
+  .tooltip .faint {
+    color: var(--color-text-faint);
+  }
+  .compact {
+    padding: 8px;
   }
 </style>

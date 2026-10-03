@@ -5,6 +5,8 @@ export const SITE_URL = 'https://dennisbakhuis.nl';
 export type PageMeta = {
   title: string;
   description: string;
+  /** Site-relative or absolute Open Graph image; defaults per route in `ogImageFor`. */
+  image?: string;
 };
 
 export const pageMeta: Record<string, PageMeta> = {
@@ -24,6 +26,10 @@ export const pageMeta: Record<string, PageMeta> = {
   '/dive/sites': {
     title: `Dive sites — ${site.name}`,
     description: 'Every site in the dive log by country, with maps and cave stick maps.',
+  },
+  '/dive/trips': {
+    title: `Dive trips — ${site.name}`,
+    description: 'Every dive trip abroad, with a map of the sites, the numbers and who came along.',
   },
   '/blog': {
     title: `Blog — ${site.name}`,
@@ -46,6 +52,23 @@ export function metaFor(pathname: string, fallback?: PageMeta): PageMeta {
 
 export function canonicalUrl(pathname: string): string {
   return `${SITE_URL}${pathname === '/' ? '' : pathname.replace(/\/$/, '')}`;
+}
+
+const DIVE_PAGE = /^\/dive\/(\d+)\/?$/;
+const SITE_PAGE = /^\/dive\/sites\/([a-z0-9-]+)\/?$/;
+
+/**
+ * Absolute Open Graph image for a page: an explicit `meta.image` wins, dive
+ * and site pages get their generated card, everything else the default.
+ */
+export function ogImageFor(pathname: string, meta?: PageMeta): string {
+  const explicit = meta?.image;
+  if (explicit) return explicit.startsWith('http') ? explicit : `${SITE_URL}${explicit}`;
+  const dive = DIVE_PAGE.exec(pathname);
+  if (dive) return `${SITE_URL}/dive/${dive[1]}/og.png`;
+  const site = SITE_PAGE.exec(pathname);
+  if (site) return `${SITE_URL}/dive/sites/${site[1]}/og.png`;
+  return `${SITE_URL}/og-image.png`;
 }
 
 export function personLD(): Record<string, unknown> {

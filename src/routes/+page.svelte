@@ -11,10 +11,21 @@
   import DiveTile from '$lib/components/home/DiveTile.svelte';
   import WritingTile from '$lib/components/home/WritingTile.svelte';
   import { formatDate } from '$lib/dive/format';
+  import { latestMatches } from '$lib/dive/sparkline';
 
   let { data } = $props();
 
   const maxDepth = $derived(data.summary?.max_depth_m ?? 40);
+  const lastDiveText = $derived(
+    data.summary?.last_dive
+      ? `${formatDate(data.summary.last_dive)}${data.summary.last_dive_site ? ` · ${data.summary.last_dive_site}` : ''}`
+      : '',
+  );
+  const lastDiveHref = $derived(
+    data.timeline?.latest && latestMatches(data.timeline, data.summary?.last_dive ?? null)
+      ? `/dive/${data.timeline.latest.number}`
+      : null,
+  );
   let descent = $state<DescentState>({
     progress: 0,
     depth: 0,
@@ -87,7 +98,7 @@
     <h2 data-reveal>The bit that isn't on LinkedIn</h2>
     <div class="bento">
       <div class="bento-item bento-dive" data-reveal>
-        <DiveTile summary={data.summary} />
+        <DiveTile summary={data.summary} timeline={data.timeline} />
       </div>
       <div class="bento-item" data-reveal>
         <WritingTile posts={data.writing} />
@@ -145,9 +156,12 @@
       </div>
       {#if data.summary?.last_dive}
         <p class="last-dive num">
-          Last dive: {formatDate(data.summary.last_dive)}{data.summary.last_dive_site
-            ? ` · ${data.summary.last_dive_site}`
-            : ''}
+          Last dive:
+          {#if lastDiveHref}
+            <a href={lastDiveHref}>{lastDiveText}</a>
+          {:else}
+            {lastDiveText}
+          {/if}
         </p>
       {/if}
     </div>
@@ -308,6 +322,13 @@
   .last-dive {
     font-size: 13px;
     opacity: 0.6;
+  }
+  .last-dive a {
+    color: inherit;
+    text-underline-offset: 3px;
+  }
+  .last-dive a:hover {
+    color: var(--color-accent);
   }
 
   @media (max-width: 880px) {

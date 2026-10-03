@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { highlighter } from './src/lib/blog/highlight.js';
+import { remarkCrosslinks } from './src/lib/blog/crosslinks.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -14,6 +15,7 @@ const APP_VERSION = readFileSync(join(__dirname, 'VERSION'), 'utf8').trim();
 const mdsvexOptions = {
   extensions: ['.md'],
   highlight: { highlighter },
+  remarkPlugins: [remarkCrosslinks],
 };
 
 /** @type {import('@sveltejs/kit').Config} */

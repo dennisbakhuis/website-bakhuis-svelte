@@ -1,6 +1,6 @@
 <script lang="ts">
   import MapGlyph from './MapGlyph.svelte';
-  import { legendFor, type SiteMap } from '$lib/dive/sitemap';
+  import { legendFor, legendKey, type SiteMap } from '$lib/dive/sitemap';
 
   let { map }: { map: SiteMap } = $props();
   const entries = $derived(legendFor(map));
@@ -8,13 +8,21 @@
 
 {#if entries.length}
   <ul class="legend">
-    {#each entries as entry (entry.kind + ('type' in entry ? entry.type : 'style' in entry ? entry.style : entry.area))}
+    {#each entries as entry (legendKey(entry))}
       <li>
         <svg class="sym" viewBox="-12 -12 24 24" aria-hidden="true">
           {#if entry.kind === 'node'}
             <g transform="scale(0.8)"><MapGlyph type={entry.type} /></g>
+          {:else if entry.kind === 'object'}
+            <g transform="scale(0.8)"><MapGlyph type="object" objectKind={entry.object} /></g>
           {:else if entry.kind === 'edge'}
             <line class="edge {entry.style}" x1="-11" y1="0" x2="11" y2="0" />
+          {:else if entry.kind === 'line'}
+            <path class="line {entry.line}" d="M-11 4 Q-4 -6 2 0 T11 -3" />
+          {:else if entry.kind === 'text'}
+            <text class="text" class:depth={entry.text.startsWith('↓')} y="4" text-anchor="middle"
+              >{entry.text}</text
+            >
           {:else}
             <rect class="area {entry.area}" x="-9" y="-7" width="18" height="14" rx="2" />
           {/if}
@@ -63,6 +71,40 @@
   .edge.route {
     stroke: var(--color-accent);
     stroke-dasharray: 6 4;
+  }
+  .line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2px;
+    stroke-linecap: round;
+  }
+  .text {
+    fill: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+  .text.depth {
+    fill: var(--color-accent);
+  }
+  .line.shoreline {
+    stroke: #d8c9a3;
+    stroke-width: 3px;
+  }
+  .line.depth {
+    stroke: color-mix(in srgb, var(--color-accent) 70%, var(--color-text));
+    stroke-width: 1.5px;
+  }
+  .line.path {
+    stroke: var(--color-warm);
+    stroke-dasharray: 5 3;
+  }
+  .line.wall {
+    stroke: var(--color-warm);
+    stroke-dasharray: 6 2 1 2;
+  }
+  .line.pipe {
+    stroke-width: 3px;
+    opacity: 0.6;
   }
   .area {
     stroke-width: 1.5px;

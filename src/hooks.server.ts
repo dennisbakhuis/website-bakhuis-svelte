@@ -37,9 +37,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     return resolve(event);
   }
 
-  event.locals.owner = null;
+  // Any page may show the owner's private view, so the cookie is resolved
+  // everywhere; a request without one costs nothing.
+  event.locals.owner = await resolveOwner(event.request.headers.get('cookie'), event.fetch);
   if (pathname.startsWith('/admin')) {
-    event.locals.owner = await resolveOwner(event.request.headers.get('cookie'), event.fetch);
     const isLogin = pathname.startsWith('/admin/login');
     if (!event.locals.owner && !isLogin) {
       redirect(303, `/admin/login?next=${encodeURIComponent(pathname)}`);
@@ -63,6 +64,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     );
     if (pathname.startsWith('/admin')) {
       response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    }
+    if (event.locals.owner) {
+      response.headers.set('Cache-Control', 'private, no-store');
     }
   }
 

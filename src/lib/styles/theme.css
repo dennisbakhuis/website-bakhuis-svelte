@@ -45,14 +45,16 @@
 
   /* Tag colours (dive types) */
   --tag-cave: #f4a261;
-  --tag-scooter: #c084fc;
+  --tag-cavern: #fdba74;
+  --tag-mine: #d4a373;
+  --tag-dpv: #c084fc;
   --tag-wreck: #fb7185;
   --tag-night: #818cf8;
+  --tag-deco: #fbbf24;
   --tag-deep: #38bdf8;
   --tag-drift: #34d399;
+  --tag-boat: #67e8f9;
   --tag-training: #a3a3a3;
-  --tag-sidemount: #fbbf24;
-  --tag-ice: #e0f2fe;
 
   /* Typography */
   --font-display:
@@ -73,6 +75,7 @@
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35), 0 24px 64px rgba(0, 0, 0, 0.25);
   --container-max: 1160px;
   --container-narrow: 720px;
+  --container-detail: 960px;
   --space-page-x: clamp(16px, 4vw, 32px);
   --space-section: clamp(64px, 9vw, 120px);
   --header-h: 68px;
@@ -177,6 +180,9 @@ pre {
 }
 .container.narrow {
   max-width: var(--container-narrow);
+}
+.container.detail {
+  max-width: var(--container-detail);
 }
 
 .kicker {
@@ -287,8 +293,14 @@ pre {
 .tag[data-tag='cave'] {
   --tag-color: var(--tag-cave);
 }
-.tag[data-tag='scooter'] {
-  --tag-color: var(--tag-scooter);
+.tag[data-tag='cavern'] {
+  --tag-color: var(--tag-cavern);
+}
+.tag[data-tag='mine'] {
+  --tag-color: var(--tag-mine);
+}
+.tag[data-tag='dpv'] {
+  --tag-color: var(--tag-dpv);
 }
 .tag[data-tag='wreck'] {
   --tag-color: var(--tag-wreck);
@@ -296,20 +308,17 @@ pre {
 .tag[data-tag='night'] {
   --tag-color: var(--tag-night);
 }
-.tag[data-tag='deep'] {
-  --tag-color: var(--tag-deep);
+.tag[data-tag='deco'] {
+  --tag-color: var(--tag-deco);
 }
 .tag[data-tag='drift'] {
   --tag-color: var(--tag-drift);
 }
+.tag[data-tag='boat'] {
+  --tag-color: var(--tag-boat);
+}
 .tag[data-tag='training'] {
   --tag-color: var(--tag-training);
-}
-.tag[data-tag='sidemount'] {
-  --tag-color: var(--tag-sidemount);
-}
-.tag[data-tag='ice'] {
-  --tag-color: var(--tag-ice);
 }
 
 .prose {

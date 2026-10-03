@@ -6,7 +6,8 @@ summary: A paper logbook is a nice object. A database is a better one. On turnin
 words: 780
 ---
 
-I have kept a paper logbook since my very first open-water dive. Ink, stamps, a
+I have kept a paper logbook since my very first open-water dive ([[dive:1]],
+[[site:nld-bussloo|Bussloo]], June 2005). Ink, stamps, a
 buddy's signature, the occasional smear of salt water. It is a lovely object and
 I would grab it in a fire.
 

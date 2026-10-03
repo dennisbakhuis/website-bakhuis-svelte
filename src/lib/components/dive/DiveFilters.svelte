@@ -1,20 +1,32 @@
 <script lang="ts">
   import type { DiveEnvelope } from '$lib/dive/types';
   import {
-    EMPTY_FILTER,
+    clearFilter,
+    gasOptions,
+    hitsOf,
     isFilterActive,
     toggleTag,
     type DiveFilter,
-    type SortKey,
   } from '$lib/dive/filter';
-  import { flagEmoji } from '$lib/dive/format';
+  import { flagEmoji, formatDate } from '$lib/dive/format';
+  import {
+    DEPTH_BUCKETS,
+    DURATION_BUCKETS,
+    parseRange,
+    rangeLabel,
+    rangeValue,
+    type Bucket,
+  } from '$lib/dive/list-view';
 
   let {
     envelope,
     filter,
     onChange,
-  }: { envelope: DiveEnvelope; filter: DiveFilter; onChange: (next: DiveFilter) => void } =
-    $props();
+  }: {
+    envelope: DiveEnvelope;
+    filter: DiveFilter;
+    onChange: (next: DiveFilter) => void;
+  } = $props();
 
   let q = $derived(filter.q);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -25,12 +37,34 @@
     timer = setTimeout(() => onChange({ ...filter, q: value }), 220);
   }
 
-  const sortOptions: { key: SortKey; label: string }[] = [
-    { key: 'date', label: 'Date' },
-    { key: 'depth', label: 'Depth' },
-    { key: 'duration', label: 'Duration' },
-    { key: 'number', label: 'Number' },
-  ];
+  function regionLabel(id: string): string {
+    return id.replace(/-/g, ' ');
+  }
+
+  const buddies = $derived(hitsOf(envelope.dives).people);
+  const mixes = $derived(gasOptions(envelope.dives).filter((m) => m.value !== 'Air'));
+  const siteName = $derived(
+    filter.site
+      ? (envelope.dives.find((d) => d.site?.slug === filter.site)?.site?.name ?? filter.site)
+      : '',
+  );
+
+  const depthRange = $derived({ min: filter.minDepth, max: filter.maxDepth });
+  const durationRange = $derived({ min: filter.minDuration, max: filter.maxDuration });
+
+  /** The bucket options, plus the range from a hand-made URL when it matches none of them. */
+  function rangeOptions(
+    range: { min: number | null; max: number | null },
+    buckets: Bucket[],
+    unit: string,
+  ) {
+    const options = buckets.map((b) => ({ value: rangeValue(b), label: b.label }));
+    const current = rangeValue(range);
+    if (current && !options.some((o) => o.value === current)) {
+      options.push({ value: current, label: rangeLabel(range, buckets, unit) });
+    }
+    return options;
+  }
 </script>
 
 <div class="filters">
@@ -39,7 +73,7 @@
       <span class="visually-hidden">Search dives</span>
       <input
         type="search"
-        placeholder="Search site, country, buddy, tag…"
+        placeholder="Search anything: site, buddy, notes, cave line, gas…"
         value={q}
         oninput={(e) => onSearch(e.currentTarget.value)}
       />
@@ -57,6 +91,36 @@
       {/each}
     </select>
     <select
+      value={filter.region}
+      onchange={(e) => onChange({ ...filter, region: e.currentTarget.value })}
+      aria-label="Region"
+    >
+      <option value="">All regions</option>
+      {#each envelope.regions as r (r)}
+        <option value={r}>{regionLabel(r)}</option>
+      {/each}
+    </select>
+    <select
+      value={filter.siteType}
+      onchange={(e) => onChange({ ...filter, siteType: e.currentTarget.value })}
+      aria-label="Site type"
+    >
+      <option value="">Any site type</option>
+      {#each envelope.site_types as t (t)}
+        <option value={t}>{t}</option>
+      {/each}
+    </select>
+    <select
+      value={filter.water}
+      onchange={(e) => onChange({ ...filter, water: e.currentTarget.value })}
+      aria-label="Water"
+    >
+      <option value="">Any water</option>
+      <option value="salt">Salt water</option>
+      <option value="fresh">Fresh water</option>
+      <option value="brackish">Brackish</option>
+    </select>
+    <select
       value={filter.year === null ? '' : String(filter.year)}
       onchange={(e) =>
         onChange({ ...filter, year: e.currentTarget.value ? Number(e.currentTarget.value) : null })}
@@ -67,16 +131,18 @@
         <option value={String(y)}>{y}</option>
       {/each}
     </select>
-    <select
-      value={filter.setup}
-      onchange={(e) => onChange({ ...filter, setup: e.currentTarget.value })}
-      aria-label="Gear setup"
-    >
-      <option value="">Any setup</option>
-      {#each envelope.gear_setups as s (s.slug)}
-        <option value={s.slug}>{s.name}</option>
-      {/each}
-    </select>
+    {#if envelope.gear_setups.length}
+      <select
+        value={filter.setup}
+        onchange={(e) => onChange({ ...filter, setup: e.currentTarget.value })}
+        aria-label="Gear setup"
+      >
+        <option value="">Any setup</option>
+        {#each envelope.gear_setups as s (s.slug)}
+          <option value={s.slug}>{s.name}</option>
+        {/each}
+      </select>
+    {/if}
     <select
       value={filter.gas}
       onchange={(e) => onChange({ ...filter, gas: e.currentTarget.value })}
@@ -84,9 +150,70 @@
     >
       <option value="">Any gas</option>
       <option value="air">Air</option>
-      <option value="nitrox">Nitrox</option>
-      <option value="trimix">Trimix</option>
+      <option value="nitrox">Nitrox (any)</option>
+      <option value="trimix">Trimix (any)</option>
+      {#each mixes as mix (mix.value)}
+        <option value={mix.value}>{mix.value} ({mix.count})</option>
+      {/each}
     </select>
+  </div>
+  <div class="row">
+    <select
+      value={filter.person}
+      onchange={(e) => onChange({ ...filter, person: e.currentTarget.value })}
+      aria-label="Buddy"
+      class="plain"
+    >
+      <option value="">Any buddy</option>
+      {#each buddies as b (b.slug)}
+        <option value={b.slug}>{b.name} ({b.count})</option>
+      {/each}
+      {#if filter.person && !buddies.some((b) => b.slug === filter.person)}
+        <option value={filter.person}>{filter.person}</option>
+      {/if}
+    </select>
+    <select
+      value={rangeValue(depthRange)}
+      onchange={(e) => {
+        const range = parseRange(e.currentTarget.value);
+        onChange({ ...filter, minDepth: range.min, maxDepth: range.max });
+      }}
+      aria-label="Depth range"
+      class="plain"
+    >
+      <option value="">Any depth</option>
+      {#each rangeOptions(depthRange, DEPTH_BUCKETS, 'm') as o (o.value)}
+        <option value={o.value}>{o.label}</option>
+      {/each}
+    </select>
+    <select
+      value={rangeValue(durationRange)}
+      onchange={(e) => {
+        const range = parseRange(e.currentTarget.value);
+        onChange({ ...filter, minDuration: range.min, maxDuration: range.max });
+      }}
+      aria-label="Duration range"
+      class="plain"
+    >
+      <option value="">Any duration</option>
+      {#each rangeOptions(durationRange, DURATION_BUCKETS, 'min') as o (o.value)}
+        <option value={o.value}>{o.label}</option>
+      {/each}
+    </select>
+    <button
+      type="button"
+      class="tag toggle"
+      class:active={filter.photos}
+      aria-pressed={filter.photos}
+      onclick={() => onChange({ ...filter, photos: !filter.photos })}>with photos</button
+    >
+    <button
+      type="button"
+      class="tag toggle"
+      class:active={filter.profile}
+      aria-pressed={filter.profile}
+      onclick={() => onChange({ ...filter, profile: !filter.profile })}>with profile</button
+    >
   </div>
   <div class="row tags-row">
     {#each envelope.tags as tag (tag)}
@@ -103,35 +230,27 @@
     {/each}
     {#if filter.site}
       <button type="button" class="tag active" onclick={() => onChange({ ...filter, site: '' })}
-        >site: {filter.site} ×</button
+        >site: {siteName} ×</button
       >
     {/if}
-    <span class="spacer"></span>
-    <label class="sort">
-      Sort
-      <select
-        value={filter.sort}
-        onchange={(e) => onChange({ ...filter, sort: e.currentTarget.value as SortKey })}
+    {#if filter.section}
+      <button type="button" class="tag active" onclick={() => onChange({ ...filter, section: '' })}
+        >line: {filter.section} ×</button
       >
-        {#each sortOptions as o (o.key)}
-          <option value={o.key}>{o.label}</option>
-        {/each}
-      </select>
-    </label>
-    <button
-      type="button"
-      class="btn btn-ghost btn-sm"
-      onclick={() => onChange({ ...filter, desc: !filter.desc })}
-      aria-label="Toggle sort direction"
-    >
-      {filter.desc ? '↓' : '↑'}
-    </button>
-    {#if isFilterActive(filter)}
+    {/if}
+    {#if filter.dateFrom !== null || filter.dateTo !== null}
       <button
         type="button"
-        class="btn btn-ghost btn-sm"
-        onclick={() => onChange({ ...EMPTY_FILTER, sort: filter.sort, desc: filter.desc })}
-        >Clear</button
+        class="tag active"
+        onclick={() => onChange({ ...filter, dateFrom: null, dateTo: null })}
+        >{filter.dateFrom ? formatDate(filter.dateFrom) : 'start'} – {filter.dateTo
+          ? formatDate(filter.dateTo)
+          : 'today'} ×</button
+      >
+    {/if}
+    {#if isFilterActive(filter)}
+      <button type="button" class="tag clear" onclick={() => onChange(clearFilter(filter))}
+        >Clear all ×</button
       >
     {/if}
   </div>
@@ -142,7 +261,6 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin: 20px 0 24px;
   }
   .row {
     display: flex;
@@ -166,25 +284,37 @@
   }
   select {
     width: auto;
+    text-transform: capitalize;
   }
-  .tags-row .tag {
+  .tags-row .tag,
+  .tag.toggle {
     cursor: pointer;
+  }
+  .tag.toggle::before {
+    display: none;
+  }
+  select.plain {
+    text-transform: none;
+  }
+  .tag.clear {
+    border-style: dashed;
+    color: var(--color-text);
+  }
+  .tag.clear::before {
+    display: none;
   }
   .tag.active {
     border-color: var(--color-accent);
     color: var(--color-accent);
   }
-  .spacer {
-    flex: 1;
-  }
-  .sort {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--color-text-muted);
-  }
-  .sort select {
-    padding: 6px 10px;
+  @media (max-width: 480px) {
+    select,
+    .row > select {
+      width: 100%;
+      flex: 1 1 100%;
+    }
+    .search {
+      flex-basis: 100%;
+    }
   }
 </style>

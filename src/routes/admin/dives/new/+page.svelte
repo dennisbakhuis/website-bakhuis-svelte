@@ -4,7 +4,9 @@
   let { data } = $props();
 </script>
 
+<p class="crumbs"><a href="/admin">Dives</a> › new</p>
 <h1>New dive</h1>
+<p class="later">Photos, scans and computer exports can be added after the first save.</p>
 <DiveForm
   dive={null}
   nextNumber={data.nextNumber}
@@ -12,4 +14,19 @@
   trips={data.trips}
   people={data.people}
   setups={data.setups}
+  regions={data.regions}
+  template={data.template}
 />
+
+<style>
+  .crumbs {
+    font-size: 13px;
+    color: var(--color-text-faint);
+    margin: 0 0 6px;
+  }
+  .later {
+    font-size: 13px;
+    color: var(--color-text-faint);
+    margin: -8px 0 16px;
+  }
+</style>

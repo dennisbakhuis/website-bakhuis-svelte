@@ -3,23 +3,62 @@
   import { goto } from '$app/navigation';
   import StatsBand from '$lib/components/dive/StatsBand.svelte';
   import WorldMap from '$lib/components/dive/WorldMap.svelte';
+  import DiveGlobe from '$lib/components/dive/DiveGlobe.svelte';
   import Charts from '$lib/components/dive/Charts.svelte';
+  import DiveTimeline from '$lib/components/dive/DiveTimeline.svelte';
   import DiveFilters from '$lib/components/dive/DiveFilters.svelte';
+  import DiveSort from '$lib/components/dive/DiveSort.svelte';
   import DiveTable from '$lib/components/dive/DiveTable.svelte';
-  import { applyFilter, filterFromParams, filterToParams, type DiveFilter } from '$lib/dive/filter';
+  import {
+    applyFilter,
+    filterFromParams,
+    filterToParams,
+    hitsOf,
+    type DiveFilter,
+  } from '$lib/dive/filter';
+  import { listScale, yearsOf } from '$lib/dive/list-view';
   import { reveal } from '$lib/anim/reveal';
+  import type { GlobeView } from '$lib/map/globe';
+  import type { Snapshot } from './$types';
 
   let { data } = $props();
+
+  // Where the globe was pointed survives a trip to a dive page and back.
+  let globeView = $state<GlobeView | null>(null);
+  export const snapshot: Snapshot<GlobeView | null> = {
+    capture: () => globeView,
+    restore: (saved) => (globeView = saved),
+  };
 
   // The URL is the single source of truth for the filter, so any view is a link.
   const filter = $derived(filterFromParams(page.url.searchParams));
 
   const filtered = $derived(applyFilter(data.envelope.dives, filter));
+  const hits = $derived(filter.q ? hitsOf(filtered) : null);
+  const visibleNumbers = $derived(new Set(filtered.map((d) => d.number)));
+  const narrowed = $derived(filtered.length !== data.envelope.dives.length);
+  const visibleSites = $derived(
+    narrowed ? new Set(filtered.flatMap((d) => (d.site ? [d.site.slug] : []))) : null,
+  );
+  const scale = $derived(listScale(data.envelope.dives));
+  const resultYears = $derived(yearsOf(filtered));
+
+  let table: DiveTable | undefined = $state();
+
+  async function jumpToYear(year: number) {
+    const found = await table?.jumpToYear(year);
+    if (!found) update({ ...filter, year });
+  }
+
+  /** Pins the log to a site from the map popup; an empty slug unpins it. */
+  function selectSite(slug: string) {
+    update({ ...filter, site: slug });
+  }
 
   function update(next: DiveFilter) {
     const params = filterToParams(next);
     const query = params.toString();
-    void goto(`/dive${query ? `?${query}` : ''}#dives`, {
+    void goto(`/dive${query ? `?${query}` : ''}`, {
       replaceState: true,
       noScroll: true,
       keepFocus: true,
@@ -38,17 +77,46 @@
 
 <StatsBand stats={data.stats} />
 
-<section class="container map-section" use:reveal>
+<section class="container explore-section" use:reveal>
   <div data-reveal>
-    <p class="kicker">Where</p>
-    <h2>Dive sites around the world</h2>
+    <p class="kicker">Explore</p>
+    <h2>Where, when and what</h2>
   </div>
   <div data-reveal>
-    <WorldMap
-      map={data.map}
+    <DiveGlobe
+      sites={data.stats.map_sites}
+      countries={data.stats.country_breakdown}
+      dives={filtered}
+      filtered={narrowed}
       activeSite={filter.site}
-      onSelect={(slug) => update({ ...filter, site: slug })}
+      size={filter.mapSize}
+      colour={filter.mapColour}
+      bind:view={globeView}
+      onSelect={selectSite}
+      onOptions={(patch) => update({ ...filter, ...patch })}
+    >
+      <WorldMap
+        map={data.map}
+        activeSite={filter.site}
+        size={filter.mapSize}
+        colour={filter.mapColour}
+        highlight={visibleSites}
+        compact
+        onSelect={selectSite}
+      />
+    </DiveGlobe>
+  </div>
+  <div class="when" data-reveal>
+    <DiveTimeline
+      dives={data.envelope.dives}
+      visible={visibleNumbers}
+      from={filter.dateFrom}
+      to={filter.dateTo}
+      onRange={(range) => update({ ...filter, dateFrom: range.from, dateTo: range.to })}
     />
+  </div>
+  <div class="what" data-reveal>
+    <DiveFilters envelope={data.envelope} {filter} onChange={update} />
   </div>
 </section>
 
@@ -58,21 +126,53 @@
     <h2>By year, by depth, by type</h2>
   </div>
   <div data-reveal>
-    <Charts stats={data.stats} onTag={(tag) => update({ ...filter, tags: [tag] })} />
+    <Charts
+      stats={data.stats}
+      dives={data.envelope.dives}
+      onTag={(tag) => update({ ...filter, tags: [tag] })}
+      onSite={(slug) => update({ ...filter, site: slug })}
+      onPerson={(slug) => update({ ...filter, person: slug })}
+    />
   </div>
 </section>
 
 <section class="container list-section" id="dives">
   <p class="kicker">The log</p>
-  <h2>
-    {#if filtered.length === data.envelope.total}
-      All {data.envelope.total} dives
-    {:else}
-      {filtered.length} of {data.envelope.total} dives
-    {/if}
-  </h2>
-  <DiveFilters envelope={data.envelope} {filter} onChange={update} />
-  <DiveTable dives={filtered} />
+  <div class="list-head">
+    <h2>
+      {#if filtered.length === data.envelope.total}
+        All {data.envelope.total} dives
+      {:else}
+        {filtered.length} of {data.envelope.total} dives
+      {/if}
+    </h2>
+    <DiveSort
+      {filter}
+      onChange={update}
+      years={filter.sort === 'date' ? resultYears : []}
+      onJump={jumpToYear}
+    />
+  </div>
+  {#if hits && (hits.sites.length || hits.people.length)}
+    <div class="hits">
+      {#each hits.sites.slice(0, 6) as hit (hit.slug)}
+        <a class="hit" href="/dive/sites/{hit.slug}"
+          >{hit.name} <span class="num">{hit.count}</span></a
+        >
+      {/each}
+      {#each hits.people.slice(0, 6) as hit (hit.slug)}
+        <a class="hit person" href="/dive/people/{hit.slug}"
+          >{hit.name} <span class="num">{hit.count}</span></a
+        >
+      {/each}
+    </div>
+  {/if}
+  <DiveTable
+    bind:this={table}
+    dives={filtered}
+    groupBy={filter.sort === 'date' ? 'month' : null}
+    {scale}
+  />
 </section>
 
 <style>
@@ -92,15 +192,60 @@
     font-size: 1.15rem;
     max-width: 56ch;
   }
-  .map-section,
+  .explore-section,
   .charts-section,
   .list-section {
     padding-top: var(--space-section);
+  }
+  .when {
+    margin-top: 28px;
+  }
+  .what {
+    margin-top: 24px;
+  }
+  .list-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-bottom: 20px;
+  }
+  .list-head h2 {
+    margin: 0;
   }
   .list-section {
     padding-bottom: var(--space-section);
   }
   h2 {
     font-size: clamp(26px, 3.5vw, 36px);
+  }
+  .hits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 16px;
+  }
+  .hit {
+    display: inline-flex;
+    gap: 6px;
+    align-items: baseline;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    text-decoration: none;
+    color: var(--color-text);
+    font-size: 13.5px;
+  }
+  .hit:hover {
+    border-color: var(--color-accent);
+  }
+  .hit.person {
+    border-style: dashed;
+  }
+  .hit .num {
+    color: var(--color-text-faint);
+    font-size: 12px;
   }
 </style>

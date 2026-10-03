@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { articleLD, canonicalUrl, jsonLdScript, metaFor, pageMeta, personLD } from './seo';
+import {
+  articleLD,
+  canonicalUrl,
+  jsonLdScript,
+  metaFor,
+  ogImageFor,
+  pageMeta,
+  personLD,
+} from './seo';
 
 describe('seo', () => {
   it('builds canonical urls without trailing slashes', () => {
@@ -10,6 +18,22 @@ describe('seo', () => {
   it('falls back to the home meta', () => {
     expect(metaFor('/nope')).toEqual(pageMeta['/']);
     expect(metaFor('/nope', { title: 't', description: 'd' }).title).toBe('t');
+  });
+
+  it('picks the Open Graph image per route', () => {
+    expect(ogImageFor('/')).toBe('https://dennisbakhuis.nl/og-image.png');
+    expect(ogImageFor('/dive/409')).toBe('https://dennisbakhuis.nl/dive/409/og.png');
+    expect(ogImageFor('/dive/409/')).toBe('https://dennisbakhuis.nl/dive/409/og.png');
+    expect(ogImageFor('/dive/sites/mex-mayan-blue')).toBe(
+      'https://dennisbakhuis.nl/dive/sites/mex-mayan-blue/og.png',
+    );
+    expect(ogImageFor('/dive/gear')).toBe('https://dennisbakhuis.nl/og-image.png');
+    expect(ogImageFor('/x', { title: 't', description: 'd', image: '/a.png' })).toBe(
+      'https://dennisbakhuis.nl/a.png',
+    );
+    expect(ogImageFor('/x', { title: 't', description: 'd', image: 'https://cdn/a.png' })).toBe(
+      'https://cdn/a.png',
+    );
   });
 
   it('escapes closing tags in JSON-LD', () => {

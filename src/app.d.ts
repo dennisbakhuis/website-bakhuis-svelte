@@ -1,7 +1,7 @@
 declare global {
   namespace App {
     interface Locals {
-      /** Signed-in owner e-mail, set by hooks.server.ts for /admin requests. */
+      /** Signed-in owner e-mail, resolved by hooks.server.ts on every request. */
       owner: string | null;
     }
   }

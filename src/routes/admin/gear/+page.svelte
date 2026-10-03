@@ -45,10 +45,16 @@
   let setup = $state(emptySetup());
   let error = $state('');
 
+  function isDirty<T>(a: T, b: T): boolean {
+    return JSON.stringify(a) !== JSON.stringify(b);
+  }
+
   function editItem(i: GearItem) {
+    if (isDirty(item, emptyItem()) && !confirm('Discard the item you were typing?')) return;
     item = { ...emptyItem(), ...i, acquired: i.acquired ?? '', retired: i.retired ?? '' };
   }
   function editSetup(s: GearSetup) {
+    if (isDirty(setup, emptySetup()) && !confirm('Discard the setup you were typing?')) return;
     setup = {
       id: s.id,
       slug: s.slug,
@@ -117,7 +123,10 @@
   }
 </script>
 
-<h1>Gear</h1>
+<div class="head">
+  <h1>Gear</h1>
+  <a class="btn btn-ghost btn-sm" href="/dive/gear" target="_blank" rel="noopener">View ↗</a>
+</div>
 {#if error}<p class="error">{error}</p>{/if}
 
 <div class="columns">
@@ -235,6 +244,17 @@
 </div>
 
 <style>
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .head h1 {
+    margin-bottom: 0;
+  }
   .columns {
     display: grid;
     gap: 28px;

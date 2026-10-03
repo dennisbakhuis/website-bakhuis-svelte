@@ -20,6 +20,9 @@ export default defineConfig({
     port: 4373,
     strictPort: true,
   },
+  // Component tests mount Svelte in jsdom, which needs the browser build of
+  // the runtime rather than the server one Vitest resolves by default.
+  resolve: process.env.VITEST ? { conditions: ['browser'] } : undefined,
   test: {
     environment: 'jsdom',
     globals: true,

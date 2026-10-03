@@ -1,194 +1,415 @@
 <script lang="ts">
   import {
     flagEmoji,
+    formatDate,
     formatDepth,
     formatLongDate,
-    formatTemp,
+    formatMonthYear,
     formatTime,
-    gasLabel,
-    modeLabel,
+    isProvenance,
+    ordinal,
+    pluralize,
   } from '$lib/dive/format';
+  import type { Attachment, Dive } from '$lib/dive/types';
+  import DiveFacts from '$lib/components/dive/DiveFacts.svelte';
   import DiveProfile from '$lib/components/dive/DiveProfile.svelte';
   import Gallery from '$lib/components/dive/Gallery.svelte';
   import Markdown from '$lib/components/Markdown.svelte';
   import SiteMapView from '$lib/components/dive/SiteMapView.svelte';
+  import SiteMapThumb from '$lib/components/dive/SiteMapThumb.svelte';
   import MapLegend from '$lib/components/dive/MapLegend.svelte';
-  import { annotationSummary, defaultTitle, fitAnnotation, routeKeys } from '$lib/dive/sitemap';
+  import DetailTop from '$lib/components/dive/DetailTop.svelte';
+  import {
+    defaultTitle,
+    fitAnnotation,
+    routeHighlights,
+    routeKeys,
+    routeLength,
+  } from '$lib/dive/sitemap';
+  import { routeLine, sameDepth, typesRawAddsNothing } from '$lib/dive/dive-page';
+
+  const MAX_FACT_PILLS = 3;
 
   let { data } = $props();
   const dive = $derived(data.dive);
   const photos = $derived(dive.attachments.filter((a) => a.kind === 'photo'));
   const scans = $derived(dive.attachments.filter((a) => a.kind === 'scan'));
   const maps = $derived(dive.attachments.filter((a) => a.kind === 'map'));
-  let tab = $state<'story' | 'logbook'>('story');
-  let onCurrent = $state(false);
-  const routeMap = $derived(onCurrent && dive.map_current ? dive.map_current : dive.map);
-  const routeAnnotation = $derived(
-    dive.map_annotation && routeMap ? fitAnnotation(routeMap, dive.map_annotation) : null,
+  const hasProfile = $derived(!!dive.profile && dive.profile.length > 1);
+  let tab = $state<'story' | 'original' | 'logbook'>('story');
+  const provenance = $derived.by(() => {
+    if (!isProvenance(dive.body_md)) return null;
+    const text = dive.body_md.trim();
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  });
+  const story = $derived(provenance ? '' : dive.body_md);
+
+  const title = $derived(dive.title || dive.site?.name || `Dive #${dive.number}`);
+  const titleIsSite = $derived(!!dive.site && title === dive.site.name);
+  const showTypesRaw = $derived(!typesRawAddsNothing(dive.types_raw, dive.tags));
+
+  const photoSrc = (a: Attachment, ...names: string[]) =>
+    names.map((n) => a.variants[n]).find(Boolean) ?? a.url;
+  const coverPhoto = $derived(
+    photos.find((a) => a.id === dive.cover_attachment_id) ?? photos[0] ?? null,
   );
+  const sitePhoto = $derived(
+    dive.site?.attachments.find((a) => a.kind === 'photo' && a.public) ?? null,
+  );
+  const locatorMap = $derived.by(() => {
+    const site = dive.site;
+    if (!site) return null;
+    const withUrl = site.maps.filter((m) => m.url && m.collection !== 'reference');
+    return (
+      withUrl.find((m) => m.ref === site.default_map) ??
+      withUrl.find((m) => m.collection === 'seed') ??
+      withUrl[0] ??
+      null
+    );
+  });
+  const routeAnnotation = $derived(
+    dive.map_annotation && dive.map ? fitAnnotation(dive.map, dive.map_annotation) : null,
+  );
+  const drawnMap = $derived.by(() => {
+    if (dive.map) return dive.map;
+    const site = dive.site;
+    if (!site) return null;
+    const ref =
+      site.maps.find((m) => m.ref === site.default_map && m.drawn) ??
+      site.maps.find((m) => m.drawn);
+    return ref?.drawn ?? null;
+  });
+  const drawnAnnotation = $derived(dive.map ? routeAnnotation : null);
+  const headerBg = $derived.by(() => {
+    if (coverPhoto) return { url: photoSrc(coverPhoto, 'w1600', 'w800'), kind: 'photo' };
+    if (sitePhoto) return { url: photoSrc(sitePhoto, 'w1600', 'w800'), kind: 'photo' };
+    if (locatorMap?.url) return { url: locatorMap.url, kind: 'map' };
+    if (drawnMap) return { url: null, kind: 'drawn' };
+    return null;
+  });
+
+  const siteVisits = $derived.by(() => {
+    const site = dive.site;
+    if (!site || !site.dives) return '';
+    const parts: string[] = [];
+    if (site.dives === 1) parts.push('The only dive here');
+    else if (dive.site_dive_index) parts.push(`Dive ${dive.site_dive_index} of ${site.dives} here`);
+    else parts.push(`${pluralize(site.dives, 'dive')} here`);
+    if (site.dives > 1 && site.first_dive) parts.push(`first ${site.first_dive.slice(0, 4)}`);
+    if (site.dives > 1 && site.last_dive) parts.push(`last ${formatMonthYear(site.last_dive)}`);
+    return parts.join(' · ');
+  });
+
+  function initial(name: string): string {
+    return name.trim().charAt(0).toUpperCase();
+  }
+
+  function since(b: Dive['buddies'][number]): string {
+    const parts: string[] = [];
+    if (b.first_dive) parts.push(`since ${formatMonthYear(b.first_dive)}`);
+    if (b.last_dive) parts.push(`last ${formatDate(b.last_dive)}`);
+    return parts.join(' · ');
+  }
+
+  const factPills = $derived(dive.context_facts.slice(0, MAX_FACT_PILLS));
+  const hasPills = $derived(!!dive.trip || !!dive.day_index || factPills.length > 0);
+
+  const mapLine = $derived.by(() => {
+    if (!dive.map) return '';
+    if (!routeAnnotation) return 'No route marked';
+    const line = routeLine(
+      routeLength(dive.map, routeAnnotation),
+      routeHighlights(dive.map, routeAnnotation),
+    );
+    return line ? line.charAt(0).toUpperCase() + line.slice(1) : '';
+  });
+  const noRoute = $derived(!!dive.map && !routeAnnotation);
+
+  type TabId = 'story' | 'original' | 'logbook';
+  const tabs = $derived(
+    [
+      story.trim() ? { id: 'story' as TabId, label: 'Story' } : null,
+      dive.notes_nl ? { id: 'original' as TabId, label: 'As written (NL)' } : null,
+      scans.length ? { id: 'logbook' as TabId, label: 'Logbook page' } : null,
+    ].filter((t) => t !== null),
+  );
+  const activeTab = $derived(tabs.some((t) => t.id === tab) ? tab : (tabs[0]?.id ?? 'story'));
 </script>
 
-<article class="dive container">
-  <nav class="crumbs">
-    <a href="/dive">← Dive log</a>
-    <span class="pager">
-      {#if dive.prev_number}<a href="/dive/{dive.prev_number}">← #{dive.prev_number}</a>{/if}
-      {#if dive.next_number}<a href="/dive/{dive.next_number}">#{dive.next_number} →</a>{/if}
-    </span>
-  </nav>
+{#snippet pager()}
+  <span class="pager">
+    {#if dive.prev_number}<a href="/dive/{dive.prev_number}" rel="prev"
+        >← <span class="num">#{dive.prev_number}</span>{#if dive.prev_site_name}<span
+            class="pager-name">{dive.prev_site_name}</span
+          >{/if}</a
+      >{/if}
+    {#if dive.next_number}<a href="/dive/{dive.next_number}" rel="next"
+        >{#if dive.next_site_name}<span class="pager-name">{dive.next_site_name}</span>{/if}<span
+          class="num">#{dive.next_number}</span
+        > →</a
+      >{/if}
+  </span>
+{/snippet}
 
-  <header class="head">
+<article class="dive container detail">
+  <DetailTop
+    back={{ href: '/dive', label: 'Dive log' }}
+    owner={data.owner
+      ? {
+          edit: { label: 'Edit', href: data.editHref },
+          actions: noRoute
+            ? [{ label: 'Mark route', href: `/admin/dives/${dive.number}#map` }]
+            : [],
+          note: noRoute ? 'no route yet' : null,
+        }
+      : null}
+  >
+    {@render pager()}
+  </DetailTop>
+
+  <header class="head" class:has-bg={headerBg}>
+    {#if headerBg?.kind === 'drawn' && drawnMap}
+      <div class="head-bg drawn" aria-hidden="true">
+        <SiteMapThumb map={drawnMap} annotation={drawnAnnotation} />
+      </div>
+    {:else if headerBg?.url}
+      <div
+        class="head-bg"
+        class:map={headerBg.kind === 'map'}
+        style:background-image={`url("${headerBg.url}")`}
+        aria-hidden="true"
+      ></div>
+    {/if}
     <p class="kicker">
       Dive <span class="num">#{dive.number}</span> · {formatLongDate(dive.date)}{dive.time_in
-        ? ` · ${formatTime(dive.time_in)}`
+        ? ` · ${formatTime(dive.time_in)}${dive.time_out ? `–${formatTime(dive.time_out)}` : ''}`
         : ''}
+      {#if dive.visibility !== 'public'}<span class="status">{dive.visibility}</span>{/if}
     </p>
-    <h1>{dive.title || dive.site?.name || `Dive #${dive.number}`}</h1>
+    <h1>{title}</h1>
     {#if dive.site}
-      <p class="where">
-        <a href="/dive/sites/{dive.site.slug}"
-          >{flagEmoji(dive.site.country_code)} {dive.site.name}</a
-        >
-        {#if dive.site.region}· {dive.site.region}{/if} · {dive.site.country_name}
-        {#if dive.trip}· <span class="trip">{dive.trip.name}</span>{/if}
+      {@const site = dive.site}
+      <p class="location">
+        {#if titleIsSite}
+          <span class="flag" aria-hidden="true">{flagEmoji(site.country_code)}</span>
+        {:else}
+          <span
+            ><a href="/dive/sites/{site.slug}">{flagEmoji(site.country_code)} {site.name}</a></span
+          >
+        {/if}
+        {#if dive.section}<span class="section">{dive.section}</span>{/if}
+        {#if site.area}<span>{site.area}</span>{/if}
+        {#if site.region_name}<span
+            ><a href="/dive/regions/{site.region}">{site.region_name}</a></span
+          >{:else}<span>{site.country_name}</span>{/if}
       </p>
     {/if}
-    <p class="tags">
-      {#each dive.tags as tag (tag)}<a class="tag" data-tag={tag} href="/dive?tag={tag}">{tag}</a
-        >{/each}
-    </p>
+    {#if dive.tags.length || showTypesRaw}
+      <p class="tags">
+        {#each dive.tags as tag (tag)}<a class="tag" data-tag={tag} href="/dive?tag={tag}">{tag}</a
+          >{/each}
+        {#if showTypesRaw}<span class="raw" title="As ticked in the paper log"
+            >{dive.types_raw}</span
+          >{/if}
+      </p>
+    {/if}
   </header>
 
-  <dl class="numbers">
-    <div>
-      <dt>Max depth</dt>
-      <dd class="num">{formatDepth(dive.max_depth_m)}</dd>
-    </div>
-    <div>
-      <dt>Avg depth</dt>
-      <dd class="num">{formatDepth(dive.avg_depth_m)}</dd>
-    </div>
-    <div>
-      <dt>Bottom time</dt>
-      <dd class="num">{dive.duration_min} min</dd>
-    </div>
-    <div>
-      <dt>Water</dt>
-      <dd class="num">{formatTemp(dive.water_temp_c)}</dd>
-    </div>
-    <div>
-      <dt>Air</dt>
-      <dd class="num">{formatTemp(dive.air_temp_c)}</dd>
-    </div>
-    <div>
-      <dt>Visibility</dt>
-      <dd class="num">{dive.visibility_m !== null ? `${dive.visibility_m} m` : '—'}</dd>
-    </div>
-    <div>
-      <dt>Gas</dt>
-      <dd>{gasLabel(dive.gas, dive.o2_pct, dive.he_pct)}</dd>
-    </div>
-    <div>
-      <dt>Mode</dt>
-      <dd>{modeLabel(dive.mode)}</dd>
-    </div>
-    {#if dive.suit}<div>
-        <dt>Suit</dt>
-        <dd>{dive.suit}</dd>
-      </div>{/if}
-    {#if dive.weights_kg !== null}<div>
-        <dt>Weights</dt>
-        <dd class="num">{dive.weights_kg} kg</dd>
-      </div>{/if}
-    {#if dive.gear_setup}<div>
-        <dt>Setup</dt>
-        <dd><a href="/dive/gear#{dive.gear_setup.slug}">{dive.gear_setup.name}</a></dd>
-      </div>{/if}
-    {#if dive.buddies.length}<div>
-        <dt>Buddies</dt>
-        <dd>{dive.buddies.join(', ')}</dd>
-      </div>{/if}
-    {#if dive.guide}<div>
-        <dt>Guide</dt>
-        <dd>{dive.guide}</dd>
-      </div>{/if}
-    {#if dive.rating}<div>
-        <dt>Rating</dt>
-        <dd aria-label="{dive.rating} out of 5">
-          {'★'.repeat(dive.rating)}{'☆'.repeat(5 - dive.rating)}
-        </dd>
-      </div>{/if}
-  </dl>
+  {#if hasPills}
+    <ul class="pills">
+      {#if dive.trip}
+        <li>
+          <a class="pill pill-trip" href="/dive/trips/{dive.trip.slug}"
+            >{dive.trip.day_index && dive.trip.days && dive.trip.days > 1
+              ? `Day ${dive.trip.day_index} of ${dive.trip.days} · `
+              : ''}{dive.trip.name} →</a
+          >
+        </li>
+      {/if}
+      {#if dive.day_index}
+        <li class="pill">
+          {dive.day_index === 1
+            ? `First of ${dive.same_day.length + 1} dives that day`
+            : `${ordinal(dive.day_index)} dive of the day`}{#if dive.same_day.length}<span
+              class="also"
+              >(also
+              {#each dive.same_day as other, i (other.number)}{i ? ', ' : ''}<a
+                  href="/dive/{other.number}"
+                  >#{other.number}{other.site_name ? ` ${other.site_name}` : ''}{other.time_in
+                    ? ` ${formatTime(other.time_in)}`
+                    : ''}</a
+                >{/each})</span
+            >{/if}
+        </li>
+      {/if}
+      {#each factPills as fact (fact)}<li class="pill">{fact}</li>{/each}
+    </ul>
+  {/if}
 
-  {#if routeMap && routeAnnotation}
+  <DiveFacts {dive} />
+
+  {#if dive.site || dive.buddies.length}
+    <div class="context-cards" class:single={!dive.site || !dive.buddies.length}>
+      {#if dive.site}
+        {@const site = dive.site}
+        <article class="card where" class:no-thumb={!drawnMap && !locatorMap?.url && !sitePhoto}>
+          {#if drawnMap || locatorMap?.url || sitePhoto}
+            <div class="where-thumb" class:drawn={!!drawnMap}>
+              {#if drawnMap}
+                <SiteMapThumb map={drawnMap} annotation={drawnAnnotation} />
+              {:else if locatorMap?.url}
+                <img src={locatorMap.url} alt="Locator map of {site.name}" loading="lazy" />
+              {:else if sitePhoto}
+                <img
+                  src={photoSrc(sitePhoto, 'w800', 'thumb')}
+                  alt={sitePhoto.caption || site.name}
+                  loading="lazy"
+                />
+              {/if}
+            </div>
+          {/if}
+          <div class="where-body">
+            <p class="eyebrow">Where</p>
+            <h2>
+              <a class="stretched" href="/dive/sites/{site.slug}">{site.name}</a>
+            </h2>
+            <p class="where-meta">
+              <span>{site.site_type}</span>
+              {#if site.system}<span>part of {site.system}</span>{/if}
+              {#if site.max_depth_m !== null && !sameDepth(site.max_depth_m, dive.max_depth_m)}<span
+                  class="num">site max {formatDepth(site.max_depth_m)}</span
+                >{/if}
+            </p>
+            {#if site.summary}<p class="where-summary">{site.summary}</p>{/if}
+            {#if siteVisits}<p class="where-visits num">{siteVisits}</p>{/if}
+            {#if sitePhoto?.credit && !drawnMap && !locatorMap?.url}<p class="where-credit">
+                Photo: {sitePhoto.credit}
+              </p>{/if}
+            {#if site.region_name}
+              <p class="where-links">
+                <a class="above" href="/dive/regions/{site.region}">{site.region_name} →</a>
+              </p>
+            {/if}
+          </div>
+        </article>
+      {/if}
+      {#if dive.buddies.length}
+        <article class="card with">
+          <p class="eyebrow">With</p>
+          <ul class="team">
+            {#each dive.buddies as buddy (buddy.slug)}
+              <li class="buddy">
+                <span class="avatar" aria-hidden="true">
+                  {#if buddy.avatar_url}
+                    <img src={buddy.avatar_url} alt="" width="36" height="36" loading="lazy" />
+                  {:else}
+                    {initial(buddy.name)}
+                  {/if}
+                </span>
+                <span class="buddy-body">
+                  <span class="buddy-name"
+                    ><a href="/dive/people/{buddy.slug}">{buddy.name}</a
+                    >{#if buddy.first_together}<span class="badge">first dive together</span
+                      >{/if}</span
+                  >
+                  {#if buddy.dives_together > 1}
+                    <span class="buddy-meta num"
+                      ><a href="/dive?with={buddy.slug}"
+                        >{pluralize(buddy.dives_together, 'dive')} together</a
+                      ></span
+                    >
+                    {#if since(buddy)}<span class="buddy-meta faint num">{since(buddy)}</span>{/if}
+                  {:else if !buddy.first_together}
+                    <span class="buddy-meta num">the only dive together</span>
+                  {/if}
+                </span>
+              </li>
+            {/each}
+          </ul>
+        </article>
+      {/if}
+    </div>
+  {/if}
+
+  {#if provenance && !hasProfile}
+    <p class="provenance">{provenance}</p>
+  {/if}
+
+  {#if dive.map}
     <section class="block">
       <div class="map-head">
         <h2>On the map</h2>
-        <p class="map-summary num">
-          {routeMap.title || defaultTitle(routeMap.kind)}{dive.site ? ` · ${dive.site.name}` : ''} · {annotationSummary(
-            routeMap,
-            routeAnnotation,
-          ) || 'no route marked'}
+        <p class="map-title">
+          {dive.map.title || defaultTitle(dive.map.kind)}
         </p>
       </div>
+      {#if mapLine}<p class="map-summary num">{mapLine}</p>{/if}
       <SiteMapView
-        map={routeMap}
-        title="Route of dive {dive.number}"
-        route={routeKeys(routeAnnotation)}
-        turn={routeAnnotation.turn}
-        pins={routeAnnotation.pins}
+        map={dive.map}
+        title={routeAnnotation
+          ? `Route of dive ${dive.number}`
+          : `Map of ${dive.site?.name ?? 'the site'}`}
+        route={routeAnnotation ? routeKeys(routeAnnotation) : null}
+        legs={routeAnnotation?.route ?? []}
+        path={routeAnnotation?.path ?? []}
+        pathTurn={routeAnnotation?.turn_at ?? null}
+        turn={routeAnnotation?.turn ?? null}
+        pins={routeAnnotation?.pins ?? []}
       />
-      <MapLegend map={routeMap} />
-      {#if routeAnnotation.note}<p class="map-note">{routeAnnotation.note}</p>{/if}
-      {#if routeAnnotation.pins.length}
+      <MapLegend map={dive.map} />
+      {#if routeAnnotation && (routeAnnotation.route.length || routeAnnotation.path.length)}
+        <p class="way-key">
+          <span class="in">way in</span><span class="out">way out</span><span class="both"
+            >both ways</span
+          >
+        </p>
+      {/if}
+      {#if routeAnnotation?.note}<p class="map-note">{routeAnnotation.note}</p>{/if}
+      {#if routeAnnotation?.pins.length}
         <ol class="pin-list">
           {#each routeAnnotation.pins as pin (pin.id)}<li>{pin.note || '—'}</li>{/each}
         </ol>
-      {/if}
-      {#if dive.map_current}
-        <p class="map-revision">
-          Drawn on revision {routeAnnotation.revision} of the map; it has since been updated.
-          <button type="button" class="link" onclick={() => (onCurrent = !onCurrent)}
-            >{onCurrent ? 'Show as drawn' : 'Show on the current map'}</button
-          >
-        </p>
       {/if}
     </section>
   {/if}
 
   {#if dive.profile && dive.profile.length > 1}
     <section class="block">
-      <h2>Profile</h2>
+      <div class="map-head">
+        <h2>Profile</h2>
+        {#if dive.profile_meta}
+          <p class="map-summary num">
+            {#if dive.profile_meta.deco_model}{dive.profile_meta.deco_model}{/if}
+            {#if dive.profile_meta.gf}· GF {dive.profile_meta.gf}{/if}
+            {#if dive.profile_meta.deco}· deco{/if}
+            {#if dive.computer.length}· Perdix #{dive.computer.join(', #')}{/if}
+          </p>
+        {/if}
+      </div>
       <DiveProfile samples={dive.profile} maxDepth={dive.max_depth_m} />
+      {#if provenance}<p class="provenance">{provenance}</p>{/if}
     </section>
   {/if}
 
-  {#if dive.body_md || scans.length}
+  {#if tabs.length}
     <section class="block">
-      {#if scans.length}
+      {#if tabs.length > 1}
         <div class="tabs" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'story'}
-            class:active={tab === 'story'}
-            onclick={() => (tab = 'story')}>Story</button
-          >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'logbook'}
-            class:active={tab === 'logbook'}
-            onclick={() => (tab = 'logbook')}>Logbook page</button
-          >
+          {#each tabs as t (t.id)}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === t.id}
+              class:active={activeTab === t.id}
+              onclick={() => (tab = t.id)}>{t.label}</button
+            >
+          {/each}
         </div>
       {/if}
-      {#if tab === 'story'}
-        {#if dive.body_md}
-          <Markdown source={dive.body_md} />
-        {:else}
-          <p class="muted">No story written for this one.</p>
-        {/if}
+      {#if activeTab === 'story'}
+        <Markdown source={story} />
+      {:else if activeTab === 'original'}
+        <blockquote class="original">{dive.notes_nl}</blockquote>
       {:else}
         <Gallery items={scans} kind="scan" />
       {/if}
@@ -209,6 +430,53 @@
     </section>
   {/if}
 
+  {#if dive.private}
+    <section class="block private">
+      <h2>Only you see this</h2>
+      <dl class="numbers">
+        {#if dive.private.people.length}<div class="wide">
+            <dt>People</dt>
+            <dd class="small">
+              {dive.private.people
+                .map(
+                  (p) =>
+                    `${p.first_name}${p.last_name ? ` ${p.last_name}` : ''}${p.email ? ` <${p.email}>` : ''}`,
+                )
+                .join(' · ')}
+            </dd>
+          </div>{/if}
+        {#if dive.private.buddy_raw}<div>
+            <dt>Buddy as written</dt>
+            <dd class="small">{dive.private.buddy_raw}</dd>
+          </div>{/if}
+        {#if dive.private.buddy_role}<div>
+            <dt>Buddy role</dt>
+            <dd class="small">{dive.private.buddy_role}</dd>
+          </div>{/if}
+        {#if dive.private.operator}<div class="wide">
+            <dt>Operator / guide</dt>
+            <dd class="small">{dive.private.operator}</dd>
+          </div>{/if}
+        {#if dive.private.site_name_raw}<div>
+            <dt>Site as written</dt>
+            <dd class="small">
+              {dive.private.site_name_raw}{dive.private.area_raw
+                ? `, ${dive.private.area_raw}`
+                : ''}
+            </dd>
+          </div>{/if}
+        {#if dive.private.sketch}<div class="wide">
+            <dt>Sketch on the page</dt>
+            <dd class="small">{dive.private.sketch}</dd>
+          </div>{/if}
+        {#if dive.private.flags.length}<div class="wide">
+            <dt>Transcription notes</dt>
+            <dd class="small">{dive.private.flags.join(' · ')}</dd>
+          </div>{/if}
+      </dl>
+    </section>
+  {/if}
+
   {#if dive.site}
     <section class="block">
       <a class="btn btn-ghost" href="/dive/sites/{dive.site.slug}"
@@ -216,6 +484,11 @@
       >
     </section>
   {/if}
+
+  <nav class="crumbs bottom">
+    <a href="/dive">← Dive log</a>
+    {@render pager()}
+  </nav>
 </article>
 
 <style>
@@ -226,13 +499,46 @@
     gap: 12px;
     flex-wrap: wrap;
   }
-  .map-summary,
-  .map-revision {
+  .map-summary {
     font-size: 14px;
     color: var(--color-text-muted);
   }
+  .map-head + .map-summary {
+    margin: -6px 0 12px;
+    color: var(--color-text);
+  }
+  .map-title {
+    font-size: 13px;
+    color: var(--color-text-faint);
+  }
   .map-note {
     margin: 10px 0 0;
+  }
+  .way-key {
+    display: flex;
+    gap: 16px;
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+  .way-key span::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 0;
+    margin-right: 6px;
+    vertical-align: middle;
+    border-top: 3px solid #ef4444;
+  }
+  .way-key .out::before {
+    border-top-color: #22c55e;
+  }
+  .way-key .both::before {
+    border-top-style: dashed;
+    border-top-color: #22c55e;
+    background: #ef4444;
+    height: 3px;
+    box-sizing: border-box;
   }
   .pin-list {
     margin: 8px 0 0;
@@ -240,24 +546,16 @@
     color: var(--color-text-muted);
     font-size: 14px;
   }
-  .link {
-    background: none;
-    border: 0;
-    padding: 0;
-    color: var(--color-accent);
-    text-decoration: underline;
-    cursor: pointer;
-    font: inherit;
-  }
   .dive {
-    max-width: 900px;
     padding-top: 40px;
     padding-bottom: var(--space-section);
   }
   .crumbs {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 16px;
     font-size: 14px;
     margin-bottom: 28px;
   }
@@ -270,33 +568,79 @@
   }
   .pager {
     display: flex;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    min-width: 0;
+  }
+  .pager a {
+    display: inline-flex;
+    gap: 0.4em;
+    min-width: 0;
+    text-decoration: none;
+    color: var(--color-text-muted);
+  }
+  .pager a:hover {
+    color: var(--color-accent);
+  }
+  .pager-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 16ch;
+  }
+  .status {
+    margin-left: 8px;
+    color: var(--color-warm);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 11px;
   }
   .head h1 {
     font-size: clamp(30px, 5vw, 48px);
     margin-bottom: 10px;
   }
-  .where {
+  .head .kicker {
+    align-items: flex-start;
+  }
+  .head .kicker::before {
+    flex: none;
+    margin-top: 0.55em;
+  }
+  .location {
     color: var(--color-text-muted);
     font-size: 15.5px;
   }
-  .where a {
+  .location > span:not(.flag) + span::before {
+    content: '·';
+    margin-right: 0.35em;
+    color: var(--color-text-faint);
+  }
+  .location a {
     text-decoration: none;
     color: var(--color-text);
   }
-  .where a:hover {
+  .location a:hover {
     color: var(--color-accent);
   }
-  .trip {
-    color: var(--color-warm);
+  .section {
+    color: var(--color-accent);
+  }
+  .flag {
+    margin-right: 0.35em;
   }
   .tags {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+    align-items: center;
   }
   .tags .tag {
     text-decoration: none;
+  }
+  .raw {
+    font-size: 12px;
+    color: var(--color-text-faint);
+    font-family: var(--font-mono);
   }
   .numbers {
     display: grid;
@@ -307,6 +651,9 @@
     border-radius: var(--radius);
     border: 1px solid var(--color-border);
     background: var(--color-bg-elevated);
+  }
+  .numbers .wide {
+    grid-column: 1 / -1;
   }
   .numbers dt {
     font-family: var(--font-mono);
@@ -320,12 +667,313 @@
     font-size: 18px;
     font-weight: 500;
   }
+  .numbers dd.small {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text);
+  }
+  .crumbs.bottom {
+    margin: 44px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-border);
+  }
+  .head {
+    position: relative;
+    isolation: isolate;
+  }
+  .head.has-bg {
+    padding: 28px 24px 18px;
+    margin: 0 -24px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .head-bg {
+    position: absolute;
+    inset: -12px;
+    z-index: -1;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.16;
+    filter: blur(6px) saturate(0.8);
+  }
+  .head-bg.map {
+    opacity: 0.3;
+    filter: blur(1.5px);
+  }
+  .head-bg.drawn {
+    inset: 0;
+    left: 40%;
+    opacity: 0.12;
+    filter: none;
+  }
+  .head.has-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      90deg,
+      var(--color-bg) 0%,
+      color-mix(in srgb, var(--color-bg) 70%, transparent) 55%,
+      color-mix(in srgb, var(--color-bg) 35%, transparent) 100%
+    );
+  }
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+  }
+  .pill {
+    display: inline-block;
+    max-width: 100%;
+    padding: 3px 10px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+  .pill a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .pill a:hover,
+  a.pill:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  a.pill-trip {
+    color: var(--color-warm);
+    border-color: color-mix(in srgb, var(--color-warm) 45%, transparent);
+  }
+  .also {
+    margin-left: 0.4em;
+  }
+  .context-cards {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .context-cards.single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .eyebrow {
+    margin: 0 0 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .where {
+    position: relative;
+    display: grid;
+    grid-template-columns: 148px minmax(0, 1fr);
+    gap: 18px;
+    padding: 16px 18px;
+    transition: border-color 0.15s ease;
+  }
+  .where.no-thumb {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .where:hover {
+    border-color: var(--color-accent);
+  }
+  .where-thumb {
+    width: 148px;
+    height: 110px;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .where-thumb.drawn {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+  }
+  .where-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .where-body h2 {
+    font-size: 19px;
+    margin: 0 0 4px;
+  }
+  .stretched {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .stretched::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .where:hover .stretched {
+    color: var(--color-accent);
+  }
+  .where-meta {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+  .where-meta span:not(:last-child)::after {
+    content: '·';
+    margin: 0 6px;
+    color: var(--color-text-faint);
+  }
+  .where-summary {
+    margin: 0 0 8px;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .where-visits {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--color-text-muted);
+  }
+  .where-credit {
+    margin: 6px 0 0;
+    font-size: 11.5px;
+    color: var(--color-text-faint);
+  }
+  .where-links {
+    margin: 8px 0 0;
+    font-size: 13px;
+  }
+  .above {
+    position: relative;
+    z-index: 1;
+    text-decoration: none;
+  }
+  .with {
+    padding: 16px 18px;
+  }
+  .team {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .buddy {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .buddy-name a,
+  .buddy-meta a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .buddy-name a:hover,
+  .buddy-meta a:hover {
+    color: var(--color-accent);
+  }
+  .buddy-meta a {
+    text-decoration: underline;
+    text-decoration-color: var(--color-border-strong);
+    text-underline-offset: 2px;
+  }
+  .avatar {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-text-muted);
+  }
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .buddy-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .buddy-name {
+    font-weight: 600;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 1px 8px;
+    border-radius: 999px;
+    color: var(--color-warm);
+    background: var(--color-warm-soft);
+  }
+  .buddy-meta {
+    font-size: 12.5px;
+    color: var(--color-text-muted);
+  }
+  .buddy-meta.faint {
+    color: var(--color-text-faint);
+  }
+  .provenance {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--color-text-faint);
+  }
+  @media (max-width: 720px) {
+    .context-cards {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .head.has-bg {
+      margin: 0 -12px;
+      padding: 22px 12px 14px;
+    }
+  }
+  @media (max-width: 480px) {
+    .where {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .where-thumb {
+      width: 100%;
+      height: 140px;
+    }
+  }
   .block {
     margin-top: 44px;
   }
   .block h2 {
     font-size: 22px;
     margin-bottom: 14px;
+  }
+  .block.private {
+    border-top: 1px dashed var(--color-warm);
+    padding-top: 20px;
+  }
+  .block.private h2 {
+    color: var(--color-warm);
+    font-size: 16px;
   }
   .tabs {
     display: flex;
@@ -347,7 +995,12 @@
     color: var(--color-text);
     border-bottom-color: var(--color-accent);
   }
-  .muted {
-    color: var(--color-text-faint);
+  .original {
+    margin: 0;
+    padding: 12px 18px;
+    border-left: 3px solid var(--color-border-strong);
+    color: var(--color-text-muted);
+    white-space: pre-wrap;
+    font-style: italic;
   }
 </style>

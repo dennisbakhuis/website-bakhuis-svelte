@@ -1,21 +1,50 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { goto, invalidateAll } from '$app/navigation';
+  import { onMount } from 'svelte';
   import { adminJson } from '$lib/admin/client';
+  import type { RepoStatus } from '$lib/dive/types';
 
   let { children, data } = $props();
 
+  let repo = $state<RepoStatus | null>(null);
+  let repoBusy = $state(false);
+
+  async function refreshRepo() {
+    try {
+      repo = await adminJson<RepoStatus>('/admin/repo/status');
+    } catch {
+      repo = null;
+    }
+  }
+
+  async function repoAction(action: 'push' | 'pull') {
+    repoBusy = true;
+    try {
+      repo = await adminJson<RepoStatus>(`/admin/repo/${action}`, 'POST');
+      if (action === 'pull') await invalidateAll();
+    } catch {
+      await refreshRepo();
+    } finally {
+      repoBusy = false;
+    }
+  }
+
+  onMount(() => {
+    if (data.owner) void refreshRepo();
+  });
+
   const nav = [
-    { href: '/admin', label: 'Dives', exact: true },
-    { href: '/admin/dives/new', label: '+ New dive' },
-    { href: '/admin/sites', label: 'Sites' },
-    { href: '/admin/gear', label: 'Gear' },
-    { href: '/admin/people', label: 'People' },
-    { href: '/admin/import', label: 'Import' },
+    { href: '/admin', label: 'Dives', match: /^\/admin(\/dives(?!\/new))?(\/|$)/ },
+    { href: '/admin/sites', label: 'Sites', match: /^\/admin\/(sites|regions)(\/|$)/ },
+    { href: '/admin/people', label: 'People', match: /^\/admin\/people(\/|$)/ },
+    { href: '/admin/trips', label: 'Trips', match: /^\/admin\/trips(\/|$)/ },
+    { href: '/admin/gear', label: 'Gear', match: /^\/admin\/gear(\/|$)/ },
+    { href: '/admin/import', label: 'Import', match: /^\/admin\/import(\/|$)/ },
   ];
 
-  function active(item: { href: string; exact?: boolean }): boolean {
-    return item.exact ? page.url.pathname === item.href : page.url.pathname.startsWith(item.href);
+  function active(item: { match: RegExp }): boolean {
+    return item.match.test(page.url.pathname);
   }
 
   async function logout() {
@@ -40,6 +69,33 @@
         {/each}
       </nav>
       <div class="right">
+        <a href="/admin/dives/new" class="btn btn-sm new-dive">+ New dive</a>
+        {#if repo}
+          <span
+            class="repo repo-{repo.state}"
+            title={repo.last_error ?? (repo.load_errors.length ? repo.load_errors.join('\n') : '')}
+          >
+            {repo.state}{repo.ahead ? ` ↑${repo.ahead}` : ''}{repo.behind
+              ? ` ↓${repo.behind}`
+              : ''}{repo.load_errors.length ? ` · ${repo.load_errors.length} file errors` : ''}
+          </span>
+          {#if repo.state === 'unpushed' || repo.state === 'conflict' || repo.state === 'error'}
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm"
+              disabled={repoBusy}
+              onclick={() => repoAction('push')}>push</button
+            >
+          {/if}
+          {#if repo.state !== 'disabled'}
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm"
+              disabled={repoBusy}
+              onclick={() => repoAction('pull')}>pull</button
+            >
+          {/if}
+        {/if}
         <a href="/dive" class="muted">view site</a>
         <button type="button" class="btn btn-ghost btn-sm" onclick={logout}>Sign out</button>
       </div>
@@ -100,10 +156,35 @@
     align-items: center;
     gap: 12px;
   }
+  .new-dive {
+    white-space: nowrap;
+  }
   .muted {
     color: var(--color-text-faint);
     font-size: 13px;
     text-decoration: none;
+  }
+  .repo {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+  }
+  .repo-clean {
+    color: var(--color-success);
+  }
+  .repo-unpushed,
+  .repo-pushing {
+    color: var(--color-warm);
+  }
+  .repo-conflict,
+  .repo-error {
+    color: var(--color-error);
+    border-color: var(--color-error);
   }
   .admin-body {
     flex: 1;

@@ -2,7 +2,7 @@
   import '$lib/styles/theme.css';
   import { page } from '$app/state';
   import { site } from '$lib/site';
-  import { metaFor, canonicalUrl, personLD, jsonLdScript, SITE_URL } from '$lib/seo';
+  import { metaFor, canonicalUrl, personLD, jsonLdScript, ogImageFor } from '$lib/seo';
   import { goHref } from '$lib/go-targets';
   import Toast from '$lib/components/Toast.svelte';
   import { version } from '$app/environment';
@@ -25,7 +25,7 @@
     page.status === 200 ? metaFor(page.url.pathname, page.data.meta) : undefined,
   );
   const canonical = $derived(canonicalUrl(page.url.pathname));
-  const ogImage = `${SITE_URL}/og-image.png`;
+  const ogImage = $derived(ogImageFor(page.url.pathname, meta));
   const jsonLd = jsonLdScript(personLD());
 
   const nav = [
@@ -37,6 +37,10 @@
   function isActive(href: string): boolean {
     return page.url.pathname === href || page.url.pathname.startsWith(`${href}/`);
   }
+
+  // A page that has an editor advertises it through `editHref` in its data;
+  // otherwise the pill just opens the admin.
+  const editHref = $derived((page.data.editHref as string | undefined) ?? '/admin');
 </script>
 
 <svelte:head>
@@ -51,6 +55,8 @@
     <meta property="og:description" content={meta.description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <link
       rel="alternate"
@@ -80,6 +86,11 @@
             >{item.label}</a
           >
         {/each}
+        {#if data.owner}
+          <a class="owner-pill" href={editHref} title="Signed in as the owner — open the editor"
+            >owner</a
+          >
+        {/if}
       </nav>
     </div>
   </header>
@@ -196,6 +207,16 @@
   .primary-nav a[aria-current='page'] {
     opacity: 1;
     background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+  .primary-nav .owner-pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-warm);
+    border: 1px solid var(--color-warm);
+    opacity: 1;
+    padding: 4px 10px;
   }
 
   main {

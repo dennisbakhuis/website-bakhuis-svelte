@@ -28,8 +28,13 @@
           <dt>{tile.label}</dt>
           <dd class="num">
             {#if num}
-              <span use:counter={{ value: num.n, decimals: num.decimals, suffix: num.suffix }}
-                >{tile.value}</span
+              <span
+                use:counter={{
+                  value: num.n,
+                  decimals: num.decimals,
+                  suffix: num.suffix,
+                  group: tile.group,
+                }}>{tile.value}</span
               >
             {:else}
               {tile.value}
@@ -84,11 +89,17 @@
     text-transform: uppercase;
     color: var(--color-text-muted);
   }
+  .tile {
+    container-type: inline-size;
+    min-width: 0;
+  }
   .tile dd {
     margin: 4px 0 0;
     font-size: clamp(30px, 4vw, 44px);
+    font-size: clamp(24px, min(4vw, 21cqi), 44px);
     font-weight: 500;
     line-height: 1;
+    white-space: nowrap;
     color: var(--color-text);
   }
   .note {

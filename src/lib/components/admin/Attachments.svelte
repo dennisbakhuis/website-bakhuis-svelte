@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
   import { adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
+  import { diveToInput } from '$lib/admin/dive-input';
   import type { Attachment, DiveAdmin } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
 
@@ -8,6 +9,7 @@
 
   const KINDS: Attachment['kind'][] = ['photo', 'scan', 'map', 'video', 'export'];
   let kind = $state<Attachment['kind']>('photo');
+  let makePublic = $state(true);
   let uploading = $state(0);
   let dragging = $state(false);
 
@@ -16,7 +18,10 @@
     uploading = list.length;
     for (const file of list) {
       try {
-        await adminUpload(`/admin/dives/${dive.id}/attachments`, file, { kind });
+        await adminUpload(`/admin/dives/${dive.number}/attachments`, file, {
+          kind,
+          public: String(kind === 'scan' ? false : makePublic),
+        });
       } catch (err) {
         toast.show({
           kind: 'error',
@@ -30,7 +35,7 @@
 
   async function patch(
     a: Attachment,
-    body: Partial<Pick<Attachment, 'caption' | 'kind' | 'sort'>>,
+    body: Partial<Pick<Attachment, 'caption' | 'kind' | 'sort' | 'public' | 'credit'>>,
   ) {
     await adminJson(`/admin/attachments/${a.id}`, 'PATCH', body);
     await invalidateAll();
@@ -43,9 +48,8 @@
   }
 
   async function setCover(a: Attachment) {
-    await adminJson(`/admin/dives/${dive.id}`, 'PUT', {
-      ...dive,
-      time_in: dive.time_in,
+    await adminJson(`/admin/dives/${dive.number}`, 'PUT', {
+      ...diveToInput(dive),
       cover_attachment_id: a.id,
     });
     await invalidateAll();
@@ -86,6 +90,10 @@
       <select bind:value={kind}>
         {#each KINDS as k (k)}<option value={k}>{k}</option>{/each}
       </select>
+    </label>
+    <label class="kind">
+      <input type="checkbox" bind:checked={makePublic} disabled={kind === 'scan'} />
+      {kind === 'scan' ? 'scans start private' : 'public'}
     </label>
     <label class="file">
       <span class="btn btn-ghost btn-sm"
@@ -133,6 +141,14 @@
               >
                 {#each KINDS as k (k)}<option value={k}>{k}</option>{/each}
               </select>
+              <label class="pub">
+                <input
+                  type="checkbox"
+                  checked={a.public}
+                  onchange={(e) => patch(a, { public: e.currentTarget.checked })}
+                />
+                public
+              </label>
               <span class="muted num"
                 >{a.width ? `${a.width}×${a.height} · ` : ''}{Math.round(a.bytes / 1024)} kB</span
               >
@@ -205,6 +221,16 @@
   }
   .kind select {
     width: auto;
+  }
+  .kind input[type='checkbox'],
+  .pub input[type='checkbox'] {
+    width: auto;
+  }
+  .pub {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
   }
   .file input {
     display: none;

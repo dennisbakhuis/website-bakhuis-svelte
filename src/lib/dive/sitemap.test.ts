@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   addArea,
+  addLine,
   addNode,
   addPin,
+  addSurveyShot,
+  legendKey,
+  lineLength,
+  moveLinePoint,
+  placeByBearing,
+  removeLine,
+  toLatLon,
+  updateLine,
   annotationSummary,
   depthFill,
   depthLabel,
@@ -23,7 +32,15 @@ import {
   removeArea,
   removeNode,
   removePin,
+  routeHighlights,
   routeLength,
+  routeEnd,
+  pathBetween,
+  extendRoute,
+  extendRouteAlong,
+  trimRoute,
+  legPhases,
+  pathLength,
   snap,
   toggleEdge,
   toggleRouteLeg,
@@ -42,7 +59,7 @@ describe('site map editing', () => {
     expect(lake.map.nodes[0].type).toBe('entry');
     const second = addNode(cave.map, 30, 10, cave.id);
     expect(second.map.edges).toEqual([
-      { from: cave.id, to: second.id, distance: null, note: '', style: 'line' },
+      { from: cave.id, to: second.id, distance: null, azimuth: null, note: '', style: 'line' },
     ]);
     expect(second.map.nodes[1].type).toBe('station');
   });
@@ -116,14 +133,24 @@ describe('site map editing', () => {
     const cave2 = addNode(cave.map, 40, 0, cave.id);
     const withDepth = updateNode(cave2.map, cave2.id, { depth: 20, type: 'end' });
     expect(mapSummary(withDepth)).toBe('2 stations · 40 m of line · max 20 m');
-    expect(legendFor(withDepth).map((l) => l.label)).toEqual(['Entrance', 'End of line']);
+    expect(legendFor(withDepth).map((l) => l.label)).toEqual([
+      'Entrance',
+      'End of line',
+      'Depth',
+      'Along the line',
+    ]);
 
     const lake = addNode(emptySiteMap('sitemap'), 0, 0);
     const wreck = updateNode(addNode(lake.map, 30, 0).map, 'n2', { type: 'wreck', depth: 18 });
     const routed = toggleEdge(wreck, 'n1', 'n2');
     const summary = mapSummary(updateEdge(routed, 'n1', 'n2', { style: 'route' }));
     expect(summary).toBe('1 object · max 18 m');
-    expect(legendFor(routed).map((l) => l.label)).toEqual(['Entry / exit', 'Wreck']);
+    expect(legendFor(routed).map((l) => l.label)).toEqual([
+      'Entry / exit',
+      'Wreck',
+      'Depth',
+      'Along the line',
+    ]);
   });
 
   it('computes bounds with padding and snaps to the grid', () => {
@@ -131,8 +158,8 @@ describe('site map editing', () => {
     expect(snap(13.4, 5)).toBe(15);
     expect(snap(-2.6, 1)).toBe(-3);
     expect(depthLabel(null)).toBe('');
-    expect(depthLabel(12)).toBe('12 m');
-    expect(depthLabel(12.25)).toBe('12.3 m');
+    expect(depthLabel(12)).toBe('↓12 m');
+    expect(depthLabel(12.25)).toBe('↓12.3 m');
   });
 });
 
@@ -178,11 +205,21 @@ describe('normalizeSiteMap', () => {
     });
     expect(map.kind).toBe('sitemap');
     expect(map.title).toBe('Lake');
+    const bare = {
+      label: '',
+      depth: null,
+      object_kind: null,
+      left: null,
+      right: null,
+      color: null,
+    };
     expect(map.nodes).toEqual([
-      { id: 'a', x: 0, y: 0, type: 'entry', label: '', depth: null },
-      { id: 'b', x: 10, y: 5, type: 'station', label: '', depth: null },
+      { id: 'a', x: 0, y: 0, type: 'entry', ...bare },
+      { id: 'b', x: 10, y: 5, type: 'station', ...bare },
     ]);
-    expect(map.edges).toEqual([{ from: 'a', to: 'b', distance: 12, note: '', style: 'line' }]);
+    expect(map.edges).toEqual([
+      { from: 'a', to: 'b', distance: 12, azimuth: null, note: '', style: 'line' },
+    ]);
     expect(map.areas).toEqual([
       {
         id: 't',
@@ -202,12 +239,92 @@ describe('normalizeSiteMap', () => {
   });
 });
 
+describe('version 3: lines, objects and survey shots', () => {
+  it('normalises lines, object kinds, origin and underlay', () => {
+    const map = normalizeSiteMap({
+      kind: 'sitemap',
+      nodes: [{ id: 'o', x: 0, y: 0, type: 'object', object_kind: 'wipkip', left: '2' }],
+      lines: [
+        {
+          id: 'l1',
+          kind: 'depth',
+          depth: '5',
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+          ],
+        },
+        { id: 'l2', kind: 'nope', points: [{ x: 0, y: 0 }] },
+        {
+          id: 'l3',
+          kind: 'shoreline',
+          closed: true,
+          points: [
+            { x: 0, y: 0 },
+            { x: 1, y: 0 },
+            { x: 1, y: 1 },
+          ],
+        },
+      ],
+      origin: { lat: '51.6', lon: 3.9 },
+      underlay: { ref: 'generated:x', scale: '0.2', opacity: 3 },
+    });
+    expect(map.nodes[0].object_kind).toBe('wipkip');
+    expect(map.nodes[0].left).toBe(2);
+    expect(map.lines.map((l) => l.id)).toEqual(['l1', 'l3']);
+    expect(map.lines[0].depth).toBe(5);
+    expect(map.lines[1].closed).toBe(true);
+    expect(map.origin).toEqual({ lat: 51.6, lon: 3.9 });
+    expect(map.underlay).toMatchObject({ ref: 'generated:x', scale: 0.2, opacity: 1 });
+    expect(mapBounds(map, 0).maxX).toBe(10);
+    expect(legendFor(map).map(legendKey)).toEqual([
+      'object:wipkip',
+      'line:shoreline',
+      'line:depth',
+      'text:↓12 m',
+    ]);
+  });
+
+  it('adds, edits and measures lines', () => {
+    const start = emptySiteMap('sitemap');
+    const { map, id } = addLine(start, 'path', [
+      { x: 0, y: 0 },
+      { x: 30, y: 40 },
+    ]);
+    expect(id).toBe('l1');
+    expect(lineLength(map.lines[0])).toBe(50);
+    const moved = moveLinePoint(map, id, 1, 0, 40);
+    expect(lineLength(moved.lines[0])).toBe(40);
+    const labelled = updateLine(moved, id, { label: 'loop', id: 'ignored' });
+    expect(labelled.lines[0]).toMatchObject({ id, label: 'loop' });
+    expect(removeLine(labelled, id).lines).toEqual([]);
+    expect(addLine(start, 'path', [{ x: 0, y: 0 }]).id).toBe('');
+    expect(mapSummary(labelled)).toContain('1 path');
+  });
+
+  it('places survey shots by distance and bearing, relative to the drawing north', () => {
+    expect(placeByBearing(0, 0, 10, 90, 0)).toEqual({ x: 10, y: 0 });
+    expect(placeByBearing(0, 0, 10, 0, 0)).toEqual({ x: 0, y: -10 });
+    expect(placeByBearing(0, 0, 10, 90, 90)).toEqual({ x: 0, y: -10 });
+    const cave = addNode(emptySiteMap('stickmap'), 0, 0);
+    const shot = addSurveyShot(cave.map, cave.id, 20, 180, 12);
+    expect(shot.map.nodes[1]).toMatchObject({ x: 0, y: 20, depth: 12 });
+    expect(shot.map.edges[0]).toMatchObject({ distance: 20, azimuth: 180 });
+    expect(addSurveyShot(cave.map, 'nope', 5, 0, null).id).toBe('');
+    expect(
+      toLatLon({ ...shot.map, origin: { lat: 50, lon: 5 } }, { x: 0, y: -1113.2 })?.lat,
+    ).toBeCloseTo(50.01, 5);
+    expect(toLatLon(shot.map, { x: 0, y: 0 })).toBeNull();
+  });
+});
+
 describe('dive annotations', () => {
   const stored = (map: ReturnType<typeof emptySiteMap>) => ({
     ...map,
     id: 'm1',
     revision: 2,
-    revisions: 3,
+    site_id: 'ressel',
+    sort: 0,
     updated_at: '2026-09-12T10:00:00Z',
   });
 
@@ -225,7 +342,7 @@ describe('dive annotations', () => {
     expect(ann.route).toEqual([{ from: b.id, to: c.id }]);
     expect(edgeKey('z', 'a')).toBe('a|z');
     const withTurn = { ...ann, turn: c.id };
-    expect(annotationSummary(map, withTurn)).toBe('30 m of line · turned at Far end (21 m)');
+    expect(annotationSummary(map, withTurn)).toBe('30 m swum · turned at Far end (↓21 m)');
   });
 
   it('manages pins and drops legs the map no longer has', () => {
@@ -295,5 +412,180 @@ describe('north bearing', () => {
     expect(normalizeSiteMap({ north: 400 }).north).toBe(40);
     expect(normalizeSiteMap({ north: -45 }).north).toBe(315);
     expect(normalizeSiteMap({ north: 'east' }).north).toBe(0);
+  });
+});
+
+describe('directed routes', () => {
+  // entrance a - b - c in a line, with a side branch b - d and a jump c - e.
+  const map = normalizeSiteMap({
+    nodes: [
+      { id: 'a', x: 0, y: 0, type: 'entrance' },
+      { id: 'b', x: 30, y: 0, type: 't' },
+      { id: 'c', x: 60, y: 0 },
+      { id: 'd', x: 30, y: 40 },
+      { id: 'e', x: 70, y: 0, type: 'jump' },
+    ],
+    edges: [
+      { from: 'a', to: 'b' },
+      { from: 'b', to: 'c' },
+      { from: 'b', to: 'd' },
+      { from: 'c', to: 'e', style: 'jump' },
+    ],
+  });
+  const empty = {
+    map_id: 'm',
+    revision: 1,
+    route: [],
+    turn: null,
+    pins: [],
+    path: [],
+    turn_at: null,
+    note: '',
+  };
+
+  it('starts at the entrance and fills the way to a clicked station', () => {
+    expect(routeEnd(map, empty)).toBe('a');
+    const out = extendRoute(map, empty, 'e');
+    expect(out.route).toEqual([
+      { from: 'a', to: 'b' },
+      { from: 'b', to: 'c' },
+      { from: 'c', to: 'e' },
+    ]);
+    expect(routeEnd(map, out)).toBe('e');
+  });
+
+  it('comes back the same way when the entrance is clicked again, counting the metres twice', () => {
+    const out = extendRoute(map, empty, 'd');
+    const back = extendRoute(map, out, 'a');
+    expect(back.route).toEqual([
+      { from: 'a', to: 'b' },
+      { from: 'b', to: 'd' },
+      { from: 'd', to: 'b' },
+      { from: 'b', to: 'a' },
+    ]);
+    expect(routeLength(map, back)).toBe(140);
+  });
+
+  it('extends across a clicked leg from its nearer end', () => {
+    const viaLeg = extendRouteAlong(map, empty, { from: 'd', to: 'b' });
+    expect(viaLeg.route).toEqual([
+      { from: 'a', to: 'b' },
+      { from: 'b', to: 'd' },
+    ]);
+  });
+
+  it('leaves the route alone for unreachable or same-place clicks and trims steps', () => {
+    expect(pathBetween(map, 'a', 'a')).toEqual([]);
+    expect(pathBetween({ ...map, edges: [] }, 'a', 'b')).toBeNull();
+    expect(extendRoute(map, empty, 'a')).toBe(empty);
+    const out = extendRoute(map, empty, 'c');
+    expect(trimRoute(out, 1).route).toEqual([{ from: 'a', to: 'b' }]);
+    expect(trimRoute(out, 5).route).toEqual([]);
+  });
+});
+
+describe('way in and way out', () => {
+  const ab = { from: 'a', to: 'b' };
+  const bc = { from: 'b', to: 'c' };
+  const cb = { from: 'c', to: 'b' };
+  const ba = { from: 'b', to: 'a' };
+
+  it('splits the route at the turn point', () => {
+    expect(legPhases([ab, bc, cb, ba], 'c')).toEqual(['in', 'in', 'out', 'out']);
+    expect(legPhases([ab, bc], 'c')).toEqual(['in', 'in']);
+  });
+
+  it('treats a leg swum a second time as the way out when no turn is marked', () => {
+    expect(legPhases([ab, bc, cb, ba], null)).toEqual(['in', 'in', 'out', 'out']);
+    expect(legPhases([ab, bc, { from: 'c', to: 'd' }], null)).toEqual(['in', 'in', 'in']);
+  });
+
+  it('measures a free track', () => {
+    expect(pathLength([])).toBe(0);
+    expect(
+      pathLength([
+        { x: 0, y: 0 },
+        { x: 30, y: 0 },
+        { x: 30, y: 40 },
+      ]),
+    ).toBe(70);
+  });
+});
+
+describe('route highlights', () => {
+  function cave() {
+    const a = addNode(emptySiteMap(), 0, 0);
+    const b = addNode(a.map, 10, 0, a.id);
+    const c = addNode(b.map, 20, 0, b.id);
+    const d = addNode(c.map, 70, 0, c.id);
+    let map = updateNode(d.map, a.id, { label: 'Entrance', depth: 3 });
+    map = updateNode(map, b.id, { label: '', depth: 12 });
+    map = updateNode(map, c.id, { label: 'Pit', depth: 18 });
+    map = updateNode(map, d.id, { label: 'Sump', depth: 9 });
+    const out = { ...map, id: 'm1', revision: 1, site_id: 's', sort: 0, updated_at: null };
+    return { map: out, ids: [a.id, b.id, c.id, d.id] };
+  }
+
+  it('names the turn and the deepest station on the route', () => {
+    const { map, ids } = cave();
+    const [a, b, c, d] = ids;
+    const ann = {
+      ...emptyAnnotation(map),
+      route: [
+        { from: a, to: b },
+        { from: b, to: c },
+        { from: c, to: d },
+      ],
+      turn: d,
+    };
+    expect(routeHighlights(map, ann)).toEqual({
+      turnedAt: 'Sump',
+      deepest: { label: 'Pit', depth: 18 },
+    });
+  });
+
+  it('only looks at stations the dive reached', () => {
+    const { map, ids } = cave();
+    const [a, b] = ids;
+    const ann = { ...emptyAnnotation(map), route: [{ from: a, to: b }], turn: b };
+    expect(routeHighlights(map, ann)).toEqual({
+      turnedAt: null,
+      deepest: { label: 'Entrance', depth: 12 },
+    });
+  });
+
+  it('borrows the nearest label along the route for an unlabelled deepest station', () => {
+    const { map, ids } = cave();
+    const [a, b, c] = ids;
+    const deeper = updateNode(map, b, { depth: 30 });
+    const stored = { ...map, ...deeper };
+    const ann = {
+      ...emptyAnnotation(stored),
+      route: [
+        { from: a, to: b },
+        { from: b, to: c },
+      ],
+    };
+    expect(routeHighlights(stored, ann).deepest).toEqual({ label: 'Entrance', depth: 30 });
+    const moved = { ...stored, ...moveNode(stored, a, -30, 0) };
+    expect(routeHighlights(moved, ann).deepest).toEqual({ label: 'Pit', depth: 30 });
+  });
+
+  it('gives nothing without depths, without a route, or for a free track', () => {
+    const { map, ids } = cave();
+    const [a, b] = ids;
+    const flat = { ...map, nodes: map.nodes.map((n) => ({ ...n, depth: null })) };
+    const leg = { ...emptyAnnotation(map), route: [{ from: a, to: b }], turn: a };
+    expect(routeHighlights(flat, leg)).toEqual({ turnedAt: 'Entrance', deepest: null });
+    expect(routeHighlights(map, emptyAnnotation(map))).toEqual({ turnedAt: null, deepest: null });
+    const track = {
+      ...emptyAnnotation(map),
+      path: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      turn_at: 1,
+    };
+    expect(routeHighlights(map, track)).toEqual({ turnedAt: null, deepest: null });
   });
 });

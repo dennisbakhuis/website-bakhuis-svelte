@@ -3,12 +3,21 @@
 
   const items = [
     { href: '/dive', label: 'Log', match: (p: string) => p === '/dive' || /^\/dive\/\d+/.test(p) },
-    { href: '/dive/sites', label: 'Sites', match: (p: string) => p.startsWith('/dive/sites') },
+    {
+      href: '/dive/sites',
+      label: 'Sites',
+      match: (p: string) => p.startsWith('/dive/sites') || p.startsWith('/dive/regions'),
+    },
+    { href: '/dive/trips', label: 'Trips', match: (p: string) => p.startsWith('/dive/trips') },
+    { href: '/dive/people', label: 'People', match: (p: string) => p.startsWith('/dive/people') },
     { href: '/dive/gear', label: 'Gear', match: (p: string) => p.startsWith('/dive/gear') },
   ];
+
+  const DETAIL = /^\/dive\/(\d+|(sites|people|trips|regions)\/[^/]+)\/?$/;
+  const detail = $derived(DETAIL.test(page.url.pathname));
 </script>
 
-<nav class="dive-nav container" aria-label="Dive log sections">
+<nav class="dive-nav container" class:detail aria-label="Dive log sections">
   {#each items as item (item.href)}
     <a
       href={item.href}
@@ -24,6 +33,9 @@
     gap: 4px;
     padding-top: 20px;
     margin-bottom: -28px;
+  }
+  .dive-nav.detail {
+    max-width: var(--container-detail);
   }
   .dive-nav a {
     padding: 6px 14px;

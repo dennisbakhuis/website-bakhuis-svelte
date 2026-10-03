@@ -3,7 +3,7 @@
 
   let { data } = $props();
   let query = $state('');
-  let show = $state<'all' | 'draft' | 'private'>('all');
+  let show = $state<'all' | 'public' | 'draft' | 'private'>('all');
 
   const rows = $derived(
     data.dives.filter((d) => {
@@ -17,16 +17,20 @@
   const drafts = $derived(data.dives.filter((d) => d.visibility === 'draft').length);
 </script>
 
-<h1>Dives <span class="count num">{data.dives.length}</span></h1>
+<h1>
+  Dives <span class="count num">{data.dives.length}</span>{#if drafts}<span class="drafts"
+      >{drafts} draft{drafts === 1 ? '' : 's'}</span
+    >{/if}
+</h1>
 
 <div class="toolbar">
   <input type="search" placeholder="Filter…" bind:value={query} />
   <select bind:value={show}>
     <option value="all">All</option>
+    <option value="public">Public</option>
     <option value="draft">Drafts{drafts ? ` (${drafts})` : ''}</option>
     <option value="private">Private</option>
   </select>
-  <a class="btn btn-solid btn-sm" href="/admin/dives/new">+ New dive</a>
 </div>
 
 <table>
@@ -34,16 +38,16 @@
     <tr
       ><th>#</th><th>Date</th><th>Title / site</th><th>Depth</th><th>Time</th><th>Tags</th><th
         >Media</th
-      ><th>Status</th></tr
+      ><th>Status</th><th></th></tr
     >
   </thead>
   <tbody>
-    {#each rows as dive (dive.id)}
+    {#each rows as dive (dive.number)}
       <tr>
         <td class="num">{dive.number}</td>
         <td class="num">{formatDate(dive.date)}</td>
         <td
-          ><a href="/admin/dives/{dive.id}">{dive.title || dive.site?.name || 'Untitled'}</a
+          ><a href="/admin/dives/{dive.number}">{dive.title || dive.site?.name || 'Untitled'}</a
           >{#if dive.title && dive.site}<span class="muted"> · {dive.site.name}</span>{/if}</td
         >
         <td class="num">{dive.max_depth_m} m</td>
@@ -51,6 +55,8 @@
         <td>{dive.tags.join(', ')}</td>
         <td class="num">{dive.attachments.length || ''}</td>
         <td><span class="status status-{dive.visibility}">{dive.visibility}</span></td>
+        <td><a class="view" href="/dive/{dive.number}" target="_blank" rel="noopener">view ↗</a></td
+        >
       </tr>
     {/each}
   </tbody>
@@ -61,6 +67,17 @@
     font-size: 16px;
     color: var(--color-text-faint);
     font-weight: 400;
+  }
+  .drafts {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-warm);
+    margin-left: 12px;
+  }
+  .view {
+    font-size: 13px;
+    white-space: nowrap;
   }
   .toolbar {
     display: flex;

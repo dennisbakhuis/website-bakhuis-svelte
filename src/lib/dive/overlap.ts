@@ -67,7 +67,13 @@ export function cellFor(box: Box): number {
   return Math.min(MAX_CELL, Math.max(MIN_CELL, raw));
 }
 
-function mask(groups: MapPoint[][], box: Box, cell: number, cols: number, rows: number): Uint8Array {
+function mask(
+  groups: MapPoint[][],
+  box: Box,
+  cell: number,
+  cols: number,
+  rows: number,
+): Uint8Array {
   const grid = new Uint8Array(cols * rows);
   for (const points of groups) {
     if (points.length < 3) continue;

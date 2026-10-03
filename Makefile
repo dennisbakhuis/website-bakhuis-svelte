@@ -2,7 +2,7 @@
 
 COMPOSE ?= docker compose
 
-.PHONY: help install run dev up down logs seed reseed migrate migration shell-db shell-backend \
+.PHONY: help install run dev up down logs data-pull data-status shell-backend \
 	build preview lint format format-check check test test-coverage \
 	backend-lint backend-format backend-typecheck backend-test backend-check ci \
 	version version-sync version-check bump release docker-build
@@ -18,7 +18,7 @@ install:  ## Install frontend (pnpm) and backend (uv) dependencies
 	pnpm install
 	cd backend && uv sync
 
-run: up  ## Start Postgres + backend + Mailpit in Docker, then the SvelteKit dev server (http://localhost:5373)
+run: up  ## Start backend + Mailpit in Docker, then the SvelteKit dev server (http://localhost:5373)
 	@echo ""
 	@echo "✅ Backend:  http://localhost:8300  (docs: http://localhost:8300/api/docs)"
 	@echo "   Mailpit:  http://localhost:8325  (magic-link e-mails land here)"
@@ -28,7 +28,7 @@ run: up  ## Start Postgres + backend + Mailpit in Docker, then the SvelteKit dev
 
 dev: run  ## Alias for `run`
 
-up:  ## Start the docker services in the background (db, backend, mailpit)
+up:  ## Start the docker services in the background (backend, mailpit)
 	@test -f .env || cp .env.example .env
 	$(COMPOSE) up -d --wait
 
@@ -38,22 +38,18 @@ down:  ## Stop the docker services
 logs:  ## Tail docker logs
 	$(COMPOSE) logs -f --tail=100
 
-seed:  ## Seed the sample dive log (no-op when dives already exist)
-	$(COMPOSE) exec backend python -m app.seed
+data-pull:  ## Pull the divelog-data checkout and reload the running backend
+	git -C $${DATA_REPO:-../divelog-data} pull --ff-only
+	curl -fsS -X POST http://localhost:8300/api/v1/admin/repo/reload >/dev/null || true
 
-reseed:  ## Wipe the database and seed again
-	$(COMPOSE) down -v
-	$(MAKE) up
+data-status:  ## Show the divelog-data checkout status
+	git -C $${DATA_REPO:-../divelog-data} status --short --branch
 
-migrate:  ## Apply Alembic migrations
-	$(COMPOSE) exec backend alembic upgrade head
+tiles:  ## Cut the locator-map basemap tiles into $(MEDIA_DIR)/tiles (needs `brew install pmtiles`)
+	uv run --project backend python scripts/build_tiles.py --data $${DATA_REPO:-../divelog-data} --media $${MEDIA_DIR:-../divelog-media}
 
-migration:  ## Autogenerate a migration (usage: make migration M="add trips")
-	@if [ -z "$(M)" ]; then echo "Usage: make migration M=\"message\"" >&2; exit 2; fi
-	$(COMPOSE) exec backend alembic revision --autogenerate -m "$(M)"
-
-shell-db:  ## psql into the dev database
-	$(COMPOSE) exec db psql -U bakhuis -d bakhuis
+tiles-upload:  ## Cut the tiles and push tiles/ to the S3 bucket from backend/.env
+	uv run --project backend python scripts/build_tiles.py --data $${DATA_REPO:-../divelog-data} --media $${MEDIA_DIR:-../divelog-media} --upload
 
 shell-backend:  ## Shell in the backend container
 	$(COMPOSE) exec backend bash

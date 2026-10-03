@@ -1,5 +1,6 @@
 <script lang="ts">
   import Markdown from '$lib/components/Markdown.svelte';
+  import OwnerBar from '$lib/components/OwnerBar.svelte';
   import { formatDate, pluralize } from '$lib/dive/format';
   import { reveal } from '$lib/anim/reveal';
 
@@ -24,30 +25,40 @@
     dives it has been on.
   </p>
 
-  <div class="setups" use:reveal={{ stagger: 90 }}>
-    {#each data.gear.setups as setup (setup.id)}
-      <article class="card setup" id={setup.slug} data-reveal>
-        <header>
-          <h2>{setup.name}</h2>
-          <a class="count num" href="/dive?setup={setup.slug}"
-            >{pluralize(setup.dive_count, 'dive')} →</a
-          >
-        </header>
-        {#if setup.description_md}<Markdown source={setup.description_md} />{/if}
-        <ul class="setup-items">
-          {#each setup.items as item (item.id)}
-            <li>
-              <a href="#item-{item.id}">{item.name}</a><span class="muted">
-                · {item.brand} {item.model}</span
-              >
-            </li>
-          {/each}
-        </ul>
-      </article>
-    {/each}
-  </div>
+  {#if data.owner}
+    <OwnerBar edit={{ label: 'Edit gear', href: '/admin/gear' }} />
+  {/if}
 
-  <h2 class="section-title">Items</h2>
+  {#if !data.gear.items.length && !data.gear.setups.length}
+    <p class="empty">No gear catalogued yet.</p>
+  {/if}
+
+  {#if data.gear.setups.length}
+    <div class="setups" use:reveal={{ stagger: 90 }}>
+      {#each data.gear.setups as setup (setup.id)}
+        <article class="card setup" id={setup.slug} data-reveal>
+          <header>
+            <h2>{setup.name}</h2>
+            <a class="count num" href="/dive?setup={setup.slug}"
+              >{pluralize(setup.dive_count, 'dive')} →</a
+            >
+          </header>
+          {#if setup.description_md}<Markdown source={setup.description_md} />{/if}
+          <ul class="setup-items">
+            {#each setup.items as item (item.id)}
+              <li>
+                <a href="#item-{item.id}">{item.name}</a><span class="muted">
+                  · {item.brand} {item.model}</span
+                >
+              </li>
+            {/each}
+          </ul>
+        </article>
+      {/each}
+    </div>
+  {/if}
+
+  {#if current.length}<h2 class="section-title">Items</h2>{/if}
   {#each categories as group (group.category)}
     <section class="category" use:reveal={{ stagger: 60 }}>
       <h3>{group.category}</h3>
@@ -107,6 +118,10 @@
   }
   h1 {
     font-size: clamp(34px, 5vw, 52px);
+  }
+  .empty {
+    color: var(--color-text-muted);
+    padding: 24px 0;
   }
   .lede {
     color: var(--color-text-muted);

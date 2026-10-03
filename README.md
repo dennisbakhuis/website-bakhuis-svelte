@@ -6,7 +6,7 @@ sites. The design contract lives in [docs/SPEC.md](docs/SPEC.md).
 
 ```fish
 make install   # pnpm install + uv sync
-make run       # Postgres + backend + Mailpit in Docker, SvelteKit dev server on :5373
+make run       # Backend + Mailpit in Docker, SvelteKit dev server on :5373
 ```
 
 | URL                            | What                                         |
@@ -15,52 +15,51 @@ make run       # Postgres + backend + Mailpit in Docker, SvelteKit dev server on
 | http://localhost:8300/api/docs | FastAPI docs (DEBUG only)                    |
 | http://localhost:8325          | Mailpit — magic-link sign-in mails land here |
 
-The backend seeds ~45 sample dives on first start (`SEED_ON_EMPTY=true` in
-`.env`). Sign in at `/admin/login` with the `OWNER_EMAIL` from `.env`, open
-the link in Mailpit.
+The dive log is a directory of Markdown and JSON files — the private
+`divelog-data` repository, checked out next to this one (`DATA_REPO` in
+`.env`) and mounted into the backend. Sign in at `/admin/login` with the
+`OWNER_EMAIL` from `.env`, open the link in Mailpit.
 
 ## Stack
 
 | Layer     | Technology                                                             |
 | --------- | ---------------------------------------------------------------------- |
 | Frontend  | SvelteKit 2 + Svelte 5 (runes), TypeScript, adapter-node               |
-| Backend   | Python 3.13, FastAPI, SQLAlchemy 2 (async), Alembic, Pillow, lxml      |
-| Database  | Postgres 18                                                            |
+| Backend   | Python 3.13, FastAPI, Pydantic, Pillow, lxml                           |
+| Data      | Files in the private `divelog-data` git repo, loaded into memory       |
 | Media     | Local files in dev (`MEDIA_ROOT`), S3 (Hetzner Object Storage) in prod |
 | Auth      | Owner-only magic link → session cookie                                 |
 | Content   | Markdown via mdsvex (`src/content/{blog,til}`), Shiki highlighting     |
 | Animation | anime.js v4 (front page "Descent", reveals, counters, profile)         |
 | Map       | Natural Earth TopoJSON projected server-side with d3-geo, no tiles     |
-| Tests     | Vitest (frontend), pytest (backend, SQLite in-process)                 |
+| Tests     | Vitest (frontend), pytest (backend, on a fixture data tree)            |
 | Deploy    | Two Docker images on GHCR, Caddy on `operator-infra`                 |
 
 ## Common commands
 
-| Command                 | Purpose                           |
-| ----------------------- | --------------------------------- |
-| `make run`              | Everything for local dev          |
-| `make up` / `make down` | Just the Docker services          |
-| `make reseed`           | Wipe the DB and seed again        |
-| `make migration M="…"`  | Autogenerate an Alembic migration |
-| `make check`            | svelte-check                      |
-| `make lint`             | ESLint (zero warnings)            |
-| `make test`             | Vitest                            |
-| `make backend-check`    | ruff + mypy strict + pytest       |
-| `make ci`               | Everything CI runs                |
-| `make build`            | Production frontend build         |
-| `make docker-build`     | Both production images            |
+| Command                 | Purpose                      |
+| ----------------------- | ---------------------------- |
+| `make run`              | Everything for local dev     |
+| `make up` / `make down` | Just the Docker services     |
+| `make data-pull`        | Pull divelog-data and reload |
+| `make data-status`      | Status of the data checkout  |
+| `make check`            | svelte-check                 |
+| `make lint`             | ESLint (zero warnings)       |
+| `make test`             | Vitest                       |
+| `make backend-check`    | ruff + mypy strict + pytest  |
+| `make ci`               | Everything CI runs           |
+| `make build`            | Production frontend build    |
+| `make docker-build`     | Both production images       |
 
 ## Project structure
 
 ```
 backend/
   app/api/v1/       public (dive), auth, admin, media routers
-  app/models/       SQLAlchemy models (dives, sites, gear, attachments, auth)
+  app/store/        the data repository in memory: records, loader, git write-back
   app/services/     auth, storage (local/S3), image variants, stats
   app/importers/    Subsurface XML parser
-  app/seed.py       sample data for development
-  alembic/          migrations
-  tests/
+  tests/            pytest on tests/fixtures/data, a tiny data tree
 src/
   content/          blog + TIL markdown
   lib/anim/         anime.js helpers (descent, reveal, counter)

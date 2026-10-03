@@ -95,7 +95,10 @@ describe('compareMaps', () => {
   });
 
   it('reports a kind only one map uses', () => {
-    const entries = compareMaps(drawn, mapWith([{ id: 'w1', kind: 'wreck', points: rect(0, 0, 5, 5) }]));
+    const entries = compareMaps(
+      drawn,
+      mapWith([{ id: 'w1', kind: 'wreck', points: rect(0, 0, 5, 5) }]),
+    );
     expect(entries.map((e) => e.kind).sort()).toEqual(['coral', 'sand', 'wreck']);
   });
 
