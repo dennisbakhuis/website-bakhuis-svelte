@@ -44,6 +44,7 @@ const map: SiteMapOut = {
   notes: '',
   origin: null,
   underlay: null,
+  to_scale: true,
 };
 
 const annotation: DiveMapAnnotation = {

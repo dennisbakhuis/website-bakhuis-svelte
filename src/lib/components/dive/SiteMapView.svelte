@@ -793,7 +793,7 @@
                     (arrow.back ? 180 : 0)}) translate(0 {arrow.phase === 'in' ? -6 * k : -11 * k})"
                 />
               {/each}
-              {#if mid && (showDistances || (focused && onRoute(edge))) && showDistance(edge)}
+              {#if mid && map.to_scale && (showDistances || (focused && onRoute(edge))) && showDistance(edge)}
                 <text
                   class="distance"
                   x={mid.x}
@@ -934,16 +934,22 @@
         >
       </g>
     </g>
-    <g
-      class="scale"
-      transform="translate({box.minX + 14 * hk} {box.maxY - 14 * hk})"
-      font-size={9.5 * hk}
-    >
-      <line x1="0" y1="0" x2={scaleBar * zoom} y2="0" />
-      <line x1="0" y1={-4 * hk} x2="0" y2={4 * hk} />
-      <line x1={scaleBar * zoom} y1={-4 * hk} x2={scaleBar * zoom} y2={4 * hk} />
-      <text x={(scaleBar * zoom) / 2} y={-6 * hk} text-anchor="middle">{scaleBar} m</text>
-    </g>
+    {#if map.to_scale}
+      <g
+        class="scale"
+        transform="translate({box.minX + 14 * hk} {box.maxY - 14 * hk})"
+        font-size={9.5 * hk}
+      >
+        <line x1="0" y1="0" x2={scaleBar * zoom} y2="0" />
+        <line x1="0" y1={-4 * hk} x2="0" y2={4 * hk} />
+        <line x1={scaleBar * zoom} y1={-4 * hk} x2={scaleBar * zoom} y2={4 * hk} />
+        <text x={(scaleBar * zoom) / 2} y={-6 * hk} text-anchor="middle">{scaleBar} m</text>
+      </g>
+    {:else}
+      <text class="not-to-scale" x={box.minX + 14 * hk} y={box.maxY - 14 * hk} font-size={9.5 * hk}
+        >not to scale</text
+      >
+    {/if}
   </svg>
   <div class="view-controls" role="group" aria-label="Map view">
     <button type="button" onclick={() => zoomIn()} title="Zoom in (+)" aria-label="Zoom in"
@@ -964,15 +970,17 @@
       title="Rotate right (])"
       aria-label="Rotate right">↻</button
     >
-    <button
-      type="button"
-      class="toggle"
-      class:off={!showDistances}
-      aria-pressed={showDistances}
-      onclick={() => (distanceChoice = !showDistances)}
-      title={showDistances ? 'Hide line lengths' : 'Show line lengths'}
-      aria-label="Line lengths">m</button
-    >
+    {#if map.to_scale}
+      <button
+        type="button"
+        class="toggle"
+        class:off={!showDistances}
+        aria-pressed={showDistances}
+        onclick={() => (distanceChoice = !showDistances)}
+        title={showDistances ? 'Hide line lengths' : 'Show line lengths'}
+        aria-label="Line lengths">m</button
+      >
+    {/if}
     {#if canFullscreen && !editable}
       <button
         type="button"
@@ -1437,6 +1445,12 @@
     fill: var(--color-text-muted);
   }
   .compass text,
+  .not-to-scale {
+    fill: var(--color-text-faint);
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
   .scale text {
     fill: var(--color-text-muted);
   }

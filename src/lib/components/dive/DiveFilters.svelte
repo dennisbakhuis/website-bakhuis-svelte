@@ -65,10 +65,12 @@
     }
     return options;
   }
+
+  const active = $derived(isFilterActive(filter));
 </script>
 
 <div class="filters">
-  <div class="row">
+  <div class="search-row">
     <label class="search">
       <span class="visually-hidden">Search dives</span>
       <input
@@ -78,128 +80,172 @@
         oninput={(e) => onSearch(e.currentTarget.value)}
       />
     </label>
-    <select
-      value={filter.country}
-      onchange={(e) => onChange({ ...filter, country: e.currentTarget.value })}
-      aria-label="Country"
-    >
-      <option value="">All countries</option>
-      {#each envelope.countries as c (c.country_code)}
-        <option value={c.country_code}
-          >{flagEmoji(c.country_code)} {c.country_name} ({c.dives})</option
-        >
-      {/each}
-    </select>
-    <select
-      value={filter.region}
-      onchange={(e) => onChange({ ...filter, region: e.currentTarget.value })}
-      aria-label="Region"
-    >
-      <option value="">All regions</option>
-      {#each envelope.regions as r (r)}
-        <option value={r}>{regionLabel(r)}</option>
-      {/each}
-    </select>
-    <select
-      value={filter.siteType}
-      onchange={(e) => onChange({ ...filter, siteType: e.currentTarget.value })}
-      aria-label="Site type"
-    >
-      <option value="">Any site type</option>
-      {#each envelope.site_types as t (t)}
-        <option value={t}>{t}</option>
-      {/each}
-    </select>
-    <select
-      value={filter.water}
-      onchange={(e) => onChange({ ...filter, water: e.currentTarget.value })}
-      aria-label="Water"
-    >
-      <option value="">Any water</option>
-      <option value="salt">Salt water</option>
-      <option value="fresh">Fresh water</option>
-      <option value="brackish">Brackish</option>
-    </select>
-    <select
-      value={filter.year === null ? '' : String(filter.year)}
-      onchange={(e) =>
-        onChange({ ...filter, year: e.currentTarget.value ? Number(e.currentTarget.value) : null })}
-      aria-label="Year"
-    >
-      <option value="">All years</option>
-      {#each envelope.years as y (y)}
-        <option value={String(y)}>{y}</option>
-      {/each}
-    </select>
-    {#if envelope.gear_setups.length}
-      <select
-        value={filter.setup}
-        onchange={(e) => onChange({ ...filter, setup: e.currentTarget.value })}
-        aria-label="Gear setup"
+    {#if active}
+      <button type="button" class="clear" onclick={() => onChange(clearFilter(filter))}
+        >Clear all ×</button
       >
-        <option value="">Any setup</option>
-        {#each envelope.gear_setups as s (s.slug)}
-          <option value={s.slug}>{s.name}</option>
+    {/if}
+  </div>
+
+  <div class="fields">
+    <label class="field" class:set={!!filter.country}>
+      <span>Country</span>
+      <select
+        value={filter.country}
+        onchange={(e) => onChange({ ...filter, country: e.currentTarget.value })}
+      >
+        <option value="">Any</option>
+        {#each envelope.countries as c (c.country_code)}
+          <option value={c.country_code}
+            >{flagEmoji(c.country_code)} {c.country_name} ({c.dives})</option
+          >
         {/each}
       </select>
+    </label>
+    <label class="field" class:set={!!filter.region}>
+      <span>Region</span>
+      <select
+        value={filter.region}
+        class="names"
+        onchange={(e) => onChange({ ...filter, region: e.currentTarget.value })}
+      >
+        <option value="">Any</option>
+        {#each envelope.regions as r (r)}
+          <option value={r}>{regionLabel(r)}</option>
+        {/each}
+      </select>
+    </label>
+    <label class="field" class:set={!!filter.siteType}>
+      <span>Site type</span>
+      <select
+        value={filter.siteType}
+        class="names"
+        onchange={(e) => onChange({ ...filter, siteType: e.currentTarget.value })}
+      >
+        <option value="">Any</option>
+        {#each envelope.site_types as t (t)}
+          <option value={t}>{t}</option>
+        {/each}
+      </select>
+    </label>
+    <label class="field" class:set={!!filter.water}>
+      <span>Water</span>
+      <select
+        value={filter.water}
+        onchange={(e) => onChange({ ...filter, water: e.currentTarget.value })}
+      >
+        <option value="">Any</option>
+        <option value="salt">Salt</option>
+        <option value="fresh">Fresh</option>
+        <option value="brackish">Brackish</option>
+      </select>
+    </label>
+    <label class="field" class:set={filter.year !== null}>
+      <span>Year</span>
+      <select
+        value={filter.year === null ? '' : String(filter.year)}
+        onchange={(e) =>
+          onChange({
+            ...filter,
+            year: e.currentTarget.value ? Number(e.currentTarget.value) : null,
+          })}
+      >
+        <option value="">Any</option>
+        {#each envelope.years as y (y)}
+          <option value={String(y)}>{y}</option>
+        {/each}
+      </select>
+    </label>
+    <label class="field" class:set={!!filter.person}>
+      <span>Buddy</span>
+      <select
+        value={filter.person}
+        onchange={(e) => onChange({ ...filter, person: e.currentTarget.value })}
+      >
+        <option value="">Any</option>
+        {#each buddies as b (b.slug)}
+          <option value={b.slug}>{b.name} ({b.count})</option>
+        {/each}
+        {#if filter.person && !buddies.some((b) => b.slug === filter.person)}
+          <option value={filter.person}>{filter.person}</option>
+        {/if}
+      </select>
+    </label>
+    <label class="field" class:set={!!filter.gas}>
+      <span>Gas</span>
+      <select
+        value={filter.gas}
+        onchange={(e) => onChange({ ...filter, gas: e.currentTarget.value })}
+      >
+        <option value="">Any</option>
+        <option value="air">Air</option>
+        <option value="nitrox">Nitrox (any)</option>
+        <option value="trimix">Trimix (any)</option>
+        {#each mixes as mix (mix.value)}
+          <option value={mix.value}>{mix.value} ({mix.count})</option>
+        {/each}
+      </select>
+    </label>
+    {#if envelope.gear_setups.length}
+      <label class="field" class:set={!!filter.setup}>
+        <span>Setup</span>
+        <select
+          value={filter.setup}
+          onchange={(e) => onChange({ ...filter, setup: e.currentTarget.value })}
+        >
+          <option value="">Any</option>
+          {#each envelope.gear_setups as s (s.slug)}
+            <option value={s.slug}>{s.name}</option>
+          {/each}
+        </select>
+      </label>
     {/if}
-    <select
-      value={filter.gas}
-      onchange={(e) => onChange({ ...filter, gas: e.currentTarget.value })}
-      aria-label="Gas"
-    >
-      <option value="">Any gas</option>
-      <option value="air">Air</option>
-      <option value="nitrox">Nitrox (any)</option>
-      <option value="trimix">Trimix (any)</option>
-      {#each mixes as mix (mix.value)}
-        <option value={mix.value}>{mix.value} ({mix.count})</option>
-      {/each}
-    </select>
+    <label class="field" class:set={filter.minDepth !== null || filter.maxDepth !== null}>
+      <span>Depth</span>
+      <select
+        value={rangeValue(depthRange)}
+        onchange={(e) => {
+          const range = parseRange(e.currentTarget.value);
+          onChange({ ...filter, minDepth: range.min, maxDepth: range.max });
+        }}
+      >
+        <option value="">Any</option>
+        {#each rangeOptions(depthRange, DEPTH_BUCKETS, 'm') as o (o.value)}
+          <option value={o.value}>{o.label}</option>
+        {/each}
+      </select>
+    </label>
+    <label class="field" class:set={filter.minDuration !== null || filter.maxDuration !== null}>
+      <span>Bottom time</span>
+      <select
+        value={rangeValue(durationRange)}
+        onchange={(e) => {
+          const range = parseRange(e.currentTarget.value);
+          onChange({ ...filter, minDuration: range.min, maxDuration: range.max });
+        }}
+      >
+        <option value="">Any</option>
+        {#each rangeOptions(durationRange, DURATION_BUCKETS, 'min') as o (o.value)}
+          <option value={o.value}>{o.label}</option>
+        {/each}
+      </select>
+    </label>
   </div>
-  <div class="row">
-    <select
-      value={filter.person}
-      onchange={(e) => onChange({ ...filter, person: e.currentTarget.value })}
-      aria-label="Buddy"
-      class="plain"
-    >
-      <option value="">Any buddy</option>
-      {#each buddies as b (b.slug)}
-        <option value={b.slug}>{b.name} ({b.count})</option>
-      {/each}
-      {#if filter.person && !buddies.some((b) => b.slug === filter.person)}
-        <option value={filter.person}>{filter.person}</option>
-      {/if}
-    </select>
-    <select
-      value={rangeValue(depthRange)}
-      onchange={(e) => {
-        const range = parseRange(e.currentTarget.value);
-        onChange({ ...filter, minDepth: range.min, maxDepth: range.max });
-      }}
-      aria-label="Depth range"
-      class="plain"
-    >
-      <option value="">Any depth</option>
-      {#each rangeOptions(depthRange, DEPTH_BUCKETS, 'm') as o (o.value)}
-        <option value={o.value}>{o.label}</option>
-      {/each}
-    </select>
-    <select
-      value={rangeValue(durationRange)}
-      onchange={(e) => {
-        const range = parseRange(e.currentTarget.value);
-        onChange({ ...filter, minDuration: range.min, maxDuration: range.max });
-      }}
-      aria-label="Duration range"
-      class="plain"
-    >
-      <option value="">Any duration</option>
-      {#each rangeOptions(durationRange, DURATION_BUCKETS, 'min') as o (o.value)}
-        <option value={o.value}>{o.label}</option>
-      {/each}
-    </select>
+
+  <div class="chips">
+    {#each envelope.tags as tag (tag)}
+      <button
+        type="button"
+        class="tag"
+        class:active={filter.tags.includes(tag)}
+        data-tag={tag}
+        aria-pressed={filter.tags.includes(tag)}
+        onclick={() => onChange(toggleTag(filter, tag))}
+      >
+        {tag}
+      </button>
+    {/each}
+    <span class="divider" aria-hidden="true"></span>
     <button
       type="button"
       class="tag toggle"
@@ -214,43 +260,24 @@
       aria-pressed={filter.profile}
       onclick={() => onChange({ ...filter, profile: !filter.profile })}>with profile</button
     >
-  </div>
-  <div class="row tags-row">
-    {#each envelope.tags as tag (tag)}
-      <button
-        type="button"
-        class="tag"
-        class:active={filter.tags.includes(tag)}
-        data-tag={tag}
-        aria-pressed={filter.tags.includes(tag)}
-        onclick={() => onChange(toggleTag(filter, tag))}
-      >
-        {tag}
-      </button>
-    {/each}
     {#if filter.site}
-      <button type="button" class="tag active" onclick={() => onChange({ ...filter, site: '' })}
+      <button type="button" class="tag pinned" onclick={() => onChange({ ...filter, site: '' })}
         >site: {siteName} ×</button
       >
     {/if}
     {#if filter.section}
-      <button type="button" class="tag active" onclick={() => onChange({ ...filter, section: '' })}
+      <button type="button" class="tag pinned" onclick={() => onChange({ ...filter, section: '' })}
         >line: {filter.section} ×</button
       >
     {/if}
     {#if filter.dateFrom !== null || filter.dateTo !== null}
       <button
         type="button"
-        class="tag active"
+        class="tag pinned"
         onclick={() => onChange({ ...filter, dateFrom: null, dateTo: null })}
         >{filter.dateFrom ? formatDate(filter.dateFrom) : 'start'} – {filter.dateTo
           ? formatDate(filter.dateTo)
           : 'today'} ×</button
-      >
-    {/if}
-    {#if isFilterActive(filter)}
-      <button type="button" class="tag clear" onclick={() => onChange(clearFilter(filter))}
-        >Clear all ×</button
       >
     {/if}
   </div>
@@ -260,19 +287,18 @@
   .filters {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
   }
-  .row {
+  .search-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
   }
   .search {
-    flex: 1 1 260px;
+    flex: 1 1 auto;
+    min-width: 0;
   }
-  input,
-  select {
+  input {
     font: inherit;
     font-size: 14.5px;
     color: var(--color-text);
@@ -282,39 +308,105 @@
     padding: 9px 12px;
     width: 100%;
   }
+  input:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 1px;
+  }
+  .clear {
+    flex: none;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-text);
+    background: none;
+    border: 1px dashed var(--color-border-strong);
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .clear:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  /* One grid of equal fields, each with a small caption: reads as a form, not a jumble. */
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+    gap: 10px 12px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .field span {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+  }
+  .field.set span {
+    color: var(--color-accent);
+  }
   select {
-    width: auto;
+    font: inherit;
+    font-size: 13.5px;
+    width: 100%;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  select:hover {
+    border-color: var(--color-border-strong);
+  }
+  .field.set select {
+    color: var(--color-text);
+    border-color: var(--color-accent);
+  }
+  select.names {
     text-transform: capitalize;
   }
-  .tags-row .tag,
-  .tag.toggle {
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .chips .tag {
     cursor: pointer;
   }
+  .divider {
+    width: 1px;
+    height: 18px;
+    background: var(--color-border-strong);
+    margin: 0 4px;
+  }
   .tag.toggle::before {
-    display: none;
-  }
-  select.plain {
-    text-transform: none;
-  }
-  .tag.clear {
-    border-style: dashed;
-    color: var(--color-text);
-  }
-  .tag.clear::before {
     display: none;
   }
   .tag.active {
     border-color: var(--color-accent);
     color: var(--color-accent);
   }
+  .tag.pinned {
+    border-color: var(--color-warm);
+    color: var(--color-warm);
+  }
+  .tag.pinned::before {
+    display: none;
+  }
   @media (max-width: 480px) {
-    select,
-    .row > select {
-      width: 100%;
-      flex: 1 1 100%;
-    }
-    .search {
-      flex-basis: 100%;
+    .fields {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 </style>

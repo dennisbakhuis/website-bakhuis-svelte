@@ -33,6 +33,7 @@ const map: SiteMap = {
   notes: '',
   origin: null,
   underlay: null,
+  to_scale: true,
 };
 
 describe('SiteMapView on a dive', () => {

@@ -74,6 +74,7 @@ const drawn: SiteMapOut = {
   notes: '',
   origin: null,
   underlay: null,
+  to_scale: true,
 };
 
 const maps: MapRef[] = [

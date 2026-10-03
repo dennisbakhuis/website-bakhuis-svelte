@@ -138,6 +138,11 @@ export type SiteMap = {
    * along the page, and the compass needle swings to match.
    */
   north: number;
+  /**
+   * False for a drawing whose geometry was never measured (a hand sketch):
+   * no line lengths or scale bar are shown, since they would be invented.
+   */
+  to_scale: boolean;
   nodes: MapNode[];
   edges: MapEdge[];
   areas: MapArea[];
@@ -331,6 +336,7 @@ export function emptySiteMap(kind: MapKind = 'stickmap'): SiteMap {
     kind,
     title: '',
     north: 0,
+    to_scale: true,
     nodes: [],
     edges: [],
     areas: [],
@@ -443,6 +449,7 @@ export function normalizeSiteMap(input: unknown): SiteMap {
     kind,
     title: text(raw.title, 120),
     north: bearing(raw.north),
+    to_scale: raw.to_scale !== false,
     nodes: cleanNodes,
     edges: cleanEdges,
     areas: cleanAreas,
@@ -730,7 +737,8 @@ export function mapSummary(map: SiteMap): string {
   const parts: string[] = [];
   const depth = maxDepth(map);
   if (map.kind === 'stickmap') {
-    parts.push(`${map.nodes.length} stations`, `${Math.round(totalLine(map))} m of line`);
+    parts.push(`${map.nodes.length} stations`);
+    parts.push(map.to_scale ? `${Math.round(totalLine(map))} m of line` : 'not to scale');
   } else {
     const objects = map.nodes.filter((n) =>
       ['platform', 'wreck', 'object', 'poi'].includes(n.type),
