@@ -1,86 +1,114 @@
 <script lang="ts">
-  import type { DiveListItem, DiveStats } from '$lib/dive/types';
-  import { barHeights, durationBuckets, typicalDive } from '$lib/dive/stats-view';
+  import type { DiveListItem } from '$lib/dive/types';
+  import { toggleTag, type DiveFilter } from '$lib/dive/filter';
+  import {
+    axisYears,
+    bandActive,
+    bands,
+    countRows,
+    cumulativeHours,
+    DEPTH_EDGES,
+    DURATION_EDGES,
+    gridLines,
+    linePath,
+    rhythmTiles,
+    tagRows,
+    tempColour,
+    toggleDepthBand,
+    toggleDurationBand,
+    toggleOne,
+    toggleYear,
+    waterByCountry,
+    yearActive,
+    yearBars,
+  } from '$lib/dive/charts-view';
+  import { flagEmoji, formatHours } from '$lib/dive/format';
+  import { today } from '$lib/dive/timeline';
   import { counter } from '$lib/anim/counter';
+  import { inView } from '$lib/anim/inview';
 
   let {
-    stats,
-    dives = [],
-    onTag,
-    onSite,
-    onPerson,
+    dives,
+    selected,
+    filter,
+    onChange,
   }: {
-    stats: DiveStats;
-    dives?: DiveListItem[];
-    onTag: (tag: string) => void;
-    onSite?: (slug: string) => void;
-    onPerson?: (slug: string) => void;
+    /** The whole log, drawn faint behind the selection. */
+    dives: DiveListItem[];
+    /** The dives the current filter keeps; equal to `dives` when nothing narrows it. */
+    selected: DiveListItem[];
+    filter: DiveFilter;
+    onChange: (next: DiveFilter) => void;
   } = $props();
 
-  const yearHeights = $derived(barHeights(stats.years, (y) => y.dives));
-  const depthHeights = $derived(barHeights(stats.depth_buckets, (b) => b.dives));
-  const topTags = $derived(stats.tags.slice(0, 8));
-  const tagWidths = $derived(barHeights(topTags, (t) => t.count));
+  const narrowed = $derived(selected.length !== dives.length);
 
-  const cumulative = $derived.by(() => {
-    let total = 0;
-    return stats.years.map((y) => {
-      total += y.minutes;
-      return { year: y.year, hours: total / 60 };
-    });
-  });
-  const cumulativePath = $derived.by(() => {
-    if (cumulative.length < 2) return { line: '', area: '', max: 0 };
-    const max = cumulative[cumulative.length - 1].hours || 1;
-    const W = 320;
-    const H = 120;
-    const x = (i: number) => (i / (cumulative.length - 1)) * W;
-    const y = (h: number) => H - (h / max) * (H - 8);
-    const line = cumulative
-      .map((c, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(c.hours).toFixed(1)}`)
-      .join(' ');
-    return { line, area: `${line} L${W} ${H} L0 ${H} Z`, max };
-  });
-
-  function top<T extends { slug: string; name: string }>(
-    pick: (dive: DiveListItem) => T[],
-    n: number,
-  ): { slug: string; name: string; count: number }[] {
-    const counts: Record<string, { slug: string; name: string; count: number }> = {};
-    for (const dive of dives) {
-      for (const item of pick(dive)) {
-        const row = (counts[item.slug] ??= { slug: item.slug, name: item.name, count: 0 });
-        row.count += 1;
-      }
-    }
-    return Object.values(counts)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, n);
+  function pct(value: number, max: number): number {
+    return Math.round((value / Math.max(max, 1)) * 100);
   }
 
-  const topSites = $derived(top((d) => (d.site ? [d.site] : []), 8));
-  const topPeople = $derived(top((d) => d.buddies, 8));
-  const siteWidths = $derived(barHeights(topSites, (s) => s.count));
-  const peopleWidths = $derived(barHeights(topPeople, (p) => p.count));
+  const years = $derived(yearBars(dives, selected));
+  const yearMax = $derived(Math.max(...years.map((y) => y.total), 1));
 
-  const byMonth = $derived.by(() => {
-    const months = Array.from({ length: 12 }, () => ({ dives: 0, temps: [] as number[] }));
-    for (const dive of dives) {
-      const m = Number(dive.date.slice(5, 7)) - 1;
-      months[m].dives += 1;
-      if (dive.water_temp_c !== null) months[m].temps.push(dive.water_temp_c);
-    }
-    return months.map((m, i) => ({
-      label: 'JFMAMJJASOND'[i],
-      dives: m.dives,
-      temp: m.temps.length ? m.temps.reduce((a, b) => a + b, 0) / m.temps.length : null,
-    }));
-  });
-  const monthHeights = $derived(barHeights(byMonth, (m) => m.dives));
+  const depths = $derived(bands(dives, selected, DEPTH_EDGES, (d) => d.max_depth_m));
+  const depthMax = $derived(Math.max(...depths.map((b) => b.total), 1));
+  const durations = $derived(bands(dives, selected, DURATION_EDGES, (d) => d.duration_min));
+  const durationMax = $derived(Math.max(...durations.map((b) => b.total), 1));
 
-  const durations = $derived(durationBuckets(dives));
-  const durationHeights = $derived(barHeights(durations, (b) => b.dives));
-  const typical = $derived(typicalDive(dives, stats));
+  const tags = $derived(tagRows(dives, selected, 8));
+  const tagMax = $derived(Math.max(...tags.map((t) => t.total), 1));
+  const sites = $derived(countRows(dives, selected, (d) => (d.site ? [d.site] : []), 8));
+  const siteMax = $derived(Math.max(...sites.map((s) => s.total), 1));
+  const people = $derived(countRows(dives, selected, (d) => d.buddies, 8));
+  const peopleMax = $derived(Math.max(...people.map((p) => p.total), 1));
+
+  const water = $derived(waterByCountry(dives, selected));
+  const waterLo = $derived(Math.min(...water.map((w) => w.min), 30));
+  const waterHi = $derived(Math.max(...water.map((w) => w.max), waterLo + 1));
+  function tempX(celsius: number): number {
+    return 3 + ((celsius - waterLo) / (waterHi - waterLo)) * 94;
+  }
+
+  const rhythm = $derived(rhythmTiles(selected, today()));
+
+  // The cumulative curve: the whole log as a faint ghost, the selection solid.
+  const W = 340;
+  const H = 150;
+  const PAD = { l: 36, r: 40, t: 14, b: 20 };
+  const cumulative = $derived(cumulativeHours(years));
+  const cumMax = $derived(Math.max(cumulative[cumulative.length - 1]?.hours ?? 0, 1));
+  function cx(i: number): number {
+    const n = Math.max(cumulative.length - 1, 1);
+    return PAD.l + (i / n) * (W - PAD.l - PAD.r);
+  }
+  function cy(hours: number): number {
+    return PAD.t + (1 - hours / cumMax) * (H - PAD.t - PAD.b);
+  }
+  const ghostPath = $derived(
+    linePath(
+      cumulative.map((p, i) => ({ x: cx(i), y: cy(p.hours) })),
+      H - PAD.b,
+    ),
+  );
+  const solidPath = $derived(
+    linePath(
+      cumulative.map((p, i) => ({ x: cx(i), y: cy(p.selectedHours) })),
+      H - PAD.b,
+    ),
+  );
+  const grid = $derived(gridLines(cumMax));
+  const axis = $derived(axisYears(cumulative.map((p) => p.year)));
+
+  let hovered: number | null = $state(null);
+  const probe = (e: PointerEvent) => {
+    const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * W;
+    const n = cumulative.length - 1;
+    const i = Math.round(((x - PAD.l) / (W - PAD.l - PAD.r)) * n);
+    hovered = Math.min(Math.max(i, 0), n);
+  };
+  const readout = $derived(cumulative[hovered ?? cumulative.length - 1] ?? null);
+  const endPoint = $derived(cumulative[cumulative.length - 1] ?? null);
 
   function numeric(value: string): { n: number; suffix: string; decimals: number } | null {
     const m = /^([\d.]+)(.*)$/.exec(value);
@@ -92,44 +120,92 @@
 </script>
 
 <div class="charts">
-  <div class="chart card">
+  <div class="chart card" use:inView>
     <h3>Dives per year</h3>
-    <div class="bars" style="--n: {stats.years.length}">
-      {#each stats.years as year, i (year.year)}
-        <div
+    <div class="bars" style="--n: {years.length}">
+      {#each years as year, i (year.year)}
+        <button
+          type="button"
           class="bar-col"
-          title="{year.year}: {year.dives} dives, {Math.round(year.minutes / 60)} h"
+          class:active={yearActive(filter, year.year)}
+          class:empty={narrowed && !year.selected}
+          style="--i: {i}"
+          title="{year.year}: {year.total} dives, {formatHours(year.minutes)}{narrowed
+            ? ` · ${year.selected} selected`
+            : ''}"
+          onclick={() => onChange(toggleYear(filter, year.year))}
         >
-          <span class="bar-value num">{year.dives}</span>
-          <span class="bar" style="height: {yearHeights[i]}%"></span>
+          <span class="bar-stack">
+            <span class="bar-value num" style="bottom: {pct(year.selected, yearMax)}%"
+              >{narrowed && !year.selected ? '' : year.selected}</span
+            >
+            {#if narrowed}<span class="bar ghost" style="height: {pct(year.total, yearMax)}%"
+              ></span>{/if}
+            <span class="bar" style="height: {pct(year.selected, yearMax)}%"></span>
+          </span>
           <span class="bar-label num">{String(year.year).slice(2)}</span>
-        </div>
+        </button>
       {/each}
     </div>
   </div>
 
-  <div class="chart card">
+  <div class="chart card" use:inView>
     <h3>Hours underwater, cumulative</h3>
-    {#if cumulativePath.line}
-      <svg viewBox="0 0 320 124" class="area-chart" role="img" aria-label="Cumulative bottom time">
-        <path d={cumulativePath.area} class="cum-area" />
-        <path d={cumulativePath.line} class="cum-line" />
-        <text x="318" y="12" text-anchor="end" class="axis num"
-          >{Math.round(cumulativePath.max)} h</text
-        >
-        <text x="0" y="122" class="axis num">{cumulative[0].year}</text>
-        <text x="320" y="122" text-anchor="end" class="axis num"
-          >{cumulative[cumulative.length - 1].year}</text
-        >
+    {#if cumulative.length > 1}
+      <svg
+        viewBox="0 0 {W} {H}"
+        class="area-chart"
+        role="img"
+        aria-label="Cumulative bottom time, {Math.round(cumMax)} hours by {endPoint?.year}"
+        onpointermove={probe}
+        onpointerdown={probe}
+        onpointerleave={() => (hovered = null)}
+      >
+        {#each grid as hours (hours)}
+          <line x1={PAD.l} x2={W - PAD.r} y1={cy(hours)} y2={cy(hours)} class="grid" />
+          <text x={PAD.l - 6} y={cy(hours) + 3} text-anchor="end" class="axis num">{hours} h</text>
+        {/each}
+        <line x1={PAD.l} x2={W - PAD.r} y1={H - PAD.b} y2={H - PAD.b} class="grid base" />
+        {#if narrowed}
+          <path d={ghostPath.area} class="cum-area ghost" />
+          <path d={ghostPath.line} class="cum-line ghost" />
+        {/if}
+        <path d={solidPath.area} class="cum-area" />
+        <path d={solidPath.line} class="cum-line" pathLength="1" />
+        {#each axis as year (year)}
+          <text x={cx(year - cumulative[0].year)} y={H - 6} text-anchor="middle" class="axis num"
+            >{year}</text
+          >
+        {/each}
+        {#if readout}
+          {@const i = cumulative.indexOf(readout)}
+          <line x1={cx(i)} x2={cx(i)} y1={PAD.t} y2={H - PAD.b} class="cursor" />
+          <circle cx={cx(i)} cy={cy(readout.selectedHours)} r="3.5" class="dot" />
+        {/if}
+        {#if endPoint}
+          <text x={W - PAD.r + 6} y={cy(endPoint.selectedHours) + 3} class="end num"
+            >{Math.round(endPoint.selectedHours)} h</text
+          >
+        {/if}
       </svg>
+      {#if readout}
+        <p class="readout num">
+          <span class="year">{readout.year}</span>
+          <span>{Math.round(readout.selectedHours)} h by year end</span>
+          <span class="faint"
+            >+{formatHours(Math.round(years[cumulative.indexOf(readout)]?.selectedMinutes ?? 0))}
+            · {readout.selectedDives} dives</span
+          >
+        </p>
+      {/if}
     {/if}
   </div>
 
-  {#if typical.length}
-    <div class="chart card">
-      <h3>Typical dive</h3>
+  {#if rhythm.length}
+    <div class="chart card" use:inView>
+      <h3>Rhythm</h3>
       <dl class="tiles">
-        {#each typical as tile (tile.label)}
+        {#each rhythm as tile (tile.label)}
           {@const parsed = numeric(tile.value)}
           <div class="tile">
             <dt>{tile.label}</dt>
@@ -141,6 +217,7 @@
                     value: parsed.n,
                     suffix: parsed.suffix,
                     decimals: parsed.decimals,
+                    group: tile.group,
                     duration: 1200,
                   }}>{tile.value}</span
                 >
@@ -155,90 +232,102 @@
     </div>
   {/if}
 
-  <div class="chart card">
-    <h3>Max depth</h3>
-    <div class="bars" style="--n: {stats.depth_buckets.length}">
-      {#each stats.depth_buckets as bucket, i (bucket.from_m)}
-        <div class="bar-col" title="{bucket.from_m}–{bucket.to_m} m: {bucket.dives} dives">
-          <span class="bar-value num">{bucket.dives}</span>
-          <span class="bar depth" style="height: {depthHeights[i]}%"></span>
-          <span class="bar-label num">{bucket.from_m}–{bucket.to_m}</span>
-        </div>
-      {/each}
+  {#if depths.length}
+    <div class="chart card" use:inView>
+      <h3>Max depth</h3>
+      <div class="bars" style="--n: {depths.length}">
+        {#each depths as band, i (band.label)}
+          <button
+            type="button"
+            class="bar-col"
+            class:active={bandActive({ min: filter.minDepth, max: filter.maxDepth }, band)}
+            class:empty={narrowed && !band.selected}
+            style="--i: {i}"
+            title="{band.label} m: {band.total} dives{narrowed
+              ? ` · ${band.selected} selected`
+              : ''}"
+            onclick={() => onChange(toggleDepthBand(filter, band))}
+          >
+            <span class="bar-stack">
+              <span class="bar-value num" style="bottom: {pct(band.selected, depthMax)}%"
+                >{narrowed && !band.selected ? '' : band.selected}</span
+              >
+              {#if narrowed}<span
+                  class="bar depth ghost"
+                  style="height: {pct(band.total, depthMax)}%"
+                ></span>{/if}
+              <span class="bar depth" style="height: {pct(band.selected, depthMax)}%"></span>
+            </span>
+            <span class="bar-label num">{band.label}</span>
+          </button>
+        {/each}
+      </div>
     </div>
-  </div>
+  {/if}
 
-  {#if dives.length}
-    <div class="chart card">
+  {#if durations.length}
+    <div class="chart card" use:inView>
       <h3>Bottom time</h3>
       <div class="bars" style="--n: {durations.length}">
-        {#each durations as bucket, i (bucket.from_min)}
-          <div class="bar-col" title="{bucket.label} min: {bucket.dives} dives">
-            <span class="bar-value num">{bucket.dives}</span>
-            <span class="bar time" style="height: {durationHeights[i]}%"></span>
-            <span class="bar-label num">{bucket.label}</span>
-          </div>
-        {/each}
-      </div>
-    </div>
-  {/if}
-
-  {#if dives.length}
-    <div class="chart card">
-      <h3>By month · water temperature</h3>
-      <div class="bars" style="--n: 12">
-        {#each byMonth as month, i (i)}
-          <div
+        {#each durations as band, i (band.label)}
+          <button
+            type="button"
             class="bar-col"
-            title="{month.dives} dives{month.temp !== null
-              ? `, water ${month.temp.toFixed(1)} °C`
+            class:active={bandActive({ min: filter.minDuration, max: filter.maxDuration }, band)}
+            class:empty={narrowed && !band.selected}
+            style="--i: {i}"
+            title="{band.label} min: {band.total} dives{narrowed
+              ? ` · ${band.selected} selected`
               : ''}"
+            onclick={() => onChange(toggleDurationBand(filter, band))}
           >
-            <span class="bar-value num"
-              >{month.temp !== null ? Math.round(month.temp) + '°' : ''}</span
-            >
-            <span class="bar month" style="height: {monthHeights[i]}%"></span>
-            <span class="bar-label num">{month.label}</span>
-          </div>
+            <span class="bar-stack">
+              <span class="bar-value num" style="bottom: {pct(band.selected, durationMax)}%"
+                >{narrowed && !band.selected ? '' : band.selected}</span
+              >
+              {#if narrowed}<span
+                  class="bar time ghost"
+                  style="height: {pct(band.total, durationMax)}%"
+                ></span>{/if}
+              <span class="bar time" style="height: {pct(band.selected, durationMax)}%"></span>
+            </span>
+            <span class="bar-label num">{band.label}</span>
+          </button>
         {/each}
       </div>
     </div>
   {/if}
 
-  <div class="chart card">
-    <h3>Dive types</h3>
-    <ul class="hbars">
-      {#each topTags as tag, i (tag.tag)}
-        <li>
-          <button type="button" class="hbar-row" onclick={() => onTag(tag.tag)}>
-            <span class="tag" data-tag={tag.tag}>{tag.tag}</span>
-            <span class="hbar-track"
-              ><span
-                class="hbar"
-                style="width: {tagWidths[
-                  i
-                ]}%; background: var(--tag-{tag.tag}, var(--color-accent))"
-              ></span></span
-            >
-            <span class="hbar-value num">{tag.count}</span>
-          </button>
-        </li>
-      {/each}
-    </ul>
-  </div>
-
-  {#if topSites.length}
-    <div class="chart card">
-      <h3>Most dived sites</h3>
+  {#if water.length}
+    <div class="chart card" use:inView>
+      <h3>Water by country</h3>
       <ul class="hbars">
-        {#each topSites as site, i (site.slug)}
+        {#each water as row, i (row.code)}
           <li>
-            <button type="button" class="hbar-row wide" onclick={() => onSite?.(site.slug)}>
-              <span class="name">{site.name}</span>
-              <span class="hbar-track"
-                ><span class="hbar" style="width: {siteWidths[i]}%"></span></span
-              >
-              <span class="hbar-value num">{site.count}</span>
+            <button
+              type="button"
+              class="hbar-row temp"
+              class:active={filter.country === row.code}
+              class:empty={narrowed && !row.selected}
+              style="--i: {i}"
+              title="{row.name}: {row.min}–{row.max} °C over {row.dives} dives"
+              onclick={() => onChange(toggleOne(filter, 'country', row.code))}
+            >
+              <span class="name"><span class="flag">{flagEmoji(row.code)}</span> {row.name}</span>
+              <span class="range-track">
+                <span
+                  class="range"
+                  style="left: {tempX(row.min)}%; width: {Math.max(
+                    tempX(row.max) - tempX(row.min),
+                    1.5,
+                  )}%"
+                ></span>
+                <span
+                  class="median"
+                  style="left: {tempX(row.median)}%; background: {tempColour(row.median)}"
+                ></span>
+              </span>
+              <span class="hbar-value num">{Math.round(row.median)} °C</span>
             </button>
           </li>
         {/each}
@@ -246,18 +335,92 @@
     </div>
   {/if}
 
-  {#if topPeople.length}
-    <div class="chart card">
+  {#if tags.length}
+    <div class="chart card" use:inView>
+      <h3>Dive types</h3>
+      <ul class="hbars">
+        {#each tags as tag, i (tag.tag)}
+          <li>
+            <button
+              type="button"
+              class="hbar-row"
+              class:active={filter.tags.includes(tag.tag)}
+              class:empty={narrowed && !tag.selected}
+              style="--i: {i}"
+              title="{tag.total} dives{narrowed ? ` · ${tag.selected} selected` : ''}"
+              onclick={() => onChange(toggleTag(filter, tag.tag))}
+            >
+              <span class="tag" data-tag={tag.tag}>{tag.tag}</span>
+              <span class="hbar-track" style="--bar: var(--tag-{tag.tag}, var(--color-accent))">
+                {#if narrowed}<span class="hbar ghost" style="width: {pct(tag.total, tagMax)}%"
+                  ></span>{/if}
+                <span class="hbar" style="width: {pct(tag.selected, tagMax)}%"></span>
+              </span>
+              <span class="hbar-value num">{tag.selected}</span>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
+
+  {#if sites.length}
+    <div class="chart card" use:inView>
+      <h3>Most dived sites</h3>
+      <ul class="hbars">
+        {#each sites as site, i (site.slug)}
+          <li>
+            <button
+              type="button"
+              class="hbar-row wide"
+              class:active={filter.site === site.slug}
+              class:empty={narrowed && !site.selected}
+              style="--i: {i}"
+              title="{site.name}: {site.total} dives{narrowed
+                ? ` · ${site.selected} selected`
+                : ''}"
+              onclick={() => onChange(toggleOne(filter, 'site', site.slug))}
+            >
+              <span class="name">{site.name}</span>
+              <span class="hbar-track">
+                {#if narrowed}<span class="hbar ghost" style="width: {pct(site.total, siteMax)}%"
+                  ></span>{/if}
+                <span class="hbar" style="width: {pct(site.selected, siteMax)}%"></span>
+              </span>
+              <span class="hbar-value num">{site.selected}</span>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
+
+  {#if people.length}
+    <div class="chart card" use:inView>
       <h3>Dived most with</h3>
       <ul class="hbars">
-        {#each topPeople as person, i (person.slug)}
+        {#each people as person, i (person.slug)}
           <li>
-            <button type="button" class="hbar-row wide" onclick={() => onPerson?.(person.slug)}>
+            <button
+              type="button"
+              class="hbar-row wide"
+              class:active={filter.person === person.slug}
+              class:empty={narrowed && !person.selected}
+              style="--i: {i}; --bar: var(--color-warm)"
+              title="{person.name}: {person.total} dives{narrowed
+                ? ` · ${person.selected} selected`
+                : ''}"
+              onclick={() => onChange(toggleOne(filter, 'person', person.slug))}
+            >
               <span class="name">{person.name}</span>
-              <span class="hbar-track"
-                ><span class="hbar warm" style="width: {peopleWidths[i]}%"></span></span
-              >
-              <span class="hbar-value num">{person.count}</span>
+              <span class="hbar-track">
+                {#if narrowed}<span
+                    class="hbar ghost"
+                    style="width: {pct(person.total, peopleMax)}%"
+                  ></span>{/if}
+                <span class="hbar" style="width: {pct(person.selected, peopleMax)}%"></span>
+              </span>
+              <span class="hbar-value num">{person.selected}</span>
             </button>
           </li>
         {/each}
@@ -307,9 +470,20 @@
       grid-column: span 6;
     }
   }
+  h3 {
+    font-size: 14px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 18px;
+  }
+
+  /* Tiles */
   .tiles {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
     gap: 18px 10px;
     margin: 0;
   }
@@ -329,7 +503,7 @@
   }
   .tile .num {
     font-family: var(--font-display);
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
     line-height: 1.1;
     color: var(--color-text);
@@ -338,18 +512,8 @@
     font-size: 11.5px;
     color: var(--color-text-muted);
   }
-  .bar.time {
-    background: var(--color-warm);
-  }
-  h3 {
-    font-size: 14px;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin-bottom: 18px;
-  }
+
+  /* Vertical bars: each column is a button that narrows the log to its band. */
   .bars {
     display: grid;
     grid-template-columns: repeat(var(--n), minmax(0, 1fr));
@@ -364,48 +528,170 @@
     justify-content: flex-end;
     height: 100%;
     gap: 4px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .bar-col:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+  .bar-stack {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    margin-top: 18px;
   }
   .bar {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    translate: -50%;
     width: 100%;
     max-width: 36px;
     min-height: 2px;
     border-radius: 4px 4px 2px 2px;
     background: var(--color-accent);
-    transition: height 0.4s ease;
+    transform-origin: bottom;
+    transition:
+      height 0.45s ease,
+      transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+      filter 0.15s ease;
+    transition-delay: 0s, calc(var(--i, 0) * 30ms), 0s;
   }
   .bar.depth {
     background: var(--tag-deep);
   }
-  .bar.month {
-    background: var(--tag-drift);
+  .bar.time {
+    background: var(--color-warm);
+  }
+  .bar.ghost {
+    opacity: 0.16;
+  }
+  .chart:global([data-anim]:not([data-inview])) .bar {
+    transform: scaleY(0);
+  }
+  .bar-col:hover .bar:not(.ghost) {
+    filter: brightness(1.2);
+  }
+  .bar-col.active .bar:not(.ghost) {
+    outline: 2px solid var(--color-warm);
+    outline-offset: 2px;
+  }
+  .bar-col.active .bar-label,
+  .bar-col:hover .bar-label {
+    color: var(--color-text);
+  }
+  .bar-col.active .bar-label {
+    color: var(--color-warm);
+  }
+  .bar-col.empty .bar-label {
+    opacity: 0.5;
   }
   .bar-value {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    margin-bottom: 3px;
     font-size: 11px;
+    line-height: 1;
     color: var(--color-text-muted);
+    transition: bottom 0.45s ease;
   }
   .bar-label {
     font-size: 10.5px;
     color: var(--color-text-faint);
     white-space: nowrap;
+    transition: color 0.15s ease;
   }
+
+  /* The cumulative curve */
   .area-chart {
     width: 100%;
     height: auto;
     display: block;
+    touch-action: pan-y;
+  }
+  .grid {
+    stroke: var(--color-border);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+  }
+  .grid.base {
+    stroke-dasharray: none;
   }
   .cum-area {
-    fill: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    fill: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    transition: opacity 0.8s ease 0.6s;
   }
   .cum-line {
     fill: none;
     stroke: var(--color-accent);
     stroke-width: 2;
     stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+  }
+  .chart:global([data-anim]:not([data-inview])) .cum-line {
+    stroke-dashoffset: 1;
+  }
+  .chart:global([data-anim]:not([data-inview])) .cum-area {
+    opacity: 0;
+  }
+  .cum-area.ghost {
+    fill: color-mix(in srgb, var(--color-text-faint) 10%, transparent);
+  }
+  .cum-line.ghost {
+    stroke: var(--color-text-faint);
+    stroke-width: 1;
+    stroke-dasharray: none;
+    opacity: 0.6;
+  }
+  .cursor {
+    stroke: var(--color-text-faint);
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+  }
+  .dot {
+    fill: var(--color-bg-elevated);
+    stroke: var(--color-accent);
+    stroke-width: 2;
   }
   .axis {
     fill: var(--color-text-faint);
-    font-size: 10px;
+    font-size: 9.5px;
   }
+  .end {
+    fill: var(--color-text);
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+  .readout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+  .readout .year {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+  .readout .faint {
+    color: var(--color-text-faint);
+  }
+
+  /* Horizontal bars: rows are buttons that narrow the log to that value. */
   .hbars {
     list-style: none;
     margin: 0;
@@ -424,39 +710,106 @@
     border: none;
     padding: 2px 0;
     color: inherit;
+    font: inherit;
     text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .hbar-row:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
   }
   .hbar-row.wide {
     grid-template-columns: 128px 1fr 32px;
   }
-  .hbar-row:hover .tag,
-  .hbar-row:hover .name {
+  .hbar-row.temp {
+    grid-template-columns: 128px 1fr 44px;
+  }
+  .hbar-row:hover .name,
+  .hbar-row:hover .tag {
     color: var(--color-accent);
+  }
+  .hbar-row.active .name,
+  .hbar-row.active .tag {
+    color: var(--color-warm);
+  }
+  .hbar-row.active .hbar-track,
+  .hbar-row.active .range-track {
+    outline: 1.5px solid var(--color-warm);
+    outline-offset: 2px;
+  }
+  .hbar-row.empty .name,
+  .hbar-row.empty .tag,
+  .hbar-row.empty .hbar-value {
+    opacity: 0.5;
   }
   .name {
     font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: color 0.15s ease;
   }
-  .hbar-track {
+  .flag {
+    font-size: 12px;
+  }
+  .hbar-track,
+  .range-track {
+    position: relative;
     height: 8px;
     border-radius: 4px;
     background: var(--color-surface-2);
+  }
+  .hbar-track {
     overflow: hidden;
   }
   .hbar {
-    display: block;
-    height: 100%;
+    position: absolute;
+    inset: 0 auto 0 0;
     border-radius: 4px;
-    background: var(--color-accent);
+    background: var(--bar, var(--color-accent));
+    transform-origin: left;
+    transition:
+      width 0.45s ease,
+      transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: 0s, calc(var(--i, 0) * 45ms);
   }
-  .hbar.warm {
-    background: var(--color-warm);
+  .hbar.ghost {
+    opacity: 0.2;
+  }
+  .chart:global([data-anim]:not([data-inview])) .hbar {
+    transform: scaleX(0);
   }
   .hbar-value {
     font-size: 12px;
     color: var(--color-text-muted);
     text-align: right;
+  }
+
+  /* Water temperature: the span from coldest to warmest with the median as a dot. */
+  .range {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+    transform-origin: center;
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i, 0) * 45ms);
+  }
+  .median {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    translate: -50% -50%;
+    border: 2px solid var(--color-bg-elevated);
+    transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i, 0) * 45ms + 0.2s);
+  }
+  .chart:global([data-anim]:not([data-inview])) .range {
+    transform: scaleX(0);
+  }
+  .chart:global([data-anim]:not([data-inview])) .median {
+    transform: scale(0);
   }
 </style>

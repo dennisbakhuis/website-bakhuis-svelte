@@ -83,13 +83,7 @@
     <h2>By year, by depth, by type</h2>
   </div>
   <div data-reveal>
-    <Charts
-      stats={data.stats}
-      dives={data.envelope.dives}
-      onTag={(tag) => update({ ...filter, tags: [tag] })}
-      onSite={(slug) => update({ ...filter, site: slug })}
-      onPerson={(slug) => update({ ...filter, person: slug })}
-    />
+    <Charts dives={data.envelope.dives} selected={filtered} {filter} onChange={update} />
   </div>
 </section>
 
