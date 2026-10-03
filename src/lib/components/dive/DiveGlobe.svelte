@@ -2,7 +2,14 @@
   import { onMount, type Snippet } from 'svelte';
   import type { GeoJSONSource, Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl';
   import type { CountryStat, DiveListItem, MapSite } from '$lib/dive/types';
-  import { siteFlavor, TILES_BASE, type TileIndex } from '$lib/map/locator';
+  import {
+    archiveForTile,
+    DETAIL_MIN_ZOOM,
+    detailMaxZoom,
+    siteFlavor,
+    TILES_BASE,
+    type TileIndex,
+  } from '$lib/map/locator';
   import {
     HOME_VIEW,
     jumpTargets,
@@ -68,7 +75,7 @@
     children?: Snippet;
   } = $props();
 
-  const MAX_ZOOM = 10;
+  const MAX_ZOOM = 18;
   const SPIN_DEGREES = 8;
   const SPIN_MS = 4000;
   const POPUP_DIVES = 6;
@@ -252,8 +259,30 @@
       if (cancelled || !container || !index?.world) return;
 
       maplibre.setWorkerUrl(workerUrl);
-      maplibre.addProtocol('pmtiles', new Protocol().tile);
+      const protocol = new Protocol();
+      maplibre.addProtocol('pmtiles', protocol.tile);
       const base = `${location.origin}${TILES_BASE}`;
+      // Past the world archive's zoom the regional archives take over: each tile
+      // request is routed to the archive that covers it, and comes back empty elsewhere.
+      maplibre.addProtocol('detail', (params, abort) => {
+        const m = /^detail:\/\/(\d+)\/(\d+)\/(\d+)$/.exec(params.url);
+        const archive = m && archiveForTile(index, +m[1], +m[2], +m[3]);
+        if (!archive) return Promise.resolve({ data: new Uint8Array() });
+        return protocol.tile(
+          { ...params, url: `pmtiles://${base}/${archive.file}/${m[1]}/${m[2]}/${m[3]}` },
+          abort,
+        );
+      });
+      const detailZoom = detailMaxZoom(index);
+      const flavor = siteFlavor();
+      const detailLayers =
+        detailZoom >= DETAIL_MIN_ZOOM
+          ? layers('detail', flavor, { lang: 'en' }).map((layer) => ({
+              ...layer,
+              id: `detail-${layer.id}`,
+              minzoom: Math.max(layer.minzoom ?? 0, DETAIL_MIN_ZOOM),
+            }))
+          : [];
       const bg = resolve('var(--color-bg)');
       const accent = resolve('var(--color-accent)');
       const warm = resolve('var(--color-warm)');
@@ -273,8 +302,18 @@
               url: `pmtiles://${base}/${index.world.file}`,
               attribution: index.attribution,
             },
+            ...(detailLayers.length
+              ? {
+                  detail: {
+                    type: 'vector' as const,
+                    tiles: ['detail://{z}/{x}/{y}'],
+                    minzoom: DETAIL_MIN_ZOOM,
+                    maxzoom: detailZoom,
+                  },
+                }
+              : {}),
           },
-          layers: layers('protomaps', siteFlavor(), { lang: 'en' }),
+          layers: [...layers('protomaps', flavor, { lang: 'en' }), ...detailLayers],
         },
         ...(view ?? (fit ? {} : HOME_VIEW)),
         ...(view || !fit ? {} : { bounds: fit, fitBoundsOptions: FIT_OPTIONS }),

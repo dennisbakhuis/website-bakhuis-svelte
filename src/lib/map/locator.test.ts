@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { archiveFor, minZoomFor, startZoom, type TileIndex } from './locator';
+import {
+  archiveFor,
+  archiveForTile,
+  detailMaxZoom,
+  minZoomFor,
+  startZoom,
+  tileBounds,
+  type TileIndex,
+} from './locator';
 
 const index: TileIndex = {
   attribution: '© OpenStreetMap contributors · Protomaps',
@@ -19,6 +27,32 @@ describe('archiveFor', () => {
 
   it('returns null for a point outside every archive', () => {
     expect(archiveFor(index, 27.8, 33.9)).toBeNull();
+  });
+});
+
+describe('archiveForTile', () => {
+  it('maps a tile to lon/lat bounds', () => {
+    expect(tileBounds(0, 0, 0)).toEqual([
+      -180,
+      expect.closeTo(-85.05, 1),
+      180,
+      expect.closeTo(85.05, 1),
+    ]);
+    const [w, s, e, n] = tileBounds(8, 130, 85);
+    expect(w).toBeCloseTo(2.81, 1);
+    expect(e).toBeCloseTo(4.22, 1);
+    expect(s).toBeCloseTo(50.74, 1);
+    expect(n).toBeCloseTo(51.62, 1);
+  });
+
+  it('picks the smallest archive overlapping the tile that reaches its zoom', () => {
+    expect(archiveForTile(index, 8, 130, 85)?.file).toBe('zeeland.pmtiles');
+    expect(archiveForTile(index, 8, 131, 85)?.file).toBe('benelux.pmtiles');
+    expect(archiveForTile(index, 15, 16738, 10883)?.file).toBe('zeeland.pmtiles');
+    expect(archiveForTile(index, 15, 16900, 10800)).toBeNull();
+    expect(archiveForTile(index, 8, 151, 103)).toBeNull();
+    expect(detailMaxZoom(index)).toBe(14);
+    expect(detailMaxZoom({ ...index, archives: [] })).toBe(0);
   });
 });
 

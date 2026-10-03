@@ -33,6 +33,37 @@ function area([w, s, e, n]: TileArchive['bbox']): number {
   return (e - w) * (n - s);
 }
 
+/** The globe switches from the world archive to the regional ones from this zoom. */
+export const DETAIL_MIN_ZOOM = 8;
+
+/** The zoom every regional archive reaches; beyond it the tiles overzoom. */
+export function detailMaxZoom(index: TileIndex): number {
+  return index.archives.length ? Math.min(...index.archives.map((a) => a.maxzoom)) : 0;
+}
+
+/** [minlon, minlat, maxlon, maxlat] of a Web Mercator tile. */
+export function tileBounds(z: number, x: number, y: number): TileArchive['bbox'] {
+  const n = 2 ** z;
+  const lon = (i: number) => (i / n) * 360 - 180;
+  const lat = (i: number) => (Math.atan(Math.sinh(Math.PI * (1 - (2 * i) / n))) * 180) / Math.PI;
+  return [lon(x), lat(y + 1), lon(x + 1), lat(y)];
+}
+
+/** The smallest archive that overlaps a tile and reaches its zoom, or null when none does. */
+export function archiveForTile(
+  index: TileIndex,
+  z: number,
+  x: number,
+  y: number,
+): TileArchive | null {
+  const [w, s, e, n] = tileBounds(z, x, y);
+  const covering = index.archives.filter(
+    (a) => a.maxzoom >= z && a.bbox[0] < e && a.bbox[2] > w && a.bbox[1] < n && a.bbox[3] > s,
+  );
+  covering.sort((a, b) => area(a.bbox) - area(b.bbox));
+  return covering[0] ?? null;
+}
+
 /** Initial zoom: a pool fills the frame, an offshore wreck needs the coastline for context. */
 export function startZoom(siteType: string): number {
   switch (siteType) {
