@@ -77,6 +77,22 @@
 
 <StatsBand stats={data.stats} />
 
+<section class="container charts-section" use:reveal>
+  <div data-reveal>
+    <p class="kicker">Numbers</p>
+    <h2>By year, by depth, by type</h2>
+  </div>
+  <div data-reveal>
+    <Charts
+      stats={data.stats}
+      dives={data.envelope.dives}
+      onTag={(tag) => update({ ...filter, tags: [tag] })}
+      onSite={(slug) => update({ ...filter, site: slug })}
+      onPerson={(slug) => update({ ...filter, person: slug })}
+    />
+  </div>
+</section>
+
 <section class="container explore-section" use:reveal>
   <div data-reveal>
     <p class="kicker">Explore</p>
@@ -117,22 +133,6 @@
   </div>
   <div class="what" data-reveal>
     <DiveFilters envelope={data.envelope} {filter} onChange={update} />
-  </div>
-</section>
-
-<section class="container charts-section" use:reveal>
-  <div data-reveal>
-    <p class="kicker">Numbers</p>
-    <h2>By year, by depth, by type</h2>
-  </div>
-  <div data-reveal>
-    <Charts
-      stats={data.stats}
-      dives={data.envelope.dives}
-      onTag={(tag) => update({ ...filter, tags: [tag] })}
-      onSite={(slug) => update({ ...filter, site: slug })}
-      onPerson={(slug) => update({ ...filter, person: slug })}
-    />
   </div>
 </section>
 
