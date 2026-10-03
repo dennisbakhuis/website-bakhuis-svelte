@@ -55,6 +55,7 @@
   --tag-drift: #34d399;
   --tag-boat: #67e8f9;
   --tag-training: #a3a3a3;
+  --tag-stage: #5eead4;
 
   /* Typography */
   --font-display:
@@ -319,6 +320,9 @@ pre {
 }
 .tag[data-tag='training'] {
   --tag-color: var(--tag-training);
+}
+.tag[data-tag='stage'] {
+  --tag-color: var(--tag-stage);
 }
 
 .prose {

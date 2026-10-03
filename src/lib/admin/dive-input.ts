@@ -13,6 +13,7 @@ export const DIVE_TAGS = [
   'dpv',
   'boat',
   'training',
+  'stage',
 ] as const;
 
 export type DiveInput = {

@@ -13,6 +13,7 @@ export type StatTile = {
 const NOTABLE: { tag: string; label: string }[] = [
   { tag: 'cave', label: 'Cave dives' },
   { tag: 'dpv', label: 'Scooter dives' },
+  { tag: 'stage', label: 'Stage dives' },
   { tag: 'wreck', label: 'Wreck dives' },
   { tag: 'deco', label: 'Deco dives' },
   { tag: 'night', label: 'Night dives' },
