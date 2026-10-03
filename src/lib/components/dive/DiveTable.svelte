@@ -106,10 +106,14 @@
       <span class="main">
         <span class="title">
           <span class="number num">#{dive.number}</span>
-          {dive.title ||
-            (hideSite ? dive.section || formatDate(dive.date) : dive.site?.name) ||
-            'Untitled dive'}
-          {#if dive.section && !hideSite}<span class="section">· {dive.section}</span>{/if}
+          {#if dive.title && dive.section && !hideSite}
+            {dive.section}<span class="section">· {dive.title}</span>
+          {:else}
+            {dive.title ||
+              (hideSite ? dive.section || formatDate(dive.date) : dive.site?.name) ||
+              'Untitled dive'}
+            {#if dive.section && !hideSite}<span class="section">· {dive.section}</span>{/if}
+          {/if}
         </span>
         <span class="where">
           {#if hideSite}
