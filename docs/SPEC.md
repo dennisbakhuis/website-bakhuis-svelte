@@ -51,8 +51,8 @@ content, blog editing in the browser (blog stays in git).
 | Analytics       | Umami, server-side relay as in the other sites; no cookies for visitors, no consent banner                 |
 | Site language   | English UI and content (**TBD** — see §11)                                                                 |
 | Domain          | `dennisbakhuis.nl` (prod, from `main`), `dev.dennisbakhuis.nl` (from `dev`)                                |
-| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend + postgres)       |
-| Backups         | wal-g for Postgres, S3 versioning on media buckets, restic of the raw exports to the Storage Box           |
+| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend, no database)     |
+| Backups         | The data repo is the backup (git, pushed after every edit), S3 versioning on media buckets                 |
 | Quality gates   | eslint `--max-warnings 0`, prettier, svelte-check, vitest ≥70 %; backend ruff + mypy strict + pytest       |
 | Commits         | No AI co-author trailers or footers, authored solely by Dennis                                             |
 
@@ -62,6 +62,26 @@ curated dataset already _is_ files, and git gives diffable history, backup and
 a second copy for free. The backend keeps FastAPI for auth, uploads and imports
 but reads and writes the data repository directly; every admin edit is one
 commit. See `docs/RUNBOOK.md` for the layout.
+
+Two repositories, one store (decided 2026-10-09): the dive log is being split
+into a reusable module with a shared dive-site **commons**. Sites, regions,
+drawn maps and CC photos are community data; dives, people, trips, gear,
+profiles, scans and private reference maps stay personal. The backend store
+layers a read-only commons checkout (`COMMONS_ROOT`) under the personal log
+and resolves every site to one of three origins: `log` (a full personal
+record), `commons` (the commons record merged with an optional overlay file
+`sites/<id>.md` carrying `extends: commons`) or `fork` (a personal copy that
+shadows a commons id, `forked_from: commons@<sha>`). Objective fields of a
+commons site cannot be edited in place: the editor writes an overlay for
+personal material or a fork. Personal maps on a commons site get ids
+`<site>-p<n>`. Provenance (`verified`, `geo_source`) is public. Markdown
+bodies are rendered by the backend into `*_html` fields. The frontend reaches
+every page, API, media and tile path through one config and URL builder
+(`src/lib/dive/config.ts`), styles the log through a `--dl-*` token contract
+and `.dl-*` classes, and mounts the public and admin pages through two
+catch-all routes backed by route tables under `src/lib/divelog/`, so the same
+code can later be published as a package. The full plan, with the data split, the
+commons repository and the later phases, is `docs/MODULE.md`.
 
 ---
 
@@ -319,12 +339,12 @@ cover`), mdsvex with a `BlogPostLayout.svelte` as in voorvoet. TIL uses a
   limiter, `/csp-report`. Uploads: type sniffing, size limits, EXIF GPS
   stripped from public variants, private buckets — nothing served straight
   from S3.
-- **Backups/DR**: Postgres wal-g to `bakhuis-wal` bucket (14-day retention as
-  voetlink), media bucket versioning, restic snapshot of raw exports to the
-  Storage Box; documented restore procedure in `docs/RUNBOOK.md`.
+- **Backups/DR**: the data repo is the backup (pushed after every admin
+  write; `git checkout <sha> -- dives/00457.md` restores a record), media
+  bucket versioning; documented restore procedure in `docs/RUNBOOK.md`.
 - **Operations**: `/health` on both services, JSON logs (pino / structlog),
   read-only containers, non-root, same compose hardening as the other sites,
-  Alembic migrations run on backend start, `prune-images.yml`.
+  one uvicorn worker (the store is in-process), `prune-images.yml`.
 
 ---
 
@@ -332,22 +352,27 @@ cover`), mdsvex with a `BlogPostLayout.svelte` as in voorvoet. TIL uses a
 
 ```
 docs/                SPEC.md (this), DEPLOY.md, RUNBOOK.md (add a post, add dives, restore)
-backend/             FastAPI app (uv): app/{api,models,services,importers,media}, alembic/, tests/
+backend/             FastAPI app (uv): app/{api,core,schemas,services,importers,store}, tests/
+  app/store/         loader, sources (log + commons), overlay merge, log repo, the merged Store, git
   Dockerfile
 src/                 SvelteKit
   content/blog/      *.md
   content/til/       *.md
-  lib/dive/          types (generated from the OpenAPI schema), client, search/filter, stats helpers
-  lib/anim/          anime.js helpers: reveal, counter, descent scroll, reduced-motion guard
+  lib/dive/          config + URL builder, context, types (generated from the OpenAPI schema), sitemap model,
+                     filter, stats/charts/list/timeline/profile view logic, format
+  lib/divelog/       the future kit: anim helpers, OwnerBar/Toast, route tables + page components, server
+                     helpers (createDivelog, loaders, handleDivelog, seo, sitemap entries), og
+  lib/components/    dive/, map/, admin/ (the log's components), home/ (site only), shared
+  lib/anim/          site-only anime.js helpers: descent scroll, fish
   lib/blog/          mdsvex layouts, remark plugins
-  lib/map/           TopoJSON projection + world map component (public), MapLibre picker (admin)
-  lib/server/        email, cap, umami, logger, session/auth helpers
-  lib/styles/        tokens.css
-  routes/            +layout, /, dive/, blog/, til/ (redirects), admin/, contact, feed.xml, go/, health
-static/              fonts, favicons, og default, world-110m.json
-infra/               Change set for operator-infra: Caddy vhost, compose.prod.yml, env example, tofu buckets
+  lib/map/           TopoJSON projection, globe/locator helpers, viewport maths
+  lib/server/        email, cap, umami, rate limiter
+  lib/styles/        theme.css (site), divelog-tokens.css + divelog.css (the --dl-* contract), maplibre.css
+  routes/            +layout, /, dive/[...path] + dive/og, blog/, til/ (redirects), admin/[...path] + admin/login,
+                     contact, feed.xml, go/, health
+static/              favicons, og default
 .github/workflows/   ci.yml (frontend + backend), docker-publish.yml (two images), pr-source-gate.yml, prune-images.yml
-Dockerfile, docker-compose.yml (frontend + backend + postgres for local dev), Makefile, VERSION
+Dockerfile, docker-compose.yml (backend + mailpit for local dev), Makefile, VERSION
 ```
 
 ---
