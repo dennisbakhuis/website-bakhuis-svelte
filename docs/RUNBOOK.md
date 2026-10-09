@@ -82,13 +82,33 @@ Media: bucket versioning in prod; in dev it is just a directory.
 ```fish
 make run                              # backend + Mailpit in Docker, SvelteKit on :5373
 make data-status                      # git status of the data checkout
-cd backend; uv run pytest             # 52 tests on tests/fixtures/data
+cd backend; uv run pytest             # 188 tests on tests/fixtures/{data,commons}
 pnpm check; pnpm lint; pnpm test      # frontend gates
 ```
 
 Production mounts a clone of divelog-data at `DATA_ROOT`, a deploy key at `GIT_SSH_KEY_PATH`,
 `STATE_DIR` for sessions, and sets `GIT_ENABLED=true`. Run one uvicorn worker: the store is
 in-process.
+
+### Two repositories
+
+`COMMONS_ROOT` (optional) points at a read-only checkout of a shared site repository
+(`divelog-sites`: `sites/`, `regions/`, `maps/drawn/`, `maps/seed/`, `media/`, a `divelog.yaml`
+with `kind: sites`). Unset, the log is the only source and nothing changes. Set, every site id
+resolves to one **origin**: `log` (a full record in `divelog-data/sites/<id>.md`, personal only),
+`commons` (the commons record with an optional **overlay**), or `fork` (a full log record that
+shadows a commons id, reported under `notices` in `/api/v1/admin/repo/status`, not as an error).
+An overlay keeps the usual path `sites/<id>.md` but starts with `extends: commons` and carries
+only personal material: `notes`, `prices`, `reference_maps`, `subsurface_uuid`,
+`summary_override`, a preferred `default_map`, extra `aliases`/`maps`/`media`, and the personal
+body (the commons body stays available as `body_md_commons`). Editing an objective field of a
+commons site answers 422 "commons site; fork to edit"; `PUT …?fork=true` writes a fork with
+`forked_from: commons@<sha>`. Deleting a commons site removes its overlay; deleting a fork falls
+back to the commons record. New maps on commons or forked sites get personal ids `<site>-p<n>`;
+commons maps cannot be edited. Commons photos (`commons:` keys) are served from
+`/media/commons/…`, their WebP variants rendered once into `STATE_DIR/variants/`. Pull and
+reload in the admin cover both repositories (`COMMONS_GIT_ENABLED=true` lets pull fetch the
+commons; it is never committed to). Tests: `backend/tests/fixtures/commons`.
 
 ## One-off scripts
 
