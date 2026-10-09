@@ -3,6 +3,9 @@
   import { siteIdFor } from '$lib/admin/slug';
   import type { Price, Region, Site } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let {
     site = null,
@@ -86,8 +89,8 @@
       description_md: s.description_md,
       prices: s.prices.map((p) => ({ ...p })),
       sources: s.sources.join('\n'),
-      verified: s.private?.verified ?? '',
-      geo_source: s.private?.geo_source ?? '',
+      verified: s.verified ?? '',
+      geo_source: s.geo_source ?? '',
       notes: s.private?.notes ?? '',
     };
   }
@@ -314,7 +317,7 @@
             ? `${defaultMap.title} (${defaultMap.collection})`
             : 'automatic (drawn → sketch → locator)'}</span
         >
-        <a class="hint" href="/admin/sites/{site.id}/maps">set in the map editor</a>
+        <a class="hint" href={urls.admin.siteMaps(site.id)}>set in the map editor</a>
       </div>
       <label
         >Verified<input

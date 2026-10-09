@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { apiOrError } from '$lib/server/api';
 import type { CountryStat, DiveListItem, MapSite, Person, TripTogether } from '$lib/dive/types';
 import { landPath, spherePath, project, MAP_WIDTH, MAP_HEIGHT } from '$lib/map/world';
+import { urls } from '$lib/divelog-config';
 
 type Payload = {
   person: Person;
@@ -13,7 +14,7 @@ type Payload = {
 };
 
 export const load: PageServerLoad = async (event) => {
-  const data = await apiOrError<Payload>(event, `/api/v1/dive/people/${event.params.slug}`);
+  const data = await apiOrError<Payload>(event, urls.api(`/dive/people/${event.params.slug}`));
   const dots = data.map_sites
     .map((site) => ({ ...site, point: project(site.lon, site.lat) }))
     .filter((s): s is MapSite & { point: { x: number; y: number } } => s.point !== null);
@@ -21,8 +22,8 @@ export const load: PageServerLoad = async (event) => {
     ...data,
     map: { landPath, spherePath, width: MAP_WIDTH, height: MAP_HEIGHT, dots },
     editHref: data.person.private
-      ? `/admin/people/${encodeURIComponent(data.person.private.id)}`
-      : '/admin/people',
+      ? urls.admin.person(encodeURIComponent(data.person.private.id))
+      : urls.admin.people(),
     meta: {
       title: `Diving with ${data.person.name} — Dennis Bakhuis`,
       description: `${data.dives.length} dives together, ${data.person.stats.countries} countries.`,

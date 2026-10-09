@@ -1,23 +1,25 @@
 <script lang="ts">
   import { beforeNavigate, goto, invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
-  import { adminJson, AdminApiError } from '$lib/admin/client';
+  import { adminApi, adminJson, AdminApiError } from '$lib/admin/client';
   import {
     applyTemplate,
-    CYLINDER_PRESETS,
-    STANDARD_GASES,
-    DIVE_TAGS,
     emptyTank,
     diveToInput,
     emptyDiveInput,
     formPayload,
     formSnapshot,
+    presetsFor,
     type DiveTemplate,
   } from '$lib/admin/dive-input';
   import { siteIdFor, slugify } from '$lib/admin/slug';
   import type { DiveAdmin, GearSetup, PersonPrivate, Region, Site, Trip } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
   import DiveRouteEditor from './DiveRouteEditor.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { config, urls } = getDivelog();
+  const presets = presetsFor(config);
 
   export type LastDive = { number: number; label: string; input: DiveTemplate };
 
@@ -101,21 +103,21 @@
     error = '';
     try {
       if (dive) {
-        await adminJson(`/admin/dives/${dive.number}`, 'PUT', formPayload(form, computerText));
+        await adminJson(adminApi('dives', dive.number), 'PUT', formPayload(form, computerText));
         markSaved();
         toast.show({ kind: 'success', message: `Dive #${form.number} saved` });
         if (form.number !== dive.number)
-          await goto(`/admin/dives/${form.number}`, { invalidateAll: true });
+          await goto(urls.admin.dive(form.number), { invalidateAll: true });
         else await invalidateAll();
       } else {
         const created = await adminJson<DiveAdmin>(
-          '/admin/dives',
+          adminApi('dives'),
           'POST',
           formPayload(form, computerText),
         );
         markSaved();
         toast.show({ kind: 'success', message: `Dive #${created.number} created` });
-        await goto(`/admin/dives/${created.number}`);
+        await goto(urls.admin.dive(created.number));
       }
     } catch (err) {
       error = err instanceof AdminApiError ? err.message : 'Save failed';
@@ -127,14 +129,14 @@
   async function remove() {
     if (!dive || !confirm(`Delete dive #${dive.number} and its attachments?`)) return;
     try {
-      await adminJson(`/admin/dives/${dive.number}`, 'DELETE');
+      await adminJson(adminApi('dives', dive.number), 'DELETE');
     } catch (err) {
       error = err instanceof AdminApiError ? err.message : 'Delete failed';
       return;
     }
     leaving = true;
     toast.show({ kind: 'success', message: 'Dive deleted' });
-    await goto('/admin');
+    await goto(urls.admin.root());
   }
 
   function copyLast() {
@@ -148,7 +150,7 @@
     if (!name) return;
     const [first, ...rest] = name.split(/\s+/);
     try {
-      const person = await adminJson<PersonPrivate>('/admin/people', 'POST', {
+      const person = await adminJson<PersonPrivate>(adminApi('people'), 'POST', {
         first_name: first,
         last_name: rest.join(' ') || null,
       });
@@ -190,7 +192,7 @@
     siteBusy = true;
     siteError = '';
     try {
-      const created = await adminJson<Site>('/admin/sites', 'POST', {
+      const created = await adminJson<Site>(adminApi('sites'), 'POST', {
         site_id: siteIdFor(country, newSite.name),
         name: newSite.name.trim(),
         country,
@@ -225,7 +227,7 @@
     tripBusy = true;
     tripError = '';
     try {
-      const created = await adminJson<Trip>('/admin/trips', 'POST', {
+      const created = await adminJson<Trip>(adminApi('trips'), 'POST', {
         slug: slugify(newTrip.name),
         name: newTrip.name.trim(),
         start_date: newTrip.start_date || null,
@@ -249,7 +251,7 @@
     if (!site) return;
     refreshing = true;
     try {
-      const fresh = await adminJson<Site>(`/admin/sites/${site.id}`);
+      const fresh = await adminJson<Site>(adminApi('sites', site.id));
       sites = sites.map((s) => (s.id === fresh.id ? fresh : s));
       const drawn = fresh.maps.filter((m) => m.collection === 'drawn' && m.drawn).length;
       toast.show({
@@ -367,7 +369,7 @@
         {/if}
       </label>
       {#if site}
-        <a class="btn btn-ghost btn-sm" href="/dive/sites/{site.slug}" target="_blank">view ↗</a>
+        <a class="btn btn-ghost btn-sm" href={urls.site(site.slug)} target="_blank">view ↗</a>
         <button type="button" class="btn btn-ghost btn-sm" onclick={() => (form.site_id = null)}
           >clear</button
         >
@@ -461,7 +463,7 @@
               list="cylinder-presets"
               bind:value={tank.cylinder}
               onchange={() => {
-                const preset = CYLINDER_PRESETS.find(
+                const preset = presets.cylinders.find(
                   (p) => p.name.toLowerCase() === tank.cylinder.trim().toLowerCase(),
                 );
                 if (preset) tank.volume_l = preset.volume_l;
@@ -474,7 +476,7 @@
             <select
               value=""
               onchange={(e) => {
-                const std = STANDARD_GASES.find((g) => g.label === e.currentTarget.value);
+                const std = presets.gases.find((g) => g.label === e.currentTarget.value);
                 if (!std) return;
                 tank.gas = std.gas;
                 tank.o2_pct = std.o2;
@@ -483,7 +485,7 @@
               }}
             >
               <option value="">pick…</option>
-              {#each STANDARD_GASES as g (g.label)}<option value={g.label}>{g.label}</option>{/each}
+              {#each presets.gases as g (g.label)}<option value={g.label}>{g.label}</option>{/each}
             </select>
           </label>
           <label>
@@ -541,7 +543,7 @@
         >
       </div>
       <datalist id="cylinder-presets">
-        {#each CYLINDER_PRESETS as p (p.name)}<option value={p.name}>{p.volume_l} L</option>{/each}
+        {#each presets.cylinders as p (p.name)}<option value={p.name}>{p.volume_l} L</option>{/each}
       </datalist>
     </div>
     <div class="field-row">
@@ -578,7 +580,7 @@
   <fieldset>
     <legend>Tags</legend>
     <div class="chips">
-      {#each DIVE_TAGS as tag (tag)}
+      {#each presets.tags as tag (tag)}
         <button
           type="button"
           class="tag"
@@ -651,7 +653,7 @@
           <p class="muted">No drawn map for {site.name} yet.</p>
           <a
             class="btn btn-ghost btn-sm"
-            href="/admin/sites/{site.id}/maps"
+            href={urls.admin.siteMaps(site.id)}
             target="_blank"
             rel="noopener">Draw a map ↗</a
           >
@@ -690,7 +692,7 @@
     {#if error}<span class="error">{error}</span>{/if}
     {#if dive}
       <span class="spacer"></span>
-      <a class="btn btn-ghost btn-sm" href="/dive/{dive.number}" target="_blank" rel="noopener"
+      <a class="btn btn-ghost btn-sm" href={urls.dive(dive.number)} target="_blank" rel="noopener"
         >View dive ↗</a
       >
       <button type="button" class="btn btn-ghost btn-sm danger" onclick={remove}>Delete</button>

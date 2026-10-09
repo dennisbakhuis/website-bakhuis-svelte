@@ -3,6 +3,9 @@
   import OwnerBar from '$lib/components/OwnerBar.svelte';
   import { formatDate, pluralize } from '$lib/dive/format';
   import { reveal } from '$lib/anim/reveal';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   const current = $derived(data.gear.items.filter((i) => !i.retired));
@@ -17,7 +20,7 @@
 </script>
 
 <section class="page container">
-  <a class="back" href="/dive">← Dive log</a>
+  <a class="back" href={urls.log()}>← Dive log</a>
   <p class="kicker">Gear</p>
   <h1>What I dive with</h1>
   <p class="lede">
@@ -26,7 +29,7 @@
   </p>
 
   {#if data.owner}
-    <OwnerBar edit={{ label: 'Edit gear', href: '/admin/gear' }} />
+    <OwnerBar edit={{ label: 'Edit gear', href: urls.admin.gear() }} />
   {/if}
 
   {#if !data.gear.items.length && !data.gear.setups.length}
@@ -39,7 +42,7 @@
         <article class="card setup" id={setup.slug} data-reveal>
           <header>
             <h2>{setup.name}</h2>
-            <a class="count num" href="/dive?setup={setup.slug}"
+            <a class="count num" href={urls.filter({ setup: setup.slug })}
               >{pluralize(setup.dive_count, 'dive')} →</a
             >
           </header>

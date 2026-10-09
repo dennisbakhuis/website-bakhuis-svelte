@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Tank } from '$lib/dive/types';
+import { DEFAULT_CONFIG } from '$lib/dive/config';
 import {
+  CYLINDER_PRESETS,
+  DIVE_TAGS,
+  presetsFor,
+  STANDARD_GASES,
   applyTemplate,
   cleanInput,
   emptyDiveInput,
@@ -127,5 +132,25 @@ describe('tanks', () => {
     expect(payload.tanks[0].pressure_in_bar).toBe(200);
     expect(payload.tanks[0].pressure_out_bar).toBeNull();
     expect(payload.tanks[0].cylinder).toBe('D12');
+  });
+});
+
+describe('presetsFor', () => {
+  it('falls back to the built-in presets', () => {
+    expect(presetsFor(DEFAULT_CONFIG)).toEqual({
+      tags: DIVE_TAGS,
+      cylinders: CYLINDER_PRESETS,
+      gases: STANDARD_GASES,
+    });
+  });
+
+  it('takes each preset list from the config when given', () => {
+    const presets = presetsFor({
+      ...DEFAULT_CONFIG,
+      presets: { tags: ['reef'], cylinders: [{ name: 'AL80', volume_l: 11.1 }] },
+    });
+    expect(presets.tags).toEqual(['reef']);
+    expect(presets.cylinders).toEqual([{ name: 'AL80', volume_l: 11.1 }]);
+    expect(presets.gases).toBe(STANDARD_GASES);
   });
 });

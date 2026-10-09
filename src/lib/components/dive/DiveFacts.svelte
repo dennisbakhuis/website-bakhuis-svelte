@@ -2,6 +2,9 @@
   import { formatDepth, formatTemp, gasLabel, modeLabel } from '$lib/dive/format';
   import { profileSpark } from '$lib/dive/dive-page';
   import type { Dive } from '$lib/dive/types';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   type Fact = { label: string; value: string; numeric: boolean; title?: string; sub?: string };
 
@@ -170,7 +173,7 @@
     {/each}
     {#if dive.gear_setup}<div>
         <dt>Setup</dt>
-        <dd><a href="/dive/gear#{dive.gear_setup.slug}">{dive.gear_setup.name}</a></dd>
+        <dd><a href={urls.gear(dive.gear_setup.slug)}>{dive.gear_setup.name}</a></dd>
       </div>{/if}
     {#if dive.rating}<div>
         <dt>Rating</dt>

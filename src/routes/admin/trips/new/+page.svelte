@@ -4,6 +4,9 @@
   import { slugify } from '$lib/admin/slug';
   import type { TripAdmin, TripIn } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let name = $state('');
   let slug = $state('');
@@ -30,14 +33,14 @@
     try {
       const created = await adminJson<TripAdmin>('/admin/trips', 'POST', body);
       toast.show({ kind: 'success', message: `${created.name} created` });
-      await goto(`/admin/trips/${created.slug}`);
+      await goto(urls.admin.trip(created.slug));
     } catch (err) {
       error = err instanceof AdminApiError ? err.message : 'Save failed';
     }
   }
 </script>
 
-<p class="breadcrumb"><a href="/admin/trips">Trips</a> › New trip</p>
+<p class="breadcrumb"><a href={urls.admin.trips()}>Trips</a> › New trip</p>
 <h1>New trip</h1>
 
 <form class="card form" onsubmit={save}>

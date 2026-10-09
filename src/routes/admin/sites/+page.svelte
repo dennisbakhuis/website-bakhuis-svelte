@@ -1,5 +1,8 @@
 <script lang="ts">
   import type { Site } from '$lib/dive/types';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
 
@@ -29,8 +32,8 @@
 
 <div class="head">
   <h1>Dive sites <span class="muted num">{data.sites.length}</span></h1>
-  <a class="secondary" href="/admin/regions">Regions</a>
-  <a class="btn btn-solid btn-sm new" href="/admin/sites/new">+ New site</a>
+  <a class="secondary" href={urls.admin.regions()}>Regions</a>
+  <a class="btn btn-solid btn-sm new" href={urls.admin.newSite()}>+ New site</a>
 </div>
 
 <div class="toolbar">
@@ -58,7 +61,7 @@
     {#each rows as site (site.id)}
       <tr>
         <td
-          ><a href="/admin/sites/{site.id}">{site.name}</a>{#if site.area}<span class="muted">
+          ><a href={urls.admin.site(site.id)}>{site.name}</a>{#if site.area}<span class="muted">
               · {site.area}</span
             >{/if}</td
         >
@@ -68,7 +71,7 @@
         <td class="n num">{site.dives}</td>
         <td class="n num">{drawnCount(site) || '—'}</td>
         <td class="row-actions"
-          ><a href="/dive/sites/{site.slug}" target="_blank" rel="noopener">view ↗</a></td
+          ><a href={urls.site(site.slug)} target="_blank" rel="noopener">view ↗</a></td
         >
       </tr>
     {:else}

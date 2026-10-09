@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  absoluteTilesBase,
   archiveFor,
   archiveForTile,
   detailMaxZoom,
@@ -71,5 +72,19 @@ describe('minZoomFor', () => {
     expect(minZoomFor([-68.5, 11.9, -68.1, 12.4])).toBe(9);
     expect(minZoomFor([0, 0, 0.0001, 0.0001])).toBe(12);
     expect(minZoomFor([-180, -85, 180, 85])).toBe(3);
+  });
+});
+
+describe('absoluteTilesBase', () => {
+  it('prefixes a site-relative base with the origin', () => {
+    expect(absoluteTilesBase('/media/tiles', 'http://localhost:5373')).toBe(
+      'http://localhost:5373/media/tiles',
+    );
+  });
+
+  it('keeps an absolute base', () => {
+    expect(absoluteTilesBase('https://tiles.example.org', 'http://localhost')).toBe(
+      'https://tiles.example.org',
+    );
   });
 });

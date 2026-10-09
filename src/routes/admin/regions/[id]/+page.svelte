@@ -3,6 +3,9 @@
   import { adminJson, AdminApiError } from '$lib/admin/client';
   import { toast } from '$lib/stores/toast.svelte';
   import RegionForm from '../RegionForm.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   const region = $derived(data.region);
@@ -14,7 +17,7 @@
     try {
       await adminJson(`/admin/regions/${region.id}`, 'DELETE');
       toast.show({ kind: 'success', message: `${region.name} deleted` });
-      await goto('/admin/regions');
+      await goto(urls.admin.regions());
     } catch (err) {
       deleteError = err instanceof AdminApiError ? err.message : 'Could not delete';
     }
@@ -22,12 +25,12 @@
 </script>
 
 <nav class="crumbs" aria-label="Breadcrumb">
-  <a href="/admin/sites">Sites</a> › <a href="/admin/regions">Regions</a> ›
+  <a href={urls.admin.sites()}>Sites</a> › <a href={urls.admin.regions()}>Regions</a> ›
   <span>{region.name}</span>
 </nav>
 <div class="head">
   <h1>{region.name}</h1>
-  <a class="btn btn-ghost btn-sm" href="/dive/regions/{region.id}" target="_blank" rel="noopener"
+  <a class="btn btn-ghost btn-sm" href={urls.region(region.id)} target="_blank" rel="noopener"
     >View ↗</a
   >
 </div>
@@ -41,7 +44,7 @@
     <h2>Sites in this region</h2>
     <ul>
       {#each region.sites as s (s.slug)}
-        <li><a href="/dive/sites/{s.slug}" target="_blank" rel="noopener">{s.name} ↗</a></li>
+        <li><a href={urls.site(s.slug)} target="_blank" rel="noopener">{s.name} ↗</a></li>
       {/each}
     </ul>
   </section>

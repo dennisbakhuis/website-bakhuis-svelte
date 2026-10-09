@@ -5,6 +5,9 @@
   import { reducedMotion } from '$lib/anim/motion';
   import { formatDate } from '$lib/dive/format';
   import { latestMatches, sparkline, type DiveTimeline } from '$lib/dive/sparkline';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let {
     summary,
@@ -17,7 +20,7 @@
   const spark = $derived(sparkline(years, SPARK_W, SPARK_H, 3));
   const lastDiveHref = $derived(
     timeline?.latest && latestMatches(timeline, summary?.last_dive ?? null)
-      ? `/dive/${timeline.latest.number}`
+      ? urls.dive(timeline.latest.number)
       : null,
   );
   const sparkLabel = $derived(
@@ -49,7 +52,7 @@
 <div class="tile">
   <div class="tile-head">
     <span class="tile-title">Diving</span>
-    <a class="tile-link" href="/dive">Open the log →</a>
+    <a class="tile-link" href={urls.log()}>Open the log →</a>
   </div>
   <p class="tile-blurb">
     Cold Dutch water, French caves, a scooter when the line is long enough. Every dive is logged —

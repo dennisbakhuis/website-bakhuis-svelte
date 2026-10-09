@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { adminJson, adminUpload, AdminApiError } from './client';
+import { adminApi, adminJson, adminUpload, AdminApiError, configureAdminClient } from './client';
 
 function response(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -64,5 +64,29 @@ describe('admin client', () => {
     expect((init.body as FormData).get('file')).toBeInstanceOf(File);
     await adminUpload('/plain', file);
     expect((fetchMock.mock.calls[1] as [string])[0]).toBe('/api/v1/plain');
+  });
+});
+
+describe('admin client base', () => {
+  afterEach(() => {
+    configureAdminClient('/api/v1');
+    vi.unstubAllGlobals();
+  });
+
+  it('builds owner API paths', () => {
+    expect(adminApi('dives')).toBe('/admin/dives');
+    expect(adminApi('dives', 650, 'attachments')).toBe('/admin/dives/650/attachments');
+  });
+
+  it('sends requests to the configured API base', async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(response(200, {})));
+    vi.stubGlobal('fetch', fetchMock);
+    configureAdminClient('https://api.example.org/v2/');
+    await adminJson(adminApi('sites'));
+    await adminUpload(adminApi('sites', 'x', 'attachments'), new File(['a'], 'a.jpg'));
+    expect((fetchMock.mock.calls[0] as [string])[0]).toBe('https://api.example.org/v2/admin/sites');
+    expect((fetchMock.mock.calls[1] as [string])[0]).toBe(
+      'https://api.example.org/v2/admin/sites/x/attachments',
+    );
   });
 });

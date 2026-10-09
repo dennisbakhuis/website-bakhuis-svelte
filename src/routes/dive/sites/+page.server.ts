@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { apiOrError } from '$lib/server/api';
 import type { Region, Site } from '$lib/dive/types';
+import { urls } from '$lib/divelog-config';
 
 export type SiteRow = {
   slug: string;
@@ -23,8 +24,8 @@ export type CountryGroup = { code: string; name: string; dives: number; regions:
 
 export const load: PageServerLoad = async (event) => {
   const [sites, regions] = await Promise.all([
-    apiOrError<Site[]>(event, '/api/v1/dive/sites'),
-    apiOrError<Region[]>(event, '/api/v1/dive/regions'),
+    apiOrError<Site[]>(event, urls.api('/dive/sites')),
+    apiOrError<Region[]>(event, urls.api('/dive/regions')),
   ]);
   const regionName = new Map(regions.map((r) => [r.id, r.name]));
   const rows: SiteRow[] = sites.map((site) => ({
@@ -69,5 +70,5 @@ export const load: PageServerLoad = async (event) => {
   countries.sort((a, b) => b.dives - a.dives);
 
   const types = [...new Set(rows.map((r) => r.site_type))].sort();
-  return { countries, types, total: rows.length, editHref: '/admin/sites' };
+  return { countries, types, total: rows.length, editHref: urls.admin.sites() };
 };

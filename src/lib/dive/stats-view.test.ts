@@ -13,6 +13,9 @@ import {
   waterTempByMonth,
 } from './stats-view';
 import type { DiveStats } from './types';
+import { DEFAULT_CONFIG, createUrls } from './config';
+
+const urls = createUrls(DEFAULT_CONFIG);
 
 const stats: DiveStats = {
   total_dives: 45,
@@ -50,12 +53,12 @@ describe('stats view', () => {
   });
 
   it('only lists notable tags that exist', () => {
-    expect(notableTiles(stats).map((t) => t.label)).toEqual(['Cave dives', 'Scooter dives']);
-    expect(notableTiles(stats)[0].href).toBe('/dive?tag=cave');
+    expect(notableTiles(stats, urls).map((t) => t.label)).toEqual(['Cave dives', 'Scooter dives']);
+    expect(notableTiles(stats, urls)[0].href).toBe('/dive?tag=cave');
   });
 
   it('skips missing records', () => {
-    const tiles = recordTiles(stats);
+    const tiles = recordTiles(stats, urls);
     expect(tiles.map((t) => t.label)).toEqual(['Deepest', 'Longest']);
     expect(tiles[0].href).toBe('/dive/30');
   });
@@ -99,12 +102,15 @@ describe('stats view edge cases', () => {
   });
 
   it('renders coldest and records without a site', () => {
-    const tiles = recordTiles({
-      ...stats,
-      deepest: { number: 1, title: '', value: 10, site: null },
-      longest: null,
-      coldest: { number: 2, title: '', value: 4, site: null },
-    });
+    const tiles = recordTiles(
+      {
+        ...stats,
+        deepest: { number: 1, title: '', value: 10, site: null },
+        longest: null,
+        coldest: { number: 2, title: '', value: 4, site: null },
+      },
+      urls,
+    );
     expect(tiles.map((t) => t.label)).toEqual(['Deepest', 'Coldest']);
     expect(tiles[0].note).toBeUndefined();
     expect(tiles[1].value).toBe('4 °C');

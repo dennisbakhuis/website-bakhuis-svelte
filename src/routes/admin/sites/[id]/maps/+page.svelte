@@ -12,6 +12,9 @@
     type SiteMapOut,
   } from '$lib/dive/sitemap';
   import { toast } from '$lib/stores/toast.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   const site = $derived(data.site);
@@ -138,13 +141,13 @@
 
 <section class="editor-page">
   <nav class="crumbs" aria-label="Breadcrumb">
-    <a href="/admin/sites">Sites</a> › <a href="/admin/sites/{site.id}">{site.name}</a> ›
+    <a href={urls.admin.sites()}>Sites</a> › <a href={urls.admin.site(site.id)}>{site.name}</a> ›
     <span>Maps</span>
   </nav>
   <div class="head">
     <div class="title">
       <h1>Maps of {site.name}</h1>
-      <a class="btn btn-ghost btn-sm" href="/dive/sites/{site.slug}" target="_blank" rel="noopener"
+      <a class="btn btn-ghost btn-sm" href={urls.site(site.slug)} target="_blank" rel="noopener"
         >View ↗</a
       >
     </div>

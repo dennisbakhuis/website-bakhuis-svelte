@@ -4,6 +4,9 @@
   import DetailTop from '$lib/components/dive/DetailTop.svelte';
   import WorldMap from '$lib/components/dive/WorldMap.svelte';
   import { flagEmoji, formatDepth, formatHours, pluralize } from '$lib/dive/format';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   const region = $derived(data.region);
@@ -12,7 +15,7 @@
 
 <section class="region container detail">
   <DetailTop
-    back={{ href: '/dive/sites', label: 'Dive sites' }}
+    back={{ href: urls.sites(), label: 'Dive sites' }}
     owner={data.owner ? { edit: { label: 'Edit region', href: data.editHref } } : null}
   />
   <p class="kicker">Region · {flagEmoji(region.country_code)} {region.country ?? ''}</p>
@@ -56,7 +59,7 @@
         <div class="top-site">
           <dt>Most dived</dt>
           <dd>
-            <a href="/dive/sites/{stats.top_site.slug}">{stats.top_site.name}</a>
+            <a href={urls.site(stats.top_site.slug)}>{stats.top_site.name}</a>
             <span class="num faint">{pluralize(stats.top_site.dives, 'dive')}</span>
           </dd>
         </div>
@@ -70,7 +73,7 @@
         map={data.map}
         compact
         label="Map of {pluralize(data.map.dots.length, 'dive site')} in {region.name}"
-        onSelect={(slug) => slug && goto(`/dive/sites/${slug}`)}
+        onSelect={(slug) => slug && goto(urls.site(slug))}
       />
     </div>
   {/if}
@@ -84,12 +87,12 @@
       <ul class="sites">
         {#each region.sites as site (site.slug)}
           <li>
-            <a href="/dive/sites/{site.slug}">{site.name}</a>
+            <a href={urls.site(site.slug)}>{site.name}</a>
             <span class="muted">{site.site_type}{site.area ? ` · ${site.area}` : ''}</span>
           </li>
         {/each}
       </ul>
-      <a class="btn btn-ghost btn-sm" href="/dive?region={region.id}">All dives here →</a>
+      <a class="btn btn-ghost btn-sm" href={urls.filter({ region: region.id })}>All dives here →</a>
     </aside>
   </div>
 </section>

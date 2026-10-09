@@ -5,6 +5,9 @@
   import type { Attachment } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
   import SiteForm from '../SiteForm.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   const site = $derived(data.site);
@@ -54,7 +57,7 @@
     try {
       await adminJson(`/admin/sites/${site.id}`, 'DELETE');
       toast.show({ kind: 'success', message: `${site.name} deleted` });
-      await goto('/admin/sites');
+      await goto(urls.admin.sites());
     } catch (err) {
       toast.show({
         kind: 'error',
@@ -65,11 +68,11 @@
 </script>
 
 <nav class="crumbs" aria-label="Breadcrumb">
-  <a href="/admin/sites">Sites</a> › <span>{site.name}</span>
+  <a href={urls.admin.sites()}>Sites</a> › <span>{site.name}</span>
 </nav>
 <div class="head">
   <h1>{site.name}</h1>
-  <a class="btn btn-ghost btn-sm" href="/dive/sites/{site.slug}" target="_blank" rel="noopener"
+  <a class="btn btn-ghost btn-sm" href={urls.site(site.slug)} target="_blank" rel="noopener"
     >View ↗</a
   >
 </div>
@@ -81,7 +84,7 @@
 <section class="card panel">
   <div class="panel-head">
     <h2>Drawn maps</h2>
-    <a class="btn btn-solid btn-sm" href="/admin/sites/{site.id}/maps">Open map editor</a>
+    <a class="btn btn-solid btn-sm" href={urls.admin.siteMaps(site.id)}>Open map editor</a>
   </div>
   {#if drawn.length}
     <ul class="maps">

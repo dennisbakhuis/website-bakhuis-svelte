@@ -1,6 +1,9 @@
 <script lang="ts">
   import { flagEmoji, formatDepth, pluralize } from '$lib/dive/format';
   import { reveal } from '$lib/anim/reveal';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   let type = $state('');
@@ -39,7 +42,7 @@
   <p class="lede">
     Every site in the log, grouped by country and region. Each has its own page with the story of
     the place, a locator map, the dives I did there and, where I have drawn one, a map of the site.
-    Or go by <a href="/dive/trips">trip</a>.
+    Or go by <a href={urls.trips()}>trip</a>.
   </p>
 
   <div class="toolbar">
@@ -66,14 +69,14 @@
       {#each group.regions as region (region.id ?? 'none')}
         {#if group.regions.length > 1 || region.id}
           <h3 class="region">
-            {#if region.id}<a href="/dive/regions/{region.id}">{region.name}</a
+            {#if region.id}<a href={urls.region(region.id)}>{region.name}</a
               >{:else}{region.name}{/if}
           </h3>
         {/if}
         <ul class="sites">
           {#each region.sites as site (site.slug)}
             <li data-reveal>
-              <a class="site card" href="/dive/sites/{site.slug}">
+              <a class="site card" href={urls.site(site.slug)}>
                 <span class="thumb">
                   <span class="type-mark">{site.site_type}</span>
                 </span>

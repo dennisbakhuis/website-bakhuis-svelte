@@ -4,6 +4,9 @@
   import type { MapRef, SiteDiveRoute } from '$lib/dive/types';
   import { formatDate } from '$lib/dive/format';
   import { defaultTitle, mapSummary, normalizeSiteMap, routeKeys } from '$lib/dive/sitemap';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let {
     maps,
@@ -93,7 +96,7 @@
             <button type="button" class:active={shown === 'none'} onclick={() => (shown = 'none')}
               >Map only</button
             >
-            {#if selected}<a class="open" href="/dive/{selected.number}">open dive ↗</a>{/if}
+            {#if selected}<a class="open" href={urls.dive(selected.number)}>open dive ↗</a>{/if}
           </div>
         {/if}
         <SiteMapView

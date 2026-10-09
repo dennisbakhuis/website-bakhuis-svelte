@@ -13,6 +13,9 @@
   import { flagEmoji, formatMinutes } from '$lib/dive/format';
   import MapKey from './MapKey.svelte';
   import MapOptions from './MapOptions.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   type Dot = MapSite & { point: { x: number; y: number } };
   type MapData = {
@@ -119,7 +122,7 @@
   </div>
   <ul class="visually-hidden">
     {#each map.dots as dot (dot.slug)}
-      <li><a href="/dive/sites/{dot.slug}">{dot.name}: {dot.dives} dives</a></li>
+      <li><a href={urls.site(dot.slug)}>{dot.name}: {dot.dives} dives</a></li>
     {/each}
   </ul>
 </div>

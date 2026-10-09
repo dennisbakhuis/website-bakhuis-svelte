@@ -1,5 +1,8 @@
 <script lang="ts">
   import { formatDate } from '$lib/dive/format';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   let query = $state('');
@@ -47,7 +50,7 @@
         <td class="num">{dive.number}</td>
         <td class="num">{formatDate(dive.date)}</td>
         <td
-          ><a href="/admin/dives/{dive.number}">{dive.title || dive.site?.name || 'Untitled'}</a
+          ><a href={urls.admin.dive(dive.number)}>{dive.title || dive.site?.name || 'Untitled'}</a
           >{#if dive.title && dive.site}<span class="muted"> · {dive.site.name}</span>{/if}</td
         >
         <td class="num">{dive.max_depth_m} m</td>
@@ -55,7 +58,9 @@
         <td>{dive.tags.join(', ')}</td>
         <td class="num">{dive.attachments.length || ''}</td>
         <td><span class="status status-{dive.visibility}">{dive.visibility}</span></td>
-        <td><a class="view" href="/dive/{dive.number}" target="_blank" rel="noopener">view ↗</a></td
+        <td
+          ><a class="view" href={urls.dive(dive.number)} target="_blank" rel="noopener">view ↗</a
+          ></td
         >
       </tr>
     {/each}

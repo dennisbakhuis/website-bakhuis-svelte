@@ -1,10 +1,13 @@
 <script lang="ts">
   import DiveForm from '$lib/components/admin/DiveForm.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
 </script>
 
-<p class="crumbs"><a href="/admin">Dives</a> › new</p>
+<p class="crumbs"><a href={urls.admin.root()}>Dives</a> › new</p>
 <h1>New dive</h1>
 <p class="later">Photos, scans and computer exports can be added after the first save.</p>
 <DiveForm

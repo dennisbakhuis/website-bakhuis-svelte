@@ -1,13 +1,17 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import RegionForm from '../RegionForm.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 </script>
 
 <nav class="crumbs" aria-label="Breadcrumb">
-  <a href="/admin/sites">Sites</a> › <a href="/admin/regions">Regions</a> › <span>New region</span>
+  <a href={urls.admin.sites()}>Sites</a> › <a href={urls.admin.regions()}>Regions</a> ›
+  <span>New region</span>
 </nav>
 <h1>New region</h1>
-<RegionForm onSaved={(region) => goto(`/admin/regions/${region.id}`)} />
+<RegionForm onSaved={(region) => goto(urls.admin.region(region.id))} />
 
 <style>
   .crumbs {

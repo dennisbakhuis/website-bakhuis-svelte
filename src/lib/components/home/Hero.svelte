@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { site } from '$lib/site';
   import { reducedMotion } from '$lib/anim/motion';
+  import { urls } from '$lib/divelog-config';
 
   const words = site.name.split(' ').map((word) => word.split(''));
   let clock = $state('');
@@ -72,7 +73,7 @@
 
     <div class="hero-bottom" data-hero>
       <a class="btn btn-solid" href="#about">Start the descent ↓</a>
-      <a class="btn btn-ghost" href="/dive">See the dive log</a>
+      <a class="btn btn-ghost" href={urls.log()}>See the dive log</a>
     </div>
   </div>
 

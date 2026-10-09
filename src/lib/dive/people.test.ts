@@ -15,6 +15,7 @@ function person(name: string, dives: number, last: string | null, countries: str
     name,
     avatar_url: null,
     bio_md: '',
+    bio_html: '',
     countries,
     private: null,
     stats: {

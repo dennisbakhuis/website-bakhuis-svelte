@@ -1,6 +1,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { formatDate } from '$lib/dive/format';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   let query = $state('');
@@ -12,7 +15,7 @@
 
 <div class="head">
   <h1>Trips <span class="count num">{data.trips.length}</span></h1>
-  <button type="button" class="btn btn-solid btn-sm" onclick={() => goto('/admin/trips/new')}
+  <button type="button" class="btn btn-solid btn-sm" onclick={() => goto(urls.admin.newTrip())}
     >+ New trip</button
   >
 </div>
@@ -30,13 +33,13 @@
   <tbody>
     {#each rows as t (t.slug)}
       <tr>
-        <td><a href="/admin/trips/{t.slug}">{t.name}</a></td>
+        <td><a href={urls.admin.trip(t.slug)}>{t.name}</a></td>
         <td class="num">{formatDate(t.start_date)} – {formatDate(t.end_date)}</td>
         <td
           >{#if t.custom}<span class="badge">custom</span>{/if}</td
         >
         <td class="row-actions">
-          <a class="btn btn-ghost btn-sm" href="/dive/trips/{t.slug}" target="_blank" rel="noopener"
+          <a class="btn btn-ghost btn-sm" href={urls.trip(t.slug)} target="_blank" rel="noopener"
             >view ↗</a
           >
         </td>

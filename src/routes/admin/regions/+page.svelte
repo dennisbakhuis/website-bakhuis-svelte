@@ -1,13 +1,17 @@
 <script lang="ts">
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
+
   let { data } = $props();
 </script>
 
 <nav class="crumbs" aria-label="Breadcrumb">
-  <a href="/admin/sites">Sites</a> › <span>Regions</span>
+  <a href={urls.admin.sites()}>Sites</a> › <span>Regions</span>
 </nav>
 <div class="head">
   <h1>Regions <span class="muted num">{data.regions.length}</span></h1>
-  <a class="btn btn-solid btn-sm" href="/admin/regions/new">+ New region</a>
+  <a class="btn btn-solid btn-sm" href={urls.admin.newRegion()}>+ New region</a>
 </div>
 
 <table>
@@ -25,14 +29,14 @@
   <tbody>
     {#each data.regions as region (region.id)}
       <tr>
-        <td><a href="/admin/regions/{region.id}">{region.name}</a></td>
+        <td><a href={urls.admin.region(region.id)}>{region.name}</a></td>
         <td class="muted">{region.id}</td>
         <td>{region.country ?? '—'}</td>
         <td>{region.waters.join(', ') || '—'}</td>
         <td class="n num">{region.sites.length}</td>
         <td class="n num">{region.dives}</td>
         <td class="row-actions"
-          ><a href="/dive/regions/{region.id}" target="_blank" rel="noopener">view ↗</a></td
+          ><a href={urls.region(region.id)} target="_blank" rel="noopener">view ↗</a></td
         >
       </tr>
     {:else}

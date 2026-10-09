@@ -14,6 +14,9 @@
     pluralize,
   } from '$lib/dive/format';
   import { listScale } from '$lib/dive/list-view';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   const trip = $derived(data.trip);
@@ -25,7 +28,7 @@
 
 <section class="trip container detail">
   <DetailTop
-    back={{ href: '/dive/trips', label: 'Dive trips' }}
+    back={{ href: urls.trips(), label: 'Dive trips' }}
     owner={data.owner ? { edit: { label: 'Edit trip', href: data.editHref } } : null}
   />
   <p class="kicker">
@@ -38,7 +41,7 @@
       'day',
     )}{#each trip.regions as region (region.id)}
       <span class="sep">·</span>
-      <a href="/dive/regions/{region.id}">{region.name}</a>{/each}
+      <a href={urls.region(region.id)}>{region.name}</a>{/each}
   </p>
 
   <dl class="band">
@@ -71,7 +74,7 @@
           map={data.map}
           compact
           label="Map of {pluralize(data.map.dots.length, 'dive site')} of {trip.name}"
-          onSelect={(slug) => slug && goto(`/dive/sites/${slug}`)}
+          onSelect={(slug) => slug && goto(urls.site(slug))}
         />
       </DiveGlobe>
     </div>
@@ -86,7 +89,7 @@
       <h2>With</h2>
       <div class="chips">
         {#each trip.buddies as buddy (buddy.slug)}
-          <a class="chip" href="/dive/people/{buddy.slug}"
+          <a class="chip" href={urls.person(buddy.slug)}
             >{buddy.name} <span class="num faint">{buddy.dives}</span></a
           >
         {/each}

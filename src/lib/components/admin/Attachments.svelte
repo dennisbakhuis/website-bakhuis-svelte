@@ -1,6 +1,6 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
+  import { adminApi, adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
   import { diveToInput } from '$lib/admin/dive-input';
   import type { Attachment, DiveAdmin } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
@@ -18,7 +18,7 @@
     uploading = list.length;
     for (const file of list) {
       try {
-        await adminUpload(`/admin/dives/${dive.number}/attachments`, file, {
+        await adminUpload(adminApi('dives', dive.number, 'attachments'), file, {
           kind,
           public: String(kind === 'scan' ? false : makePublic),
         });
@@ -37,18 +37,18 @@
     a: Attachment,
     body: Partial<Pick<Attachment, 'caption' | 'kind' | 'sort' | 'public' | 'credit'>>,
   ) {
-    await adminJson(`/admin/attachments/${a.id}`, 'PATCH', body);
+    await adminJson(adminApi('attachments', a.id), 'PATCH', body);
     await invalidateAll();
   }
 
   async function remove(a: Attachment) {
     if (!confirm(`Delete ${a.original_name || a.kind}?`)) return;
-    await adminJson(`/admin/attachments/${a.id}`, 'DELETE');
+    await adminJson(adminApi('attachments', a.id), 'DELETE');
     await invalidateAll();
   }
 
   async function setCover(a: Attachment) {
-    await adminJson(`/admin/dives/${dive.number}`, 'PUT', {
+    await adminJson(adminApi('dives', dive.number), 'PUT', {
       ...diveToInput(dive),
       cover_attachment_id: a.id,
     });
@@ -60,8 +60,8 @@
     const i = sorted.findIndex((x) => x.id === a.id);
     const j = i + delta;
     if (j < 0 || j >= sorted.length) return;
-    await adminJson(`/admin/attachments/${sorted[i].id}`, 'PATCH', { sort: j });
-    await adminJson(`/admin/attachments/${sorted[j].id}`, 'PATCH', { sort: i });
+    await adminJson(adminApi('attachments', sorted[i].id), 'PATCH', { sort: j });
+    await adminJson(adminApi('attachments', sorted[j].id), 'PATCH', { sort: i });
     await invalidateAll();
   }
 </script>

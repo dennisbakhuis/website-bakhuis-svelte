@@ -1,5 +1,6 @@
 import type { DiveAdmin, Tank, TankGas } from '$lib/dive/types';
 import type { DiveMapAnnotation } from '$lib/dive/sitemap';
+import type { CylinderPreset, DivelogConfig, GasPreset } from '$lib/dive/config';
 
 /** Canonical tags a dive can carry; the paper log's own words stay in `types_raw`. */
 export const DIVE_TAGS = [
@@ -288,7 +289,7 @@ export function applyTemplate(form: DiveInput, template: DiveTemplate): DiveInpu
 }
 
 /** Cylinder names the tank editor offers, with their water volume in litres. */
-export const CYLINDER_PRESETS: { name: string; volume_l: number }[] = [
+export const CYLINDER_PRESETS: CylinderPreset[] = [
   { name: 'D12', volume_l: 24 },
   { name: 'D10', volume_l: 20 },
   { name: 'D7', volume_l: 14 },
@@ -341,12 +342,7 @@ export function legacyTanks(dive: {
 }
 
 /** GUE standard gases: one pick sets the mix of a tank. */
-export const STANDARD_GASES: {
-  label: string;
-  gas: TankGas;
-  o2: number | null;
-  he: number | null;
-}[] = [
+export const STANDARD_GASES: GasPreset[] = [
   { label: 'Air', gas: 'air', o2: null, he: null },
   { label: 'EAN32', gas: 'nitrox', o2: 32, he: null },
   { label: 'Trimix 30/30', gas: 'trimix', o2: 30, he: 30 },
@@ -356,3 +352,18 @@ export const STANDARD_GASES: {
   { label: 'EAN50', gas: 'nitrox', o2: 50, he: null },
   { label: 'Oxygen', gas: 'oxygen', o2: 100, he: null },
 ];
+
+export type EditorPresets = {
+  tags: readonly string[];
+  cylinders: CylinderPreset[];
+  gases: GasPreset[];
+};
+
+/** The editor's tag, cylinder and gas choices: the config's presets over the defaults. */
+export function presetsFor(config: DivelogConfig): EditorPresets {
+  return {
+    tags: config.presets?.tags ?? DIVE_TAGS,
+    cylinders: config.presets?.cylinders ?? CYLINDER_PRESETS,
+    gases: config.presets?.gases ?? STANDARD_GASES,
+  };
+}

@@ -12,6 +12,9 @@
     type PeopleSort,
   } from '$lib/dive/people';
   import { reveal } from '$lib/anim/reveal';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
 
@@ -84,7 +87,7 @@
   <ul class="people" use:reveal={{ stagger: 25 }}>
     {#each shown as person (person.slug)}
       <li data-reveal>
-        <a class="person card" href="/dive/people/{person.slug}">
+        <a class="person card" href={urls.person(person.slug)}>
           <span class="avatar" class:has-image={person.avatar_url}>
             {#if person.avatar_url}
               <img src={person.avatar_url} alt="" width="56" height="56" loading="lazy" />

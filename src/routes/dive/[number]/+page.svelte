@@ -32,6 +32,9 @@
     sameDepth,
     typesRawAddsNothing,
   } from '$lib/dive/dive-page';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   const MAX_FACT_PILLS = 3;
 
@@ -143,12 +146,12 @@
 
 {#snippet pager()}
   <span class="pager">
-    {#if dive.prev_number}<a href="/dive/{dive.prev_number}" rel="prev"
+    {#if dive.prev_number}<a href={urls.dive(dive.prev_number)} rel="prev"
         >← <span class="num">#{dive.prev_number}</span>{#if dive.prev_site_name}<span
             class="pager-name">{dive.prev_site_name}</span
           >{/if}</a
       >{/if}
-    {#if dive.next_number}<a href="/dive/{dive.next_number}" rel="next"
+    {#if dive.next_number}<a href={urls.dive(dive.next_number)} rel="next"
         >{#if dive.next_site_name}<span class="pager-name">{dive.next_site_name}</span>{/if}<span
           class="num">#{dive.next_number}</span
         > →</a
@@ -158,12 +161,12 @@
 
 <article class="dive container detail">
   <DetailTop
-    back={{ href: '/dive', label: 'Dive log' }}
+    back={{ href: urls.log(), label: 'Dive log' }}
     owner={data.owner
       ? {
           edit: { label: 'Edit', href: data.editHref },
           actions: noRoute
-            ? [{ label: 'Mark route', href: `/admin/dives/${dive.number}#map` }]
+            ? [{ label: 'Mark route', href: urls.admin.dive(dive.number, 'map') }]
             : [],
           note: noRoute ? 'no route yet' : null,
         }
@@ -198,20 +201,19 @@
         {#if titleIsSite}
           <span class="flag" aria-hidden="true">{flagEmoji(site.country_code)}</span>
         {:else}
-          <span
-            ><a href="/dive/sites/{site.slug}">{flagEmoji(site.country_code)} {site.name}</a></span
-          >
+          <span><a href={urls.site(site.slug)}>{flagEmoji(site.country_code)} {site.name}</a></span>
         {/if}
         {#if dive.section}<span class="section">{dive.section}</span>{/if}
         {#if site.area}<span>{site.area}</span>{/if}
         {#if site.region_name}<span
-            ><a href="/dive/regions/{site.region}">{site.region_name}</a></span
+            ><a href={urls.region(site.region ?? '')}>{site.region_name}</a></span
           >{:else}<span>{site.country_name}</span>{/if}
       </p>
     {/if}
     {#if dive.tags.length || showTypesRaw}
       <p class="tags">
-        {#each dive.tags as tag (tag)}<a class="tag" data-tag={tag} href="/dive?tag={tag}">{tag}</a
+        {#each dive.tags as tag (tag)}<a class="tag" data-tag={tag} href={urls.filter({ tag })}
+            >{tag}</a
           >{/each}
         {#if showTypesRaw}<span class="raw" title="As ticked in the paper log"
             >{dive.types_raw}</span
@@ -224,7 +226,7 @@
     <ul class="pills">
       {#if dive.trip}
         <li>
-          <a class="pill pill-trip" href="/dive/trips/{dive.trip.slug}"
+          <a class="pill pill-trip" href={urls.trip(dive.trip.slug)}
             >{dive.trip.day_index && dive.trip.days && dive.trip.days > 1
               ? `Day ${dive.trip.day_index} of ${dive.trip.days} · `
               : ''}{dive.trip.name} →</a
@@ -239,7 +241,7 @@
               class="also"
               >(also
               {#each dive.same_day as other, i (other.number)}{i ? ', ' : ''}<a
-                  href="/dive/{other.number}"
+                  href={urls.dive(other.number)}
                   >#{other.number}{other.site_name ? ` ${other.site_name}` : ''}{other.time_in
                     ? ` ${formatTime(other.time_in)}`
                     : ''}</a
@@ -276,7 +278,7 @@
           <div class="where-body">
             <p class="eyebrow">Where</p>
             <h2>
-              <a class="stretched" href="/dive/sites/{site.slug}">{site.name}</a>
+              <a class="stretched" href={urls.site(site.slug)}>{site.name}</a>
             </h2>
             <p class="where-meta">
               <span>{site.site_type}</span>
@@ -292,7 +294,7 @@
               </p>{/if}
             {#if site.region_name}
               <p class="where-links">
-                <a class="above" href="/dive/regions/{site.region}">{site.region_name} →</a>
+                <a class="above" href={urls.region(site.region ?? '')}>{site.region_name} →</a>
               </p>
             {/if}
           </div>
@@ -313,13 +315,13 @@
                 </span>
                 <span class="buddy-body">
                   <span class="buddy-name"
-                    ><a href="/dive/people/{buddy.slug}">{buddy.name}</a
+                    ><a href={urls.person(buddy.slug)}>{buddy.name}</a
                     >{#if buddy.first_together}<span class="badge">first dive together</span
                       >{/if}</span
                   >
                   {#if buddy.dives_together > 1}
                     <span class="buddy-meta num"
-                      ><a href="/dive?with={buddy.slug}"
+                      ><a href={urls.filter({ with: buddy.slug })}
                         >{pluralize(buddy.dives_together, 'dive')} together</a
                       ></span
                     >
@@ -494,14 +496,12 @@
 
   {#if dive.site}
     <section class="block">
-      <a class="btn btn-ghost" href="/dive/sites/{dive.site.slug}"
-        >All dives at {dive.site.name} →</a
-      >
+      <a class="btn btn-ghost" href={urls.site(dive.site.slug)}>All dives at {dive.site.name} →</a>
     </section>
   {/if}
 
   <nav class="crumbs bottom">
-    <a href="/dive">← Dive log</a>
+    <a href={urls.log()}>← Dive log</a>
     {@render pager()}
   </nav>
 </article>

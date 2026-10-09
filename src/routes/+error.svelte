@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { urls } from '$lib/divelog-config';
 </script>
 
 <svelte:head>
@@ -17,7 +18,7 @@
   {/if}
   <div class="cta-row">
     <a class="btn btn-solid" href="/">Back to the surface</a>
-    <a class="btn btn-ghost" href="/dive">Dive log</a>
+    <a class="btn btn-ghost" href={urls.log()}>Dive log</a>
   </div>
 </section>
 

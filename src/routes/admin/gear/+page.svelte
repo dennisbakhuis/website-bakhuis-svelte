@@ -3,6 +3,9 @@
   import { adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
   import type { GearItem, GearSetup } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
 
@@ -125,7 +128,7 @@
 
 <div class="head">
   <h1>Gear</h1>
-  <a class="btn btn-ghost btn-sm" href="/dive/gear" target="_blank" rel="noopener">View ↗</a>
+  <a class="btn btn-ghost btn-sm" href={urls.gear()} target="_blank" rel="noopener">View ↗</a>
 </div>
 {#if error}<p class="error">{error}</p>{/if}
 

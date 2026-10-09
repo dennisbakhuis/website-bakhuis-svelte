@@ -1,4 +1,6 @@
 import { site } from '$lib/site';
+import { escapeRegExp, type DivelogUrls } from '$lib/dive/config';
+import { urls } from '$lib/divelog-config';
 
 export const SITE_URL = 'https://dennisbakhuis.nl';
 
@@ -9,28 +11,36 @@ export type PageMeta = {
   image?: string;
 };
 
+/** Static meta for the dive log's index pages, keyed by their paths. */
+export function diveMetaFor(diveUrls: DivelogUrls, name: string): Record<string, PageMeta> {
+  return {
+    [diveUrls.log()]: {
+      title: `Dive log — ${name}`,
+      description:
+        'Every dive, searchable: statistics, a world map of dive sites, cave and scooter dives, gear.',
+    },
+    [diveUrls.gear()]: {
+      title: `Dive gear — ${name}`,
+      description: 'The setups and the gear behind the dive log, with the dives each item did.',
+    },
+    [diveUrls.sites()]: {
+      title: `Dive sites — ${name}`,
+      description: 'Every site in the dive log by country, with maps and cave stick maps.',
+    },
+    [diveUrls.trips()]: {
+      title: `Dive trips — ${name}`,
+      description:
+        'Every dive trip abroad, with a map of the sites, the numbers and who came along.',
+    },
+  };
+}
+
 export const pageMeta: Record<string, PageMeta> = {
   '/': {
     title: `${site.name} — ${site.role}`,
     description: `${site.name}: data scientist and engineer with a physics PhD, based in the Netherlands. Machine learning, data engineering, diving and writing.`,
   },
-  '/dive': {
-    title: `Dive log — ${site.name}`,
-    description:
-      'Every dive, searchable: statistics, a world map of dive sites, cave and scooter dives, gear.',
-  },
-  '/dive/gear': {
-    title: `Dive gear — ${site.name}`,
-    description: 'The setups and the gear behind the dive log, with the dives each item did.',
-  },
-  '/dive/sites': {
-    title: `Dive sites — ${site.name}`,
-    description: 'Every site in the dive log by country, with maps and cave stick maps.',
-  },
-  '/dive/trips': {
-    title: `Dive trips — ${site.name}`,
-    description: 'Every dive trip abroad, with a map of the sites, the numbers and who came along.',
-  },
+  ...diveMetaFor(urls, site.name),
   '/blog': {
     title: `Blog — ${site.name}`,
     description:
@@ -54,8 +64,9 @@ export function canonicalUrl(pathname: string): string {
   return `${SITE_URL}${pathname === '/' ? '' : pathname.replace(/\/$/, '')}`;
 }
 
-const DIVE_PAGE = /^\/dive\/(\d+)\/?$/;
-const SITE_PAGE = /^\/dive\/sites\/([a-z0-9-]+)\/?$/;
+const DIVE_BASE = escapeRegExp(urls.base);
+const DIVE_PAGE = new RegExp(`^${DIVE_BASE}\\/(\\d+)\\/?$`);
+const SITE_PAGE = new RegExp(`^${DIVE_BASE}\\/sites\\/([a-z0-9-]+)\\/?$`);
 
 /**
  * Absolute Open Graph image for a page: an explicit `meta.image` wins, dive
@@ -65,9 +76,9 @@ export function ogImageFor(pathname: string, meta?: PageMeta): string {
   const explicit = meta?.image;
   if (explicit) return explicit.startsWith('http') ? explicit : `${SITE_URL}${explicit}`;
   const dive = DIVE_PAGE.exec(pathname);
-  if (dive) return `${SITE_URL}/dive/${dive[1]}/og.png`;
+  if (dive) return `${SITE_URL}${urls.og('dive', dive[1])}`;
   const site = SITE_PAGE.exec(pathname);
-  if (site) return `${SITE_URL}/dive/sites/${site[1]}/og.png`;
+  if (site) return `${SITE_URL}${urls.og('site', site[1])}`;
   return `${SITE_URL}/og-image.png`;
 }
 

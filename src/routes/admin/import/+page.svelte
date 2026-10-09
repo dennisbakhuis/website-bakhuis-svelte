@@ -1,6 +1,9 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
   import { adminUpload, AdminApiError } from '$lib/admin/client';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   let busy = $state(false);
@@ -35,7 +38,7 @@
     const form = new FormData();
     for (const file of Array.from(files)) form.append('files', file, file.name);
     try {
-      const response = await fetch('/api/v1/admin/import/shearwater', {
+      const response = await fetch(urls.api('/admin/import/shearwater'), {
         method: 'POST',
         body: form,
         credentials: 'same-origin',
@@ -103,7 +106,7 @@
       <strong>{result.skipped}</strong> skipped (already imported) ·
       <strong>{result.sites_created}</strong> sites created
     </p>
-    <a class="btn btn-solid btn-sm" href="/admin">Review drafts</a>
+    <a class="btn btn-solid btn-sm" href={urls.admin.root()}>Review drafts</a>
   </div>
 {/if}
 

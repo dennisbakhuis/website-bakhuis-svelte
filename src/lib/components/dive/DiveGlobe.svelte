@@ -3,11 +3,11 @@
   import type { GeoJSONSource, Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl';
   import type { CountryStat, DiveListItem, MapSite } from '$lib/dive/types';
   import {
+    absoluteTilesBase,
     archiveForTile,
     DETAIL_MIN_ZOOM,
     detailMaxZoom,
     siteFlavor,
-    TILES_BASE,
     type TileIndex,
   } from '$lib/map/locator';
   import {
@@ -37,6 +37,9 @@
   // MapLibre derives its worker URL from import.meta.url, which Vite's dependency
   // pre-bundling breaks; an explicit asset URL works in dev and in the build.
   import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let {
     sites,
@@ -252,7 +255,7 @@
         import('maplibre-gl'),
         import('pmtiles'),
         import('@protomaps/basemaps'),
-        fetch(`${TILES_BASE}/index.json`, { cache: 'no-cache' }).then((r) =>
+        fetch(urls.tiles('index.json'), { cache: 'no-cache' }).then((r) =>
           r.ok ? (r.json() as Promise<TileIndex>) : null,
         ),
       ]);
@@ -261,7 +264,7 @@
       maplibre.setWorkerUrl(workerUrl);
       const protocol = new Protocol();
       maplibre.addProtocol('pmtiles', protocol.tile);
-      const base = `${location.origin}${TILES_BASE}`;
+      const base = absoluteTilesBase(urls.tilesBase, location.origin);
       // Past the world archive's zoom the regional archives take over: each tile
       // request is routed to the archive that covers it, and comes back empty elsewhere.
       maplibre.addProtocol('detail', (params, abort) => {
@@ -578,7 +581,7 @@
         <header>
           <strong
             >{flagEmoji(site.country_code)}
-            <a href="/dive/sites/{site.slug}">{site.name}</a></strong
+            <a href={urls.site(site.slug)}>{site.name}</a></strong
           >
           <span class="num faint"
             >{site.site_type} · {site.first_year === site.last_year
@@ -598,7 +601,7 @@
           <ul class="dives">
             {#each selectedDives.slice(0, POPUP_DIVES) as dive (dive.number)}
               <li>
-                <a href="/dive/{dive.number}">
+                <a href={urls.dive(dive.number)}>
                   <span class="num no">#{dive.number}</span>
                   {#if dive.title}<span class="title">{dive.title}</span>{/if}
                   <span class="num faint"
@@ -628,7 +631,7 @@
               {/if}
             </button>
           {/if}
-          <a class="chip" href="/dive/sites/{site.slug}">Site page →</a>
+          <a class="chip" href={urls.site(site.slug)}>Site page →</a>
         </footer>
       </aside>
     {/if}
@@ -652,7 +655,7 @@
 
   <ul class="visually-hidden">
     {#each sites as site (site.slug)}
-      <li><a href="/dive/sites/{site.slug}">{site.name}: {site.dives} dives</a></li>
+      <li><a href={urls.site(site.slug)}>{site.name}: {site.dives} dives</a></li>
     {/each}
   </ul>
 </div>

@@ -4,6 +4,9 @@
   import { onMount } from 'svelte';
   import { adminJson } from '$lib/admin/client';
   import type { RepoStatus } from '$lib/dive/types';
+  import { escapeRegExp } from '$lib/dive/config';
+  import DivelogProvider from '$lib/components/dive/DivelogProvider.svelte';
+  import { divelogConfig, urls } from '$lib/divelog-config';
 
   let { children, data } = $props();
 
@@ -34,13 +37,15 @@
     if (data.owner) void refreshRepo();
   });
 
+  const admin = escapeRegExp(urls.admin.base);
+  const under = (rest: string) => new RegExp(`^${admin}${rest}(\\/|$)`);
   const nav = [
-    { href: '/admin', label: 'Dives', match: /^\/admin(\/dives(?!\/new))?(\/|$)/ },
-    { href: '/admin/sites', label: 'Sites', match: /^\/admin\/(sites|regions)(\/|$)/ },
-    { href: '/admin/people', label: 'People', match: /^\/admin\/people(\/|$)/ },
-    { href: '/admin/trips', label: 'Trips', match: /^\/admin\/trips(\/|$)/ },
-    { href: '/admin/gear', label: 'Gear', match: /^\/admin\/gear(\/|$)/ },
-    { href: '/admin/import', label: 'Import', match: /^\/admin\/import(\/|$)/ },
+    { href: urls.admin.root(), label: 'Dives', match: under('(\\/dives(?!\\/new))?') },
+    { href: urls.admin.sites(), label: 'Sites', match: under('\\/(sites|regions)') },
+    { href: urls.admin.people(), label: 'People', match: under('\\/people') },
+    { href: urls.admin.trips(), label: 'Trips', match: under('\\/trips') },
+    { href: urls.admin.gear(), label: 'Gear', match: under('\\/gear') },
+    { href: urls.admin.import(), label: 'Import', match: under('\\/import') },
   ];
 
   function active(item: { match: RegExp }): boolean {
@@ -50,7 +55,7 @@
   async function logout() {
     await adminJson('/auth/logout', 'POST');
     await invalidateAll();
-    await goto('/admin/login');
+    await goto(urls.admin.login());
   }
 </script>
 
@@ -59,52 +64,55 @@
   <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
-<div class="admin">
-  {#if data.owner}
-    <header class="bar">
-      <a class="brand" href="/admin">dive log admin</a>
-      <nav>
-        {#each nav as item (item.href)}
-          <a href={item.href} aria-current={active(item) ? 'page' : undefined}>{item.label}</a>
-        {/each}
-      </nav>
-      <div class="right">
-        <a href="/admin/dives/new" class="btn btn-sm new-dive">+ New dive</a>
-        {#if repo}
-          <span
-            class="repo repo-{repo.state}"
-            title={repo.last_error ?? (repo.load_errors.length ? repo.load_errors.join('\n') : '')}
-          >
-            {repo.state}{repo.ahead ? ` ↑${repo.ahead}` : ''}{repo.behind
-              ? ` ↓${repo.behind}`
-              : ''}{repo.load_errors.length ? ` · ${repo.load_errors.length} file errors` : ''}
-          </span>
-          {#if repo.state === 'unpushed' || repo.state === 'conflict' || repo.state === 'error'}
-            <button
-              type="button"
-              class="btn btn-ghost btn-sm"
-              disabled={repoBusy}
-              onclick={() => repoAction('push')}>push</button
+<DivelogProvider config={divelogConfig}>
+  <div class="admin">
+    {#if data.owner}
+      <header class="bar">
+        <a class="brand" href={urls.admin.root()}>dive log admin</a>
+        <nav>
+          {#each nav as item (item.href)}
+            <a href={item.href} aria-current={active(item) ? 'page' : undefined}>{item.label}</a>
+          {/each}
+        </nav>
+        <div class="right">
+          <a href={urls.admin.newDive()} class="btn btn-sm new-dive">+ New dive</a>
+          {#if repo}
+            <span
+              class="repo repo-{repo.state}"
+              title={repo.last_error ??
+                (repo.load_errors.length ? repo.load_errors.join('\n') : '')}
             >
+              {repo.state}{repo.ahead ? ` ↑${repo.ahead}` : ''}{repo.behind
+                ? ` ↓${repo.behind}`
+                : ''}{repo.load_errors.length ? ` · ${repo.load_errors.length} file errors` : ''}
+            </span>
+            {#if repo.state === 'unpushed' || repo.state === 'conflict' || repo.state === 'error'}
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                disabled={repoBusy}
+                onclick={() => repoAction('push')}>push</button
+              >
+            {/if}
+            {#if repo.state !== 'disabled'}
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                disabled={repoBusy}
+                onclick={() => repoAction('pull')}>pull</button
+              >
+            {/if}
           {/if}
-          {#if repo.state !== 'disabled'}
-            <button
-              type="button"
-              class="btn btn-ghost btn-sm"
-              disabled={repoBusy}
-              onclick={() => repoAction('pull')}>pull</button
-            >
-          {/if}
-        {/if}
-        <a href="/dive" class="muted">view site</a>
-        <button type="button" class="btn btn-ghost btn-sm" onclick={logout}>Sign out</button>
-      </div>
-    </header>
-  {/if}
-  <div class="admin-body">
-    {@render children()}
+          <a href={urls.log()} class="muted">view site</a>
+          <button type="button" class="btn btn-ghost btn-sm" onclick={logout}>Sign out</button>
+        </div>
+      </header>
+    {/if}
+    <div class="admin-body">
+      {@render children()}
+    </div>
   </div>
-</div>
+</DivelogProvider>
 
 <style>
   .admin {

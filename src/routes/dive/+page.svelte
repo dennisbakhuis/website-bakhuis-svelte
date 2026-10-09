@@ -20,6 +20,9 @@
   import { reveal } from '$lib/anim/reveal';
   import type { GlobeView } from '$lib/map/globe';
   import type { Snapshot } from './$types';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
 
@@ -58,7 +61,7 @@
   function update(next: DiveFilter) {
     const params = filterToParams(next);
     const query = params.toString();
-    void goto(`/dive${query ? `?${query}` : ''}`, {
+    void goto(urls.log(query), {
       replaceState: true,
       noScroll: true,
       keepFocus: true,
@@ -150,12 +153,11 @@
   {#if hits && (hits.sites.length || hits.people.length)}
     <div class="hits">
       {#each hits.sites.slice(0, 6) as hit (hit.slug)}
-        <a class="hit" href="/dive/sites/{hit.slug}"
-          >{hit.name} <span class="num">{hit.count}</span></a
+        <a class="hit" href={urls.site(hit.slug)}>{hit.name} <span class="num">{hit.count}</span></a
         >
       {/each}
       {#each hits.people.slice(0, 6) as hit (hit.slug)}
-        <a class="hit person" href="/dive/people/{hit.slug}"
+        <a class="hit person" href={urls.person(hit.slug)}
           >{hit.name} <span class="num">{hit.count}</span></a
         >
       {/each}

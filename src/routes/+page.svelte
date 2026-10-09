@@ -9,6 +9,8 @@
   import Bubbles from '$lib/components/home/Bubbles.svelte';
   import Fish from '$lib/components/home/Fish.svelte';
   import DiveTile from '$lib/components/home/DiveTile.svelte';
+  import DivelogProvider from '$lib/components/dive/DivelogProvider.svelte';
+  import { divelogConfig, urls } from '$lib/divelog-config';
   import WritingTile from '$lib/components/home/WritingTile.svelte';
   import { formatDate } from '$lib/dive/format';
   import { latestMatches } from '$lib/dive/sparkline';
@@ -23,7 +25,7 @@
   );
   const lastDiveHref = $derived(
     data.timeline?.latest && latestMatches(data.timeline, data.summary?.last_dive ?? null)
-      ? `/dive/${data.timeline.latest.number}`
+      ? urls.dive(data.timeline.latest.number)
       : null,
   );
   let descent = $state<DescentState>({
@@ -98,7 +100,9 @@
     <h2 data-reveal>The bit that isn't on LinkedIn</h2>
     <div class="bento">
       <div class="bento-item bento-dive" data-reveal>
-        <DiveTile summary={data.summary} timeline={data.timeline} />
+        <DivelogProvider config={divelogConfig}>
+          <DiveTile summary={data.summary} timeline={data.timeline} />
+        </DivelogProvider>
       </div>
       <div class="bento-item" data-reveal>
         <WritingTile posts={data.writing} />

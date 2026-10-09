@@ -3,6 +3,7 @@
   import { page } from '$app/state';
   import { site } from '$lib/site';
   import { metaFor, canonicalUrl, personLD, jsonLdScript, ogImageFor } from '$lib/seo';
+  import { urls } from '$lib/divelog-config';
   import { goHref } from '$lib/go-targets';
   import Toast from '$lib/components/Toast.svelte';
   import { version } from '$app/environment';
@@ -19,7 +20,7 @@
 
   let scrollY = $state(0);
   const isHome = $derived(page.url.pathname === '/');
-  const isAdmin = $derived(page.url.pathname.startsWith('/admin'));
+  const isAdmin = $derived(page.url.pathname.startsWith(urls.admin.base));
   const overHero = $derived(isHome && scrollY < 80);
   const meta = $derived(
     page.status === 200 ? metaFor(page.url.pathname, page.data.meta) : undefined,
@@ -29,7 +30,7 @@
   const jsonLd = jsonLdScript(personLD());
 
   const nav = [
-    { href: '/dive', label: 'Dive log' },
+    { href: urls.log(), label: 'Dive log' },
     { href: '/blog', label: 'Blog' },
     { href: '/contact', label: 'Contact' },
   ];
@@ -40,7 +41,7 @@
 
   // A page that has an editor advertises it through `editHref` in its data;
   // otherwise the pill just opens the admin.
-  const editHref = $derived((page.data.editHref as string | undefined) ?? '/admin');
+  const editHref = $derived((page.data.editHref as string | undefined) ?? urls.admin.root());
 </script>
 
 <svelte:head>
@@ -109,14 +110,14 @@
         <p class="footer-meta num">
           v{version}
           {#if data.owner}
-            · <a href="/admin">admin</a>
+            · <a href={urls.admin.root()}>admin</a>
           {/if}
         </p>
       </div>
       <div class="footer-col">
         <h3>Site</h3>
-        <a href="/dive">Dive log</a>
-        <a href="/dive/gear">Dive gear</a>
+        <a href={urls.log()}>Dive log</a>
+        <a href={urls.gear()}>Dive gear</a>
         <a href="/blog">Blog</a>
         <a href="/blog?kind=til">Today I learned</a>
         <a href="/feed.xml">RSS</a>

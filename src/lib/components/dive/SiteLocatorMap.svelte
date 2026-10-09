@@ -3,11 +3,11 @@
   import type { Map as MapLibreMap } from 'maplibre-gl';
   import type { NearbySite } from '$lib/dive/types';
   import {
+    absoluteTilesBase,
     archiveFor,
     minZoomFor,
     siteFlavor,
     startZoom,
-    TILES_BASE,
     type TileIndex,
   } from '$lib/map/locator';
   import 'maplibre-gl/dist/maplibre-gl.css';
@@ -15,6 +15,9 @@
   // MapLibre derives its worker URL from import.meta.url, which Vite's dependency
   // pre-bundling breaks; an explicit asset URL works in dev and in the build.
   import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let {
     lat,
@@ -48,7 +51,7 @@
   function nearbyPin(other: NearbySite): HTMLAnchorElement {
     const el = document.createElement('a');
     el.className = 'nearby-pin';
-    el.href = `/dive/sites/${other.slug}`;
+    el.href = urls.site(other.slug);
     el.title = `${other.name} · ${other.distance_km} km`;
     const dot = document.createElement('i');
     const label = document.createElement('span');
@@ -66,7 +69,7 @@
         import('maplibre-gl'),
         import('pmtiles'),
         import('@protomaps/basemaps'),
-        fetch(`${TILES_BASE}/index.json`, { cache: 'no-cache' }).then((r) =>
+        fetch(urls.tiles('index.json'), { cache: 'no-cache' }).then((r) =>
           r.ok ? (r.json() as Promise<TileIndex>) : null,
         ),
       ]);
@@ -76,7 +79,7 @@
 
       maplibre.setWorkerUrl(workerUrl);
       maplibre.addProtocol('pmtiles', new Protocol().tile);
-      const base = `${location.origin}${TILES_BASE}`;
+      const base = absoluteTilesBase(urls.tilesBase, location.origin);
       const instance = new maplibre.Map({
         container,
         style: {

@@ -3,11 +3,12 @@ import { apiOrError } from '$lib/server/api';
 import type { MapSite, TripDetail } from '$lib/dive/types';
 import { makeRegionMap } from '$lib/map/world';
 import { formatDateRange } from '$lib/dive/format';
+import { urls } from '$lib/divelog-config';
 
 type Dot = MapSite & { point: { x: number; y: number } };
 
 export const load: PageServerLoad = async (event) => {
-  const data = await apiOrError<TripDetail>(event, `/api/v1/dive/trips/${event.params.slug}`);
+  const data = await apiOrError<TripDetail>(event, urls.api(`/dive/trips/${event.params.slug}`));
   const { trip } = data;
   const panel = await makeRegionMap(trip.slug, trip.name, data.map_sites);
   const map = panel
@@ -24,7 +25,7 @@ export const load: PageServerLoad = async (event) => {
   return {
     ...data,
     map,
-    editHref: `/admin/trips/${trip.slug}`,
+    editHref: urls.admin.trip(trip.slug),
     meta: {
       title: `${trip.name} — dive trip — Dennis Bakhuis`,
       description: `${trip.stats.dives} dives at ${trip.stats.sites} sites, ${formatDateRange(trip.start_date, trip.end_date)}.`,

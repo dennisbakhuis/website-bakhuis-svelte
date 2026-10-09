@@ -3,6 +3,9 @@
   import { adminJson, AdminApiError } from '$lib/admin/client';
   import type { TripAdmin, TripIn } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
 
@@ -54,20 +57,20 @@
     error = '';
     try {
       await adminJson(`/admin/trips/${data.trip.slug}`, 'DELETE');
-      await goto('/admin/trips');
+      await goto(urls.admin.trips());
     } catch (err) {
       error = err instanceof AdminApiError ? err.message : 'Could not remove override';
     }
   }
 </script>
 
-<p class="breadcrumb"><a href="/admin/trips">Trips</a> › {data.trip.name}</p>
+<p class="breadcrumb"><a href={urls.admin.trips()}>Trips</a> › {data.trip.name}</p>
 <div class="head">
   <h1>
     {data.trip.name}
     {#if data.trip.custom}<span class="badge">custom</span>{/if}
   </h1>
-  <a class="btn btn-ghost btn-sm" href="/dive/trips/{data.trip.slug}" target="_blank" rel="noopener"
+  <a class="btn btn-ghost btn-sm" href={urls.trip(data.trip.slug)} target="_blank" rel="noopener"
     >View ↗</a
   >
 </div>

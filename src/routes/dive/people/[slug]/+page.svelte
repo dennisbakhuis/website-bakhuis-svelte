@@ -15,6 +15,9 @@
   } from '$lib/dive/format';
   import { sitesTogether } from '$lib/dive/people';
   import { barHeights } from '$lib/dive/stats-view';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   const person = $derived(data.person);
@@ -35,7 +38,7 @@
 
 <section class="person container detail">
   <DetailTop
-    back={{ href: '/dive/people', label: 'Dive buddies' }}
+    back={{ href: urls.people(), label: 'Dive buddies' }}
     owner={data.owner ? { edit: { label: 'Edit person', href: data.editHref } } : null}
   />
   <header class="head">
@@ -125,7 +128,7 @@
   {#if data.map.dots.length}
     <section class="block">
       <h2>Where we dived</h2>
-      <WorldMap map={data.map} compact onSelect={(slug) => slug && goto(`/dive/sites/${slug}`)} />
+      <WorldMap map={data.map} compact onSelect={(slug) => slug && goto(urls.site(slug))} />
     </section>
   {/if}
 
@@ -137,7 +140,7 @@
           <ul class="hbars card">
             {#each topSites as site, i (site.slug)}
               <li>
-                <a class="hbar-row" href="/dive/sites/{site.slug}">
+                <a class="hbar-row" href={urls.site(site.slug)}>
                   <span class="name">{flagEmoji(site.country_code)} {site.name}</span>
                   <span class="hbar-track"
                     ><span class="hbar" style="width: {siteWidths[i]}%"></span></span
@@ -161,7 +164,7 @@
             {#each data.countries as country (country.country_code)}
               <a
                 class="flag-chip"
-                href="/dive?country={country.country_code}&with={person.slug}"
+                href={urls.filter({ country: country.country_code, with: person.slug })}
                 title="{pluralize(country.dives, 'dive')} in {country.country_name}"
               >
                 <span class="flag" aria-hidden="true">{flagEmoji(country.country_code)}</span>
@@ -182,7 +185,7 @@
         {#each data.trips as trip (trip.slug)}
           <a
             class="flag-chip"
-            href="/dive/trips/{trip.slug}"
+            href={urls.trip(trip.slug)}
             title="{pluralize(trip.dives, 'dive')} together, {formatDateRange(
               trip.start_date,
               trip.end_date,

@@ -1,14 +1,16 @@
 <script lang="ts">
   import type { DiveStats } from '$lib/dive/types';
   import { headlineTiles, notableTiles, recordTiles } from '$lib/dive/stats-view';
+  import { getDivelog } from '$lib/dive/context';
   import { counter } from '$lib/anim/counter';
   import { reveal } from '$lib/anim/reveal';
 
   let { stats }: { stats: DiveStats } = $props();
 
   const headline = $derived(headlineTiles(stats));
-  const notable = $derived(notableTiles(stats));
-  const records = $derived(recordTiles(stats));
+  const { urls } = getDivelog();
+  const notable = $derived(notableTiles(stats, urls));
+  const records = $derived(recordTiles(stats, urls));
 
   function numeric(value: string): { n: number; suffix: string; decimals: number } | null {
     const m = /^([\d.]+)(.*)$/.exec(value);

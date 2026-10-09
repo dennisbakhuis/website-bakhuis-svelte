@@ -14,6 +14,9 @@
   } from '$lib/dive/list-view';
   import { typeColour } from '$lib/dive/stats-view';
   import MapGlyph from './MapGlyph.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let {
     dives,
@@ -72,7 +75,7 @@
 
 {#snippet row(dive: DiveListItem)}
   <li id="dive-row-{dive.number}">
-    <a class="dive" href="/dive/{dive.number}">
+    <a class="dive" href={urls.dive(dive.number)}>
       <span
         class="cover"
         class:has-photo={dive.cover_url}
@@ -186,7 +189,7 @@
           <span class="count">· {group.count} {group.count === 1 ? 'dive' : 'dives'}</span>
           {#if groupBy === 'month'}
             {#each group.trips as trip (trip.slug)}
-              <a class="trip" href="/dive/trips/{trip.slug}">· {trip.name} →</a>
+              <a class="trip" href={urls.trip(trip.slug)}>· {trip.name} →</a>
             {/each}
           {/if}
         </h3>

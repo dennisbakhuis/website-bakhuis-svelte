@@ -1,3 +1,5 @@
+import { urls } from '$lib/divelog-config';
+
 export const site = {
   name: 'Dennis Bakhuis',
   role: 'Data scientist & engineer',
@@ -81,7 +83,7 @@ export const likes: Like[] = [
     id: 'diving',
     title: 'Diving',
     blurb: 'Cold Dutch water, French caves, a scooter when the line is long enough.',
-    href: '/dive',
+    href: urls.log(),
   },
   {
     id: 'writing',

@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   articleLD,
   canonicalUrl,
+  diveMetaFor,
   jsonLdScript,
   metaFor,
   ogImageFor,
   pageMeta,
   personLD,
 } from './seo';
+import { DEFAULT_CONFIG, createUrls } from '$lib/dive/config';
 
 describe('seo', () => {
   it('builds canonical urls without trailing slashes', () => {
@@ -52,5 +54,33 @@ describe('seo', () => {
     });
     expect(article.dateModified).toBe('2024-01-01');
     expect(article.url).toBe('https://dennisbakhuis.nl/blog/a');
+  });
+});
+
+describe('dive meta', () => {
+  it('keys the dive index pages by their paths, in sitemap order', () => {
+    expect(Object.keys(pageMeta)).toEqual([
+      '/',
+      '/dive',
+      '/dive/gear',
+      '/dive/sites',
+      '/dive/trips',
+      '/blog',
+      '/contact',
+      '/privacy',
+    ]);
+    expect(pageMeta['/dive/sites'].title).toBe('Dive sites — Dennis Bakhuis');
+  });
+
+  it('follows another mount', () => {
+    const urls = createUrls({ ...DEFAULT_CONFIG, basePath: '/logbook' });
+    const meta = diveMetaFor(urls, 'Kim');
+    expect(Object.keys(meta)).toEqual([
+      '/logbook',
+      '/logbook/gear',
+      '/logbook/sites',
+      '/logbook/trips',
+    ]);
+    expect(meta['/logbook'].title).toBe('Dive log — Kim');
   });
 });

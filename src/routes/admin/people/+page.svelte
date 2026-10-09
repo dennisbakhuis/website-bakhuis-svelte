@@ -1,6 +1,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import type { PersonPrivate } from '$lib/dive/types';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   let query = $state('');
@@ -24,7 +27,7 @@
 
 <div class="head">
   <h1>People <span class="count num">{data.people.length}</span></h1>
-  <button type="button" class="btn btn-solid btn-sm" onclick={() => goto('/admin/people/new')}
+  <button type="button" class="btn btn-solid btn-sm" onclick={() => goto(urls.admin.newPerson())}
     >+ New person</button
   >
 </div>
@@ -47,15 +50,15 @@
             {#if p.avatar_url}<img src={p.avatar_url} alt="" />{:else}{p.first_name[0]}{/if}
           </span>
         </td>
-        <td><a href="/admin/people/{p.id}">{label(p)}</a> <span class="muted num">{p.id}</span></td>
+        <td
+          ><a href={urls.admin.person(p.id)}>{label(p)}</a>
+          <span class="muted num">{p.id}</span></td
+        >
         <td>{p.display === 'hidden' ? '— hidden —' : p.name}</td>
         <td class="num">{p.dives}</td>
         <td class="row-actions">
-          <a
-            class="btn btn-ghost btn-sm"
-            href="/dive/people/{p.slug}"
-            target="_blank"
-            rel="noopener">view ↗</a
+          <a class="btn btn-ghost btn-sm" href={urls.person(p.slug)} target="_blank" rel="noopener"
+            >view ↗</a
           >
         </td>
       </tr>

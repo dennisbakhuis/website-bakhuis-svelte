@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { apiOrError } from '$lib/server/api';
+import { urls } from '$lib/divelog-config';
 
 type ImportRow = {
   id: string;
@@ -12,5 +13,5 @@ type ImportRow = {
 };
 
 export const load: PageServerLoad = async (event) => ({
-  imports: await apiOrError<ImportRow[]>(event, '/api/v1/admin/imports'),
+  imports: await apiOrError<ImportRow[]>(event, urls.api('/admin/imports')),
 });

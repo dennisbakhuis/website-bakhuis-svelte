@@ -4,6 +4,7 @@ import { api, ApiError } from '$lib/server/api';
 import { siteCardSvg } from '$lib/server/og/card';
 import { OG_CACHE, renderPng } from '$lib/server/og/render';
 import type { DiveListItem, Site } from '$lib/dive/types';
+import { urls } from '$lib/divelog-config';
 
 export const GET: RequestHandler = async ({ params, fetch }) => {
   if (!/^[a-z0-9-]+$/.test(params.slug)) error(404, 'Not found');
@@ -11,7 +12,7 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
   try {
     data = await api<{ site: Site; dives: DiveListItem[] }>(
       fetch,
-      `/api/v1/dive/sites/${params.slug}`,
+      urls.api(`/dive/sites/${params.slug}`),
     );
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) error(404, 'Not found');

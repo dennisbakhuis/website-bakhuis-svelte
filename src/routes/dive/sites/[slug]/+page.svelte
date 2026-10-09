@@ -7,6 +7,9 @@
   import DetailTop from '$lib/components/dive/DetailTop.svelte';
   import { flagEmoji, formatDate, formatDepth, pluralize } from '$lib/dive/format';
   import { barHeights, waterTempByMonth } from '$lib/dive/stats-view';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
   const site = $derived(data.site);
@@ -33,8 +36,8 @@
   );
   const provenance = $derived(
     site.private
-      ? `${site.private.verified ? `verified: ${site.private.verified}` : 'not verified'}${
-          site.private.geo_source ? ` · ${site.private.geo_source}` : ''
+      ? `${site.verified ? `verified: ${site.verified}` : 'not verified'}${
+          site.geo_source ? ` · ${site.geo_source}` : ''
         }`
       : null,
   );
@@ -42,18 +45,18 @@
 
 <section class="site container detail">
   <DetailTop
-    back={{ href: '/dive/sites', label: 'Dive sites' }}
+    back={{ href: urls.sites(), label: 'Dive sites' }}
     owner={owner
       ? {
           edit: { label: 'Edit site', href: data.editHref },
-          actions: [{ label: 'Maps', href: `/admin/sites/${site.id}/maps` }],
+          actions: [{ label: 'Maps', href: urls.admin.siteMaps(site.id) }],
           note: provenance,
         }
       : null}
   />
   <p class="kicker">
     Dive site · {site.site_type}
-    {#if site.region_name}· <a href="/dive/regions/{site.region}">{site.region_name}</a>{/if}
+    {#if site.region_name}· <a href={urls.region(site.region ?? '')}>{site.region_name}</a>{/if}
   </p>
   <h1>{flagEmoji(site.country_code)} {site.name}</h1>
   <p class="where">
@@ -134,9 +137,7 @@
             <dt>Lines & sections</dt>
             <dd class="small chips">
               {#each site.section_vocabulary as section (section)}
-                <a class="chip" href="/dive?site={site.slug}&section={encodeURIComponent(section)}"
-                  >{section}</a
-                >
+                <a class="chip" href={urls.filter({ site: site.slug, section })}>{section}</a>
               {/each}
             </dd>
           </div>
@@ -246,7 +247,7 @@
       <h2>Dived here with</h2>
       <div class="people">
         {#each data.people as person (person.slug)}
-          <a class="person" href="/dive/people/{person.slug}">
+          <a class="person" href={urls.person(person.slug)}>
             {#if person.avatar_url}<img
                 src={person.avatar_url}
                 alt=""
@@ -266,7 +267,7 @@
       <ul class="nearby">
         {#each data.nearby as other (other.slug)}
           <li>
-            <a class="nearby-site card" href="/dive/sites/{other.slug}">
+            <a class="nearby-site card" href={urls.site(other.slug)}>
               <span class="nearby-name">{flagEmoji(other.country_code)} {other.name}</span>
               <span class="nearby-meta num"
                 >{other.distance_km.toFixed(1)} km · {other.dives

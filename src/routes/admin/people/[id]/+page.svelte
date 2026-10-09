@@ -3,6 +3,9 @@
   import { adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
   import type { PersonPrivate } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
 
@@ -71,19 +74,19 @@
     deleteError = '';
     try {
       await adminJson(`/admin/people/${data.person.id}`, 'DELETE');
-      await goto('/admin/people');
+      await goto(urls.admin.people());
     } catch (err) {
       deleteError = err instanceof AdminApiError ? err.message : 'Could not delete';
     }
   }
 </script>
 
-<p class="breadcrumb"><a href="/admin/people">People</a> › {data.person.name}</p>
+<p class="breadcrumb"><a href={urls.admin.people()}>People</a> › {data.person.name}</p>
 <div class="head">
   <h1>{data.person.name}</h1>
   <a
     class="btn btn-ghost btn-sm"
-    href="/dive/people/{data.person.slug}"
+    href={urls.person(data.person.slug)}
     target="_blank"
     rel="noopener">View ↗</a
   >

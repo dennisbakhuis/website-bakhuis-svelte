@@ -1,5 +1,6 @@
 import type { DiveStats, MapSite } from './types';
 import { formatHours } from './format';
+import type { DivelogUrls } from './config';
 
 /** One stat; `group: false` keeps a counted number like a year free of digit grouping. */
 export type StatTile = {
@@ -43,45 +44,45 @@ export function headlineTiles(stats: DiveStats): StatTile[] {
   return tiles;
 }
 
-export function notableTiles(stats: DiveStats): StatTile[] {
+export function notableTiles(stats: DiveStats, urls: DivelogUrls): StatTile[] {
   const counts = new Map(stats.tags.map((t) => [t.tag, t.count]));
   const tiles: StatTile[] = NOTABLE.filter((n) => counts.has(n.tag)).map((n) => ({
     label: n.label,
     value: String(counts.get(n.tag)),
-    href: `/dive?tag=${n.tag}`,
+    href: urls.filter({ tag: n.tag }),
   }));
   if (stats.deep_dives)
     tiles.push({
       label: `Deep dives`,
       value: String(stats.deep_dives),
       note: `${DEEP_DIVE_M} m or more`,
-      href: `/dive?min=${DEEP_DIVE_M}`,
+      href: urls.filter({ min: DEEP_DIVE_M }),
     });
   return tiles;
 }
 
-export function recordTiles(stats: DiveStats): StatTile[] {
+export function recordTiles(stats: DiveStats, urls: DivelogUrls): StatTile[] {
   const tiles: StatTile[] = [];
   if (stats.deepest)
     tiles.push({
       label: 'Deepest',
       value: `${stats.deepest.value} m`,
       note: stats.deepest.site ?? undefined,
-      href: `/dive/${stats.deepest.number}`,
+      href: urls.dive(stats.deepest.number),
     });
   if (stats.longest)
     tiles.push({
       label: 'Longest',
       value: `${stats.longest.value} min`,
       note: stats.longest.site ?? undefined,
-      href: `/dive/${stats.longest.number}`,
+      href: urls.dive(stats.longest.number),
     });
   if (stats.coldest)
     tiles.push({
       label: 'Coldest',
       value: `${stats.coldest.value} °C`,
       note: stats.coldest.site ?? undefined,
-      href: `/dive/${stats.coldest.number}`,
+      href: urls.dive(stats.coldest.number),
     });
   return tiles;
 }

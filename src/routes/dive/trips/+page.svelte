@@ -2,6 +2,9 @@
   import { flagEmoji, formatDateRange, formatDepth, pluralize } from '$lib/dive/format';
   import type { TripSummary } from '$lib/dive/types';
   import { reveal } from '$lib/anim/reveal';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   let { data } = $props();
 
@@ -42,7 +45,7 @@
       <ul class="trips">
         {#each group.trips as trip (trip.slug)}
           <li data-reveal>
-            <a class="trip card" href="/dive/trips/{trip.slug}">
+            <a class="trip card" href={urls.trip(trip.slug)}>
               <span class="thumb" class:empty={!trip.cover_url}>
                 {#if trip.cover_url}
                   <img src={trip.cover_url} alt="" loading="lazy" width="168" height="124" />
@@ -78,8 +81,8 @@
   {/each}
 
   <p class="cross">
-    <a href="/dive/sites">All dive sites →</a>
-    <a href="/dive/people">Dive buddies →</a>
+    <a href={urls.sites()}>All dive sites →</a>
+    <a href={urls.people()}>Dive buddies →</a>
   </p>
 </section>
 

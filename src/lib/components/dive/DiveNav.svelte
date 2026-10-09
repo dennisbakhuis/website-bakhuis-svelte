@@ -1,19 +1,26 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { escapeRegExp } from '$lib/dive/config';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
+  const base = escapeRegExp(urls.base);
+  const DIVE = new RegExp(`^${base}\\/\\d+`);
+  const under = (path: string) => (p: string) => p.startsWith(path);
 
   const items = [
-    { href: '/dive', label: 'Log', match: (p: string) => p === '/dive' || /^\/dive\/\d+/.test(p) },
+    { href: urls.log(), label: 'Log', match: (p: string) => p === urls.log() || DIVE.test(p) },
     {
-      href: '/dive/sites',
+      href: urls.sites(),
       label: 'Sites',
-      match: (p: string) => p.startsWith('/dive/sites') || p.startsWith('/dive/regions'),
+      match: (p: string) => p.startsWith(urls.sites()) || p.startsWith(`${urls.base}/regions`),
     },
-    { href: '/dive/trips', label: 'Trips', match: (p: string) => p.startsWith('/dive/trips') },
-    { href: '/dive/people', label: 'People', match: (p: string) => p.startsWith('/dive/people') },
-    { href: '/dive/gear', label: 'Gear', match: (p: string) => p.startsWith('/dive/gear') },
+    { href: urls.trips(), label: 'Trips', match: under(urls.trips()) },
+    { href: urls.people(), label: 'People', match: under(urls.people()) },
+    { href: urls.gear(), label: 'Gear', match: under(urls.gear()) },
   ];
 
-  const DETAIL = /^\/dive\/(\d+|(sites|people|trips|regions)\/[^/]+)\/?$/;
+  const DETAIL = new RegExp(`^${base}\\/(\\d+|(sites|people|trips|regions)\\/[^/]+)\\/?$`);
   const detail = $derived(DETAIL.test(page.url.pathname));
 </script>
 

@@ -34,11 +34,15 @@ export type Price = { date: string; amount: number; currency: string; note: stri
 export type AccessPoint = { lat: number | null; lon: number | null; note: string | null };
 
 export type SitePrivate = {
-  verified: string | null;
-  geo_source: string | null;
   notes: string | null;
   reference_maps: MapRef[];
 };
+
+/** Where a site record comes from: the owner's log, a shared commons, or a fork of one. */
+export type SiteOrigin = 'log' | 'commons' | 'fork';
+
+/** Licence and source of a site record taken from a shared commons. */
+export type Attribution = { licence: string; source: string; ref: string | null };
 
 export type Site = SiteSummary & {
   id: string;
@@ -55,6 +59,7 @@ export type Site = SiteSummary & {
   halocline_m: number | null;
   summary: string | null;
   description_md: string;
+  description_html: string;
   max_depth_m: number | null;
   dives: number;
   first_dive: string | null;
@@ -64,6 +69,10 @@ export type Site = SiteSummary & {
   attachments: Attachment[];
   prices: Price[];
   sources: string[];
+  verified: string | null;
+  geo_source: string | null;
+  origin: SiteOrigin;
+  attribution: Attribution | null;
   private: SitePrivate | null;
 };
 
@@ -74,6 +83,7 @@ export type Region = {
   country_code: string;
   waters: string[];
   body_md: string;
+  body_html: string;
   sites: SiteSummary[];
   dives: number;
   /** Only on the region page itself, not in the list. */
@@ -117,6 +127,7 @@ export type Trip = {
   start_date: string | null;
   end_date: string | null;
   description_md: string;
+  description_html: string;
   /** On a dive page: the day of the trip the dive fell on, 1-based, and the trip's length. */
   day_index?: number | null;
   days?: number | null;
@@ -147,6 +158,7 @@ export type TripSummary = {
   stats: TripStats;
   buddies: (PersonPublic & { dives: number })[];
   description_md: string;
+  description_html: string;
   cover_url: string | null;
 };
 
@@ -171,6 +183,7 @@ export type TripAdmin = {
   start_date: string | null;
   end_date: string | null;
   description_md: string;
+  description_html: string;
   days: number | null;
   custom: boolean;
 };
@@ -275,6 +288,7 @@ export type PersonStats = {
 
 export type Person = PersonPublic & {
   bio_md: string;
+  bio_html: string;
   stats: PersonStats;
   /** Alpha-2 codes of the countries we dived in together, most dives first. */
   countries: string[];
@@ -375,6 +389,7 @@ export type Dive = {
   gear_setup: { slug: string; name: string } | null;
   guide: string | null;
   body_md: string;
+  body_html: string;
   notes_nl: string | null;
   visibility: 'public' | 'private' | 'draft';
   buddies: Buddy[];
@@ -483,6 +498,7 @@ export type GearItem = {
   acquired: string | null;
   retired: string | null;
   notes_md: string;
+  notes_html: string;
   sort: number;
   photo_url: string | null;
   dive_count: number;
@@ -493,6 +509,7 @@ export type GearSetup = {
   slug: string;
   name: string;
   description_md: string;
+  description_html: string;
   sort: number;
   items: GearItem[];
   dive_count: number;

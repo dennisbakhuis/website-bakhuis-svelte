@@ -3,6 +3,9 @@
   import { adminJson, AdminApiError } from '$lib/admin/client';
   import type { PersonPrivate } from '$lib/dive/types';
   import { toast } from '$lib/stores/toast.svelte';
+  import { getDivelog } from '$lib/dive/context';
+
+  const { urls } = getDivelog();
 
   const empty = () => ({
     first_name: '',
@@ -39,14 +42,14 @@
     try {
       const created = await adminJson<PersonPrivate>('/admin/people', 'POST', body());
       toast.show({ kind: 'success', message: `${created.first_name} added` });
-      await goto(`/admin/people/${created.id}`);
+      await goto(urls.admin.person(created.id));
     } catch (err) {
       error = err instanceof AdminApiError ? err.message : 'Save failed';
     }
   }
 </script>
 
-<p class="breadcrumb"><a href="/admin/people">People</a> › New person</p>
+<p class="breadcrumb"><a href={urls.admin.people()}>People</a> › New person</p>
 <h1>New person</h1>
 
 <form class="card form" onsubmit={save}>

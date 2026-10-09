@@ -18,7 +18,10 @@ export type TileIndex = {
   archives: TileArchive[];
 };
 
-export const TILES_BASE = '/media/tiles';
+/** The tile base as an absolute URL, which MapLibre needs for glyphs, sprites and pmtiles. */
+export function absoluteTilesBase(tilesBase: string, origin: string): string {
+  return /^[a-z]+:\/\//i.test(tilesBase) ? tilesBase : `${origin}${tilesBase}`;
+}
 
 /** The smallest archive whose bounds contain the point, or null when none does. */
 export function archiveFor(index: TileIndex, lat: number, lon: number): TileArchive | null {
