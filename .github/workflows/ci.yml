@@ -71,6 +71,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
       - name: Version consistency — VERSION file is the source of truth
         run: pnpm run version:check
 
@@ -82,6 +88,9 @@ jobs:
 
       - name: Type check
         run: pnpm check
+
+      - name: API types match the backend schemas
+        run: pnpm types:check
 
       - name: Unit tests with coverage
         run: pnpm test:coverage

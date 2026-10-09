@@ -46,6 +46,7 @@ function dive(overrides: Partial<DiveListItem>): DiveListItem {
     spark: null,
     cover_url: null,
     search_text: '',
+    trip: null,
     ...overrides,
   };
   base.search_text = [

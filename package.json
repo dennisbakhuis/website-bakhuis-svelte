@@ -16,7 +16,10 @@
     "format:check": "prettier --check .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "types": "node scripts/api-types.mjs",
+    "types:url": "node scripts/api-types.mjs --url http://localhost:8300/api/openapi.json",
+    "types:check": "node scripts/api-types.mjs --check"
   },
   "dependencies": {
     "@cap.js/wasm": "^0.0.7",
@@ -59,6 +62,7 @@
     "eslint-plugin-svelte": "^3.17.1",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.8.3",
     "prettier-plugin-svelte": "^3.5.1",
     "svelte-check": "^4.4.8",
