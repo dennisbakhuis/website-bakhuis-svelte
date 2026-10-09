@@ -42,20 +42,20 @@
     flex-wrap: wrap;
     gap: 6px 18px;
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .legend li {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .sym {
-    --map-bg: var(--color-bg);
+    --map-bg: var(--dl-color-bg);
     width: 22px;
     height: 22px;
     overflow: visible;
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .edge {
     stroke: currentColor;
@@ -69,7 +69,7 @@
     opacity: 0.6;
   }
   .edge.route {
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-dasharray: 6 4;
   }
   .line {
@@ -79,27 +79,27 @@
     stroke-linecap: round;
   }
   .text {
-    fill: var(--color-text-muted);
-    font-family: var(--font-mono);
+    fill: var(--dl-color-text-muted);
+    font-family: var(--dl-font-mono);
     font-size: 10px;
   }
   .text.depth {
-    fill: var(--color-accent);
+    fill: var(--dl-color-accent);
   }
   .line.shoreline {
     stroke: #d8c9a3;
     stroke-width: 3px;
   }
   .line.depth {
-    stroke: color-mix(in srgb, var(--color-accent) 70%, var(--color-text));
+    stroke: color-mix(in srgb, var(--dl-color-accent) 70%, var(--dl-color-text));
     stroke-width: 1.5px;
   }
   .line.path {
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-dasharray: 5 3;
   }
   .line.wall {
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-dasharray: 6 2 1 2;
   }
   .line.pipe {
@@ -115,7 +115,7 @@
   }
   .area.depth {
     fill: hsl(203 48% 42% / 0.5);
-    stroke: color-mix(in srgb, var(--color-accent) 40%, transparent);
+    stroke: color-mix(in srgb, var(--dl-color-accent) 40%, transparent);
   }
   .area.coral {
     fill: color-mix(in srgb, #2f8f6f 42%, transparent);
@@ -126,12 +126,12 @@
     stroke: color-mix(in srgb, #d8c9a3 40%, transparent);
   }
   .area.shallows {
-    fill: color-mix(in srgb, var(--color-accent) 14%, transparent);
-    stroke: color-mix(in srgb, var(--color-accent) 50%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-accent) 14%, transparent);
+    stroke: color-mix(in srgb, var(--dl-color-accent) 50%, transparent);
   }
   .area.wall {
-    fill: color-mix(in srgb, var(--color-warm) 10%, transparent);
-    stroke: var(--color-warm);
+    fill: color-mix(in srgb, var(--dl-color-warm) 10%, transparent);
+    stroke: var(--dl-color-warm);
     stroke-dasharray: 4 2;
   }
   .area.wreck {
@@ -139,8 +139,8 @@
     stroke: currentColor;
   }
   .area.reeds {
-    fill: color-mix(in srgb, var(--color-success) 18%, transparent);
-    stroke: color-mix(in srgb, var(--color-success) 60%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-success) 18%, transparent);
+    stroke: color-mix(in srgb, var(--dl-color-success) 60%, transparent);
   }
   .area.other {
     fill: color-mix(in srgb, currentColor 8%, transparent);

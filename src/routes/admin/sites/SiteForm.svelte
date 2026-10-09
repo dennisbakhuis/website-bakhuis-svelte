@@ -2,7 +2,7 @@
   import { adminJson, AdminApiError } from '$lib/admin/client';
   import { siteIdFor } from '$lib/admin/slug';
   import type { Price, Region, Site } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -187,7 +187,7 @@
   }
 </script>
 
-<form class="card form" onsubmit={save}>
+<form class="dl-card form" onsubmit={save}>
   <div class="field-row">
     <label>Name<input type="text" bind:value={form.name} required /></label>
     <label
@@ -300,12 +300,12 @@
         <input type="text" placeholder="note" bind:value={price.note} />
         <button
           type="button"
-          class="btn btn-ghost btn-sm danger"
+          class="dl-btn dl-btn-ghost dl-btn-sm danger"
           onclick={() => (form.prices = form.prices.filter((_, j) => j !== i))}>×</button
         >
       </div>
     {/each}
-    <button type="button" class="btn btn-ghost btn-sm" onclick={addPrice}>+ price</button>
+    <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={addPrice}>+ price</button>
   </fieldset>
 
   {#if site}
@@ -333,12 +333,12 @@
 
   {#if error}<p class="error">{error}</p>{/if}
   <div class="actions">
-    <button type="submit" class="btn btn-solid btn-sm" disabled={saving}
+    <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm" disabled={saving}
       >{saving ? 'Saving…' : site ? 'Save' : 'Create'}</button
     >
     {#if form.lat !== '' && form.lon !== ''}
       <a
-        class="btn btn-ghost btn-sm"
+        class="dl-btn dl-btn-ghost dl-btn-sm"
         href="https://www.openstreetmap.org/?mlat={form.lat}&mlon={form.lon}#map=15/{form.lat}/{form.lon}"
         target="_blank"
         rel="noopener">Check on OSM ↗</a
@@ -354,22 +354,22 @@
     flex-direction: column;
     gap: 12px;
     margin-bottom: 24px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .sub {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius);
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
   .sub legend {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     padding: 0 6px;
   }
   .price-row {
@@ -385,18 +385,18 @@
   }
   .readonly .label {
     font-size: 12.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .hint {
     font-size: 12.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   input[readonly] {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .danger:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
   .actions {
     display: flex;

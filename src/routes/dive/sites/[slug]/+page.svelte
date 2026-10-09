@@ -3,7 +3,6 @@
   import Gallery from '$lib/components/dive/Gallery.svelte';
   import MapPanel from '$lib/components/dive/MapPanel.svelte';
   import SiteLocatorMap from '$lib/components/dive/SiteLocatorMap.svelte';
-  import Markdown from '$lib/components/Markdown.svelte';
   import DetailTop from '$lib/components/dive/DetailTop.svelte';
   import { flagEmoji, formatDate, formatDepth, pluralize } from '$lib/dive/format';
   import { barHeights, waterTempByMonth } from '$lib/dive/stats-view';
@@ -43,7 +42,7 @@
   );
 </script>
 
-<section class="site container detail">
+<section class="site dl-container dl-detail">
   <DetailTop
     back={{ href: urls.sites(), label: 'Dive sites' }}
     owner={owner
@@ -54,7 +53,7 @@
         }
       : null}
   />
-  <p class="kicker">
+  <p class="dl-kicker">
     Dive site · {site.site_type}
     {#if site.region_name}· <a href={urls.region(site.region ?? '')}>{site.region_name}</a>{/if}
   </p>
@@ -70,11 +69,11 @@
       <dl class="facts">
         <div>
           <dt>Dives here</dt>
-          <dd class="num">{data.dives.length}</dd>
+          <dd class="dl-num">{data.dives.length}</dd>
         </div>
         <div>
           <dt>Deepest</dt>
-          <dd class="num">{formatDepth(deepest)}</dd>
+          <dd class="dl-num">{formatDepth(deepest)}</dd>
         </div>
         {#if site.water}
           <div>
@@ -89,7 +88,7 @@
         {#if site.first_dive}
           <div>
             <dt>First · last</dt>
-            <dd class="num small">
+            <dd class="dl-num small">
               {site.first_dive.slice(0, 4)}{site.last_dive && site.last_dive !== site.first_dive
                 ? ` · ${site.last_dive.slice(0, 4)}`
                 : ''}
@@ -99,7 +98,7 @@
         {#if site.lat !== null && site.lon !== null}
           <div>
             <dt>Position</dt>
-            <dd class="num small">
+            <dd class="dl-num small">
               <a
                 href="https://www.openstreetmap.org/?mlat={site.lat}&mlon={site.lon}#map=15/{site.lat}/{site.lon}"
                 target="_blank"
@@ -119,7 +118,7 @@
             <dd class="small">
               {site.access.note ?? ''}
               {#if site.access.lat !== null && site.access.lon !== null}
-                <span class="num faint"
+                <span class="dl-num faint"
                   >({site.access.lat.toFixed(4)}, {site.access.lon.toFixed(4)})</span
                 >
               {/if}
@@ -145,7 +144,7 @@
         {#if latestPrice}
           <div>
             <dt>Entry</dt>
-            <dd class="num small">
+            <dd class="dl-num small">
               {latestPrice.amount === 0
                 ? 'free'
                 : `${latestPrice.amount.toFixed(2)} ${latestPrice.currency}`}
@@ -155,7 +154,7 @@
         {/if}
       </dl>
     </div>
-    <div class="map card">
+    <div class="map dl-card">
       {#snippet globe()}
         <svg
           viewBox="0 0 {data.map.width} {data.map.height}"
@@ -204,7 +203,8 @@
 
   {#if site.description_md}
     <section class="block prose-block">
-      <Markdown source={site.description_md} />
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -- sanitised by the backend -->
+      <div class="dl-prose">{@html site.description_html}</div>
     </section>
   {/if}
 
@@ -230,8 +230,8 @@
         <tbody>
           {#each [...site.prices].sort( (a, b) => b.date.localeCompare(a.date) ) as price (price.date + price.note)}
             <tr>
-              <td class="num">{formatDate(price.date)}</td>
-              <td class="num"
+              <td class="dl-num">{formatDate(price.date)}</td>
+              <td class="dl-num"
                 >{price.amount === 0 ? 'free' : `${price.amount.toFixed(2)} ${price.currency}`}</td
               >
               <td>{price.note}</td>
@@ -267,9 +267,9 @@
       <ul class="nearby">
         {#each data.nearby as other (other.slug)}
           <li>
-            <a class="nearby-site card" href={urls.site(other.slug)}>
+            <a class="nearby-site dl-card" href={urls.site(other.slug)}>
               <span class="nearby-name">{flagEmoji(other.country_code)} {other.name}</span>
-              <span class="nearby-meta num"
+              <span class="nearby-meta dl-num"
                 >{other.distance_km.toFixed(1)} km · {other.dives
                   ? pluralize(other.dives, 'dive')
                   : 'not dived yet'} · {other.site_type}</span
@@ -296,9 +296,9 @@
                   class:active={openYear === year}
                   onclick={() => (openYear = openYear === year ? null : year)}
                 >
-                  <span class="num">{year}</span>
+                  <span class="dl-num">{year}</span>
                   <span class="bar" style="height: {Math.min(100, 12 + dives.length * 12)}%"></span>
-                  <span class="num faint">{dives.length}</span>
+                  <span class="dl-num faint">{dives.length}</span>
                 </button>
               {/each}
             </div>
@@ -319,7 +319,7 @@
                     ? `${month.temp.toFixed(1)} °C over ${pluralize(month.dives, 'dive')}`
                     : 'no dives'}
                 >
-                  <span class="temp-value num"
+                  <span class="temp-value dl-num"
                     >{month.temp !== null ? `${Math.round(month.temp)}°` : ''}</span
                   >
                   <span
@@ -327,7 +327,7 @@
                     class:empty={month.temp === null}
                     style="height: {tempHeights[i]}%"
                   ></span>
-                  <span class="temp-label num">{month.label}</span>
+                  <span class="temp-label dl-num">{month.label}</span>
                 </div>
               {/each}
             </div>
@@ -366,9 +366,9 @@
 <style>
   .site {
     padding-top: 40px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
-  .kicker a {
+  .dl-kicker a {
     color: inherit;
   }
   h1 {
@@ -376,7 +376,7 @@
     margin-bottom: 6px;
   }
   .where {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .summary {
     font-size: 1.15rem;
@@ -400,11 +400,11 @@
     grid-column: 1 / -1;
   }
   .facts dt {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .facts dd {
     margin: 2px 0 0;
@@ -426,21 +426,21 @@
   .chip {
     padding: 2px 10px;
     border-radius: 999px;
-    border: 1px solid var(--color-border-strong);
+    border: 1px solid var(--dl-color-border-strong);
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-size: 13px;
   }
   .chip:hover {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .map {
     padding: 0;
     overflow: hidden;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
     align-self: stretch;
     min-height: 340px;
   }
@@ -453,21 +453,21 @@
     display: block;
   }
   .sphere {
-    fill: color-mix(in srgb, var(--color-accent) 4%, transparent);
-    stroke: var(--color-border);
+    fill: color-mix(in srgb, var(--dl-color-accent) 4%, transparent);
+    stroke: var(--dl-color-border);
   }
   .land {
-    fill: var(--color-surface-2);
-    stroke: color-mix(in srgb, var(--color-text) 14%, transparent);
+    fill: var(--dl-color-surface-2);
+    stroke: color-mix(in srgb, var(--dl-color-text) 14%, transparent);
     stroke-width: 0.5;
   }
   .halo {
-    fill: var(--color-warm);
+    fill: var(--dl-color-warm);
     opacity: 0.25;
   }
   .dot {
-    fill: var(--color-warm);
-    stroke: var(--color-bg);
+    fill: var(--dl-color-warm);
+    stroke: var(--dl-color-bg);
     stroke-width: 1.5;
   }
   h2 {
@@ -493,14 +493,14 @@
   .prices td {
     text-align: left;
     padding: 8px 10px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--dl-color-border);
   }
   .prices th {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-weight: 500;
   }
   .people {
@@ -514,9 +514,9 @@
     gap: 8px;
     padding: 5px 14px 5px 6px;
     border-radius: 999px;
-    border: 1px solid var(--color-border-strong);
+    border: 1px solid var(--dl-color-border-strong);
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-weight: 500;
   }
   .person img {
@@ -526,7 +526,7 @@
     object-fit: cover;
   }
   .person:hover {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .nearby {
     list-style: none;
@@ -548,14 +548,14 @@
     transition: border-color 0.15s ease;
   }
   .nearby-site:hover {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .nearby-name {
     font-weight: 500;
   }
   .nearby-meta {
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .site-charts {
     display: grid;
@@ -568,11 +568,11 @@
   }
   .chart-title {
     font-size: 11px;
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 8px;
   }
   .years {
@@ -603,18 +603,18 @@
     max-width: 22px;
     min-height: 2px;
     border-radius: 3px 3px 0 0;
-    background: var(--tag-drift);
+    background: var(--dl-tag-drift);
   }
   .temp-bar.empty {
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
   }
   .temp-value {
     font-size: 10.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .temp-label {
     font-size: 10.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .year {
     display: flex;
@@ -626,7 +626,7 @@
     min-width: 44px;
     background: none;
     border: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 11.5px;
     cursor: pointer;
     padding: 0;
@@ -634,32 +634,32 @@
   .year .bar {
     width: 22px;
     border-radius: 3px 3px 0 0;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     transition: background 0.15s ease;
   }
   .year:hover .bar,
   .year.active .bar {
-    background: var(--color-accent);
+    background: var(--dl-color-accent);
   }
   .year.active {
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .sources ul {
     margin: 0;
     padding-left: 20px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 14px;
   }
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 14px;
   }
   .private {
-    border-top: 1px dashed var(--color-warm);
+    border-top: 1px dashed var(--dl-color-warm);
     padding-top: 16px;
   }
   .private h3 {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
   }
   @media (max-width: 800px) {
     .grid {

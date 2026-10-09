@@ -24,12 +24,12 @@
 <style>
   .crumbs {
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin: 0 0 6px;
   }
   .later {
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin: -8px 0 16px;
   }
 </style>

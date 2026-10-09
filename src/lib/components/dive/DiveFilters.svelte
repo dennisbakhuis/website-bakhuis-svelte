@@ -72,7 +72,7 @@
 <div class="filters">
   <div class="search-row">
     <label class="search">
-      <span class="visually-hidden">Search dives</span>
+      <span class="dl-visually-hidden">Search dives</span>
       <input
         type="search"
         placeholder="Search anything: site, buddy, notes, cave line, gas…"
@@ -236,7 +236,7 @@
     {#each envelope.tags as tag (tag)}
       <button
         type="button"
-        class="tag"
+        class="dl-tag"
         class:active={filter.tags.includes(tag)}
         data-tag={tag}
         aria-pressed={filter.tags.includes(tag)}
@@ -248,32 +248,34 @@
     <span class="divider" aria-hidden="true"></span>
     <button
       type="button"
-      class="tag toggle"
+      class="dl-tag toggle"
       class:active={filter.photos}
       aria-pressed={filter.photos}
       onclick={() => onChange({ ...filter, photos: !filter.photos })}>with photos</button
     >
     <button
       type="button"
-      class="tag toggle"
+      class="dl-tag toggle"
       class:active={filter.profile}
       aria-pressed={filter.profile}
       onclick={() => onChange({ ...filter, profile: !filter.profile })}>with profile</button
     >
     {#if filter.site}
-      <button type="button" class="tag pinned" onclick={() => onChange({ ...filter, site: '' })}
+      <button type="button" class="dl-tag pinned" onclick={() => onChange({ ...filter, site: '' })}
         >site: {siteName} ×</button
       >
     {/if}
     {#if filter.section}
-      <button type="button" class="tag pinned" onclick={() => onChange({ ...filter, section: '' })}
-        >line: {filter.section} ×</button
+      <button
+        type="button"
+        class="dl-tag pinned"
+        onclick={() => onChange({ ...filter, section: '' })}>line: {filter.section} ×</button
       >
     {/if}
     {#if filter.dateFrom !== null || filter.dateTo !== null}
       <button
         type="button"
-        class="tag pinned"
+        class="dl-tag pinned"
         onclick={() => onChange({ ...filter, dateFrom: null, dateTo: null })}
         >{filter.dateFrom ? formatDate(filter.dateFrom) : 'start'} – {filter.dateTo
           ? formatDate(filter.dateTo)
@@ -301,33 +303,33 @@
   input {
     font: inherit;
     font-size: 14.5px;
-    color: var(--color-text);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    color: var(--dl-color-text);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius-sm);
     padding: 9px 12px;
     width: 100%;
   }
   input:focus-visible,
   select:focus-visible {
-    outline: 2px solid var(--color-focus-ring);
+    outline: 2px solid var(--dl-color-focus-ring);
     outline-offset: 1px;
   }
   .clear {
     flex: none;
     font: inherit;
     font-size: 13px;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     background: none;
-    border: 1px dashed var(--color-border-strong);
+    border: 1px dashed var(--dl-color-border-strong);
     border-radius: 999px;
     padding: 7px 14px;
     cursor: pointer;
     white-space: nowrap;
   }
   .clear:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    border-color: var(--dl-color-accent);
+    color: var(--dl-color-accent);
   }
 
   /* One grid of equal fields, each with a small caption: reads as a form, not a jumble. */
@@ -343,33 +345,33 @@
     min-width: 0;
   }
   .field span {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .field.set span {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   select {
     font: inherit;
     font-size: 13.5px;
     width: 100%;
-    color: var(--color-text-muted);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    color: var(--dl-color-text-muted);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius-sm);
     padding: 7px 10px;
     cursor: pointer;
     transition: border-color 0.15s ease;
   }
   select:hover {
-    border-color: var(--color-border-strong);
+    border-color: var(--dl-color-border-strong);
   }
   .field.set select {
-    color: var(--color-text);
-    border-color: var(--color-accent);
+    color: var(--dl-color-text);
+    border-color: var(--dl-color-accent);
   }
   select.names {
     text-transform: capitalize;
@@ -381,27 +383,27 @@
     gap: 8px;
     align-items: center;
   }
-  .chips .tag {
+  .chips .dl-tag {
     cursor: pointer;
   }
   .divider {
     width: 1px;
     height: 18px;
-    background: var(--color-border-strong);
+    background: var(--dl-color-border-strong);
     margin: 0 4px;
   }
-  .tag.toggle::before {
+  .dl-tag.toggle::before {
     display: none;
   }
-  .tag.active {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+  .dl-tag.active {
+    border-color: var(--dl-color-accent);
+    color: var(--dl-color-accent);
   }
-  .tag.pinned {
-    border-color: var(--color-warm);
-    color: var(--color-warm);
+  .dl-tag.pinned {
+    border-color: var(--dl-color-warm);
+    color: var(--dl-color-warm);
   }
-  .tag.pinned::before {
+  .dl-tag.pinned::before {
     display: none;
   }
   @media (max-width: 480px) {

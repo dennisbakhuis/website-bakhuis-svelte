@@ -10,8 +10,8 @@
   <a href={urls.admin.sites()}>Sites</a> › <span>Regions</span>
 </nav>
 <div class="head">
-  <h1>Regions <span class="muted num">{data.regions.length}</span></h1>
-  <a class="btn btn-solid btn-sm" href={urls.admin.newRegion()}>+ New region</a>
+  <h1>Regions <span class="muted dl-num">{data.regions.length}</span></h1>
+  <a class="dl-btn dl-btn-solid dl-btn-sm" href={urls.admin.newRegion()}>+ New region</a>
 </div>
 
 <table>
@@ -33,8 +33,8 @@
         <td class="muted">{region.id}</td>
         <td>{region.country ?? '—'}</td>
         <td>{region.waters.join(', ') || '—'}</td>
-        <td class="n num">{region.sites.length}</td>
-        <td class="n num">{region.dives}</td>
+        <td class="n dl-num">{region.sites.length}</td>
+        <td class="n dl-num">{region.dives}</td>
         <td class="row-actions"
           ><a href={urls.region(region.id)} target="_blank" rel="noopener">view ↗</a></td
         >
@@ -48,11 +48,11 @@
 <style>
   .crumbs {
     font-size: 13.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin-bottom: 6px;
   }
   .crumbs a {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .head {
     display: flex;
@@ -62,7 +62,7 @@
     flex-wrap: wrap;
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 14px;
     font-weight: 400;
   }

@@ -18,14 +18,14 @@
 <style>
   .crumbs {
     font-size: 13.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin-bottom: 6px;
   }
   .crumbs a {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 14px;
   }
 </style>

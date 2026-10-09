@@ -30,13 +30,13 @@
 <style>
   .crumbs {
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin: 0 0 6px;
   }
   .sub {
     font-size: 16px;
     font-weight: 400;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-left: 10px;
   }
 </style>

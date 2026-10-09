@@ -39,17 +39,17 @@
     gap: 4px;
   }
   button {
-    --map-bg: var(--color-bg-elevated);
+    --map-bg: var(--dl-color-bg-elevated);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
     width: 64px;
     padding: 5px 2px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--dl-color-border);
     border-radius: 8px;
-    background: var(--color-bg-elevated);
-    color: var(--color-text-muted);
+    background: var(--dl-color-bg-elevated);
+    color: var(--dl-color-text-muted);
     font-size: 10px;
     line-height: 1.1;
     cursor: pointer;
@@ -59,13 +59,13 @@
     padding: 4px;
   }
   button:hover {
-    border-color: var(--color-border-strong);
-    color: var(--color-text);
+    border-color: var(--dl-color-border-strong);
+    color: var(--dl-color-text);
   }
   button.selected {
-    border-color: var(--color-accent);
-    color: var(--color-text);
-    box-shadow: 0 0 0 1px var(--color-accent);
+    border-color: var(--dl-color-accent);
+    color: var(--dl-color-text);
+    box-shadow: 0 0 0 1px var(--dl-color-accent);
   }
   svg {
     width: 28px;

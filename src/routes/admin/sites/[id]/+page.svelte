@@ -3,7 +3,7 @@
   import { adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
   import { defaultTitle, mapSummary } from '$lib/dive/sitemap';
   import type { Attachment } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import SiteForm from '../SiteForm.svelte';
   import { getDivelog } from '$lib/dive/context';
 
@@ -72,8 +72,11 @@
 </nav>
 <div class="head">
   <h1>{site.name}</h1>
-  <a class="btn btn-ghost btn-sm" href={urls.site(site.slug)} target="_blank" rel="noopener"
-    >View ↗</a
+  <a
+    class="dl-btn dl-btn-ghost dl-btn-sm"
+    href={urls.site(site.slug)}
+    target="_blank"
+    rel="noopener">View ↗</a
   >
 </div>
 
@@ -81,10 +84,10 @@
   <SiteForm {site} regions={data.regions} onSaved={() => invalidateAll()} />
 {/key}
 
-<section class="card panel">
+<section class="dl-card panel">
   <div class="panel-head">
     <h2>Drawn maps</h2>
-    <a class="btn btn-solid btn-sm" href={urls.admin.siteMaps(site.id)}>Open map editor</a>
+    <a class="dl-btn dl-btn-solid dl-btn-sm" href={urls.admin.siteMaps(site.id)}>Open map editor</a>
   </div>
   {#if drawn.length}
     <ul class="maps">
@@ -92,7 +95,7 @@
         <li>
           <span class="badge">{defaultTitle(m.kind)}</span>
           <span class="map-title">{m.title || defaultTitle(m.kind)}</span>
-          <span class="muted num">{mapSummary(m)}</span>
+          <span class="muted dl-num">{mapSummary(m)}</span>
           {#if site.default_map === `drawn:${m.id}`}<span class="star">★ shown first</span>{/if}
         </li>
       {/each}
@@ -118,7 +121,7 @@
   {/if}
 </section>
 
-<section class="card panel">
+<section class="dl-card panel">
   <h2>Photos & uploaded maps</h2>
   <div class="dropzone">
     <label class="kind">
@@ -130,7 +133,7 @@
     </label>
     <label class="kind"><input type="checkbox" bind:checked={mediaPublic} /> public</label>
     <label class="file">
-      <span class="btn btn-ghost btn-sm"
+      <span class="dl-btn dl-btn-ghost dl-btn-sm"
         >{uploading ? `Uploading ${uploading}…` : 'Choose images'}</span
       >
       <input
@@ -181,7 +184,7 @@
               <a href={a.url} target="_blank" rel="noopener" class="muted">open</a>
               <button
                 type="button"
-                class="btn btn-ghost btn-sm danger"
+                class="dl-btn dl-btn-ghost dl-btn-sm danger"
                 onclick={() => removeMedia(a)}>Delete</button
               >
             </div>
@@ -199,7 +202,7 @@
       so it cannot be deleted.
     </p>
   {:else}
-    <button type="button" class="btn btn-ghost btn-sm danger" onclick={removeSite}
+    <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm danger" onclick={removeSite}
       >Delete site</button
     >
   {/if}
@@ -208,11 +211,11 @@
 <style>
   .crumbs {
     font-size: 13.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin-bottom: 6px;
   }
   .crumbs a {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .head {
     display: flex;
@@ -221,7 +224,7 @@
     flex-wrap: wrap;
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 14px;
     margin: 0;
   }
@@ -231,7 +234,7 @@
     flex-direction: column;
     gap: 12px;
     margin-bottom: 24px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .panel h2 {
     font-size: 15px;
@@ -258,25 +261,25 @@
     gap: 10px;
     flex-wrap: wrap;
     padding: 8px 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    background: var(--color-surface);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-surface);
   }
   .map-title {
     font-weight: 500;
   }
   .badge {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 2px 8px;
     border-radius: 999px;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
+    background: var(--dl-color-accent-soft);
+    color: var(--dl-color-accent);
   }
   .star {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
     font-size: 13px;
     margin-left: auto;
   }
@@ -286,9 +289,9 @@
     align-items: center;
     gap: 14px;
     padding: 12px;
-    border: 1px dashed var(--color-border-strong);
-    border-radius: var(--radius);
-    background: var(--color-surface);
+    border: 1px dashed var(--dl-color-border-strong);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-surface);
   }
   .kind {
     flex-direction: row;
@@ -318,20 +321,20 @@
     gap: 12px;
     align-items: center;
     padding: 8px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    background: var(--color-surface);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-surface);
   }
   .media-row.private {
     border-style: dashed;
-    border-color: var(--color-warm);
+    border-color: var(--dl-color-warm);
   }
   .media-row img {
     width: 96px;
     height: 72px;
     object-fit: cover;
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-2);
+    border-radius: var(--dl-radius-sm);
+    background: var(--dl-color-surface-2);
   }
   .media-fields {
     display: flex;
@@ -349,11 +352,11 @@
     padding: 4px 8px;
   }
   .danger-zone {
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
     padding-top: 16px;
   }
   .danger:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
 </style>

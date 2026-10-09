@@ -23,8 +23,8 @@
 </script>
 
 <section class="login">
-  <div class="card box">
-    <p class="kicker">Admin</p>
+  <div class="dl-card box">
+    <p class="dl-kicker">Admin</p>
     <h1>Sign in</h1>
     {#if page.url.searchParams.get('error') === 'expired'}
       <p class="error">That link has expired or was already used. Request a new one.</p>
@@ -47,7 +47,7 @@
           <input type="email" autocomplete="email" bind:value={email} required />
         </label>
         {#if error}<p class="error">{error}</p>{/if}
-        <button type="submit" class="btn btn-solid" disabled={busy}
+        <button type="submit" class="dl-btn dl-btn-solid" disabled={busy}
           >{busy ? 'Sending…' : 'Send me a link'}</button
         >
       </form>
@@ -65,7 +65,7 @@
   .box {
     width: min(420px, 100%);
     padding: 32px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   form {
     display: flex;
@@ -74,6 +74,6 @@
   }
   .hint {
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
 </style>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Post } from '$lib/blog/posts';
-  import { formatLongDate } from '$lib/dive/format';
+  import { formatLongDate } from '$lib/format';
   import { articleLD, jsonLdScript } from '$lib/seo';
 
   let { post, backHref, backLabel }: { post: Post; backHref: string; backLabel: string } = $props();

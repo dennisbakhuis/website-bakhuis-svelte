@@ -128,30 +128,30 @@ export function dotMeasureMax(sites: MapSite[], mode: SizeMode): number {
 }
 
 const TYPE_COLOURS: Record<string, string> = {
-  cave: 'var(--tag-cave)',
-  cavern: 'var(--tag-cave)',
-  mine: 'var(--tag-cave)',
-  quarry: 'var(--tag-training)',
-  'quarry lake': 'var(--tag-training)',
-  lake: 'var(--tag-drift)',
-  reservoir: 'var(--tag-drift)',
-  pool: 'var(--tag-training)',
-  'indoor dive tower': 'var(--tag-training)',
-  wreck: 'var(--tag-wreck)',
-  'reef with wrecks': 'var(--tag-wreck)',
+  cave: 'var(--dl-tag-cave)',
+  cavern: 'var(--dl-tag-cave)',
+  mine: 'var(--dl-tag-cave)',
+  quarry: 'var(--dl-tag-training)',
+  'quarry lake': 'var(--dl-tag-training)',
+  lake: 'var(--dl-tag-drift)',
+  reservoir: 'var(--dl-tag-drift)',
+  pool: 'var(--dl-tag-training)',
+  'indoor dive tower': 'var(--dl-tag-training)',
+  wreck: 'var(--dl-tag-wreck)',
+  'reef with wrecks': 'var(--dl-tag-wreck)',
 };
 
 export function typeColour(type: string): string {
-  return TYPE_COLOURS[type] ?? 'var(--color-accent)';
+  return TYPE_COLOURS[type] ?? 'var(--dl-color-accent)';
 }
 
 /** The legend swatches for the type colouring, collapsed to the families that share a colour. */
 export const TYPE_LEGEND: { label: string; colour: string }[] = [
-  { label: 'sea', colour: 'var(--color-accent)' },
-  { label: 'cave', colour: 'var(--tag-cave)' },
-  { label: 'quarry / pool', colour: 'var(--tag-training)' },
-  { label: 'lake', colour: 'var(--tag-drift)' },
-  { label: 'wreck', colour: 'var(--tag-wreck)' },
+  { label: 'sea', colour: 'var(--dl-color-accent)' },
+  { label: 'cave', colour: 'var(--dl-tag-cave)' },
+  { label: 'quarry / pool', colour: 'var(--dl-tag-training)' },
+  { label: 'lake', colour: 'var(--dl-tag-drift)' },
+  { label: 'wreck', colour: 'var(--dl-tag-wreck)' },
 ];
 
 export type ColourScale = { min: number; max: number };

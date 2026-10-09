@@ -66,7 +66,7 @@
 </p>
 
 <div class="drops">
-  <label class="drop card">
+  <label class="drop dl-card">
     <input
       type="file"
       multiple
@@ -77,7 +77,7 @@
     <strong>Shearwater Perdix</strong>
     <span>{busy ? 'Importing…' : 'Choose one or more Perdix .xml files'}</span>
   </label>
-  <label class="drop card">
+  <label class="drop dl-card">
     <input
       type="file"
       accept=".xml,.ssrf,application/xml,text/xml"
@@ -91,7 +91,7 @@
 
 {#if error}<p class="error">{error}</p>{/if}
 {#if result}
-  <div class="card summary">
+  <div class="dl-card summary">
     <p>
       <strong>{result.created.length}</strong> drafts created{result.created.length
         ? `: #${result.created.join(', #')}`
@@ -106,7 +106,7 @@
       <strong>{result.skipped}</strong> skipped (already imported) ·
       <strong>{result.sites_created}</strong> sites created
     </p>
-    <a class="btn btn-solid btn-sm" href={urls.admin.root()}>Review drafts</a>
+    <a class="dl-btn dl-btn-solid dl-btn-sm" href={urls.admin.root()}>Review drafts</a>
   </div>
 {/if}
 
@@ -117,10 +117,10 @@
     <tbody>
       {#each data.imports as row (row.id)}
         <tr>
-          <td class="num">{row.created_at.slice(0, 16).replace('T', ' ')}</td>
+          <td class="dl-num">{row.created_at.slice(0, 16).replace('T', ' ')}</td>
           <td>{row.original_name}</td>
-          <td class="num">{row.created.length}</td>
-          <td class="num">{row.updated.length}</td>
+          <td class="dl-num">{row.created.length}</td>
+          <td class="dl-num">{row.updated.length}</td>
           <td><a href={row.url}>download</a></td>
         </tr>
       {/each}
@@ -130,7 +130,7 @@
 
 <style>
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     max-width: 64ch;
   }
   .drops {
@@ -148,7 +148,7 @@
     padding: 36px;
     border-style: dashed;
     cursor: pointer;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .drop input {
     display: none;

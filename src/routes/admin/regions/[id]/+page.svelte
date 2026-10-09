@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto, invalidateAll } from '$app/navigation';
   import { adminJson, AdminApiError } from '$lib/admin/client';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import RegionForm from '../RegionForm.svelte';
   import { getDivelog } from '$lib/dive/context';
 
@@ -30,8 +30,11 @@
 </nav>
 <div class="head">
   <h1>{region.name}</h1>
-  <a class="btn btn-ghost btn-sm" href={urls.region(region.id)} target="_blank" rel="noopener"
-    >View ↗</a
+  <a
+    class="dl-btn dl-btn-ghost dl-btn-sm"
+    href={urls.region(region.id)}
+    target="_blank"
+    rel="noopener">View ↗</a
   >
 </div>
 
@@ -51,7 +54,9 @@
 {/if}
 
 <section class="danger-zone">
-  <button type="button" class="btn btn-ghost btn-sm danger" onclick={remove}>Delete region</button>
+  <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm danger" onclick={remove}
+    >Delete region</button
+  >
   {#if region.sites.length}
     <span class="muted"
       >Refused while {region.sites.length} site{region.sites.length === 1 ? '' : 's'} use it.</span
@@ -63,11 +68,11 @@
 <style>
   .crumbs {
     font-size: 13.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin-bottom: 6px;
   }
   .crumbs a {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .head {
     display: flex;
@@ -89,11 +94,11 @@
     font-size: 14px;
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13.5px;
   }
   .danger-zone {
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
     padding-top: 16px;
     display: flex;
     gap: 12px;
@@ -101,7 +106,7 @@
     flex-wrap: wrap;
   }
   .danger:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
 </style>

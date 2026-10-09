@@ -9,7 +9,7 @@
     profileFacts,
     sampleAt,
   } from '$lib/dive/profile-view';
-  import { reducedMotion } from '$lib/anim/motion';
+  import { reducedMotion } from '$lib/divelog/anim/motion';
 
   let {
     samples,
@@ -124,7 +124,7 @@
   });
 </script>
 
-<figure class="profile card">
+<figure class="profile dl-card">
   <div class="stage">
     <svg
       bind:this={svg}
@@ -191,7 +191,7 @@
     </svg>
 
     <div
-      class="readout num"
+      class="readout dl-num"
       class:visible={hovered}
       class:flip={readoutFlip}
       style="left: {readoutLeft}%"
@@ -216,7 +216,7 @@
       {#each facts as fact (fact.label)}
         <div>
           <dt>{fact.label}</dt>
-          <dd class="num">{fact.value}</dd>
+          <dd class="dl-num">{fact.value}</dd>
           {#if fact.note}<span class="note">{fact.note}</span>{/if}
         </div>
       {/each}
@@ -237,7 +237,7 @@
   .profile {
     margin: 0;
     padding: 16px 12px 12px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .stage {
     position: relative;
@@ -250,78 +250,78 @@
     cursor: crosshair;
   }
   .grid {
-    stroke: var(--color-border);
+    stroke: var(--dl-color-border);
     stroke-dasharray: 2 4;
   }
   .axis {
-    fill: var(--color-text-faint);
-    font-family: var(--font-mono);
+    fill: var(--dl-color-text-faint);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
   }
   .area {
-    fill: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-accent) 18%, transparent);
   }
   .line {
     fill: none;
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 2.2;
     stroke-linejoin: round;
     stroke-linecap: round;
   }
   .deco {
     fill: none;
-    stroke: var(--color-error);
+    stroke: var(--dl-color-error);
     stroke-width: 2.6;
     stroke-linejoin: round;
     stroke-linecap: round;
   }
   .ceiling {
-    fill: color-mix(in srgb, var(--color-error) 16%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-error) 16%, transparent);
   }
   .ceiling-edge {
     fill: none;
-    stroke: var(--color-error);
+    stroke: var(--dl-color-error);
     stroke-width: 1.2;
     stroke-dasharray: 3 3;
   }
   .break {
-    fill: color-mix(in srgb, var(--color-text) 5%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-text) 5%, transparent);
   }
   .break-label {
-    fill: var(--color-text-faint);
+    fill: var(--dl-color-text-faint);
     font-size: 10px;
   }
   .temp {
     fill: none;
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-width: 1.4;
     stroke-dasharray: 4 3;
     opacity: 0.85;
   }
   .temp-label {
-    fill: var(--color-warm);
+    fill: var(--dl-color-warm);
   }
   .switch {
-    stroke: var(--color-success);
+    stroke: var(--dl-color-success);
     stroke-width: 1;
     stroke-dasharray: 2 3;
   }
   .switch-dot {
-    fill: var(--color-success);
-    stroke: var(--color-bg-elevated);
+    fill: var(--dl-color-success);
+    stroke: var(--dl-color-bg-elevated);
     stroke-width: 1.5;
   }
   .switch-label {
-    fill: var(--color-success);
+    fill: var(--dl-color-success);
     font-size: 10.5px;
   }
   .cursor {
-    stroke: var(--color-text-muted);
+    stroke: var(--dl-color-text-muted);
     stroke-width: 1;
   }
   .cursor-dot {
-    fill: var(--color-text);
-    stroke: var(--color-bg-elevated);
+    fill: var(--dl-color-text);
+    stroke: var(--dl-color-bg-elevated);
     stroke-width: 1.5;
   }
   .readout {
@@ -332,12 +332,12 @@
     flex-direction: column;
     gap: 1px;
     padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-    border: 1px solid var(--color-border-strong);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--dl-radius-sm);
+    background: color-mix(in srgb, var(--dl-color-surface) 94%, transparent);
+    border: 1px solid var(--dl-color-border-strong);
+    box-shadow: var(--dl-shadow-sm);
     font-size: 12px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.12s ease;
@@ -350,11 +350,11 @@
     opacity: 1;
   }
   .readout strong {
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-weight: 500;
   }
   .readout .warm {
-    color: var(--color-error);
+    color: var(--dl-color-error);
   }
   figcaption {
     display: flex;
@@ -362,12 +362,12 @@
     gap: 6px 16px;
     padding: 8px 6px 0;
     font-size: 12px;
-    color: var(--color-text-muted);
-    font-family: var(--font-mono);
+    color: var(--dl-color-text-muted);
+    font-family: var(--dl-font-mono);
   }
   .how {
     margin-left: auto;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .sw {
     display: inline-block;
@@ -377,22 +377,22 @@
     margin-right: 6px;
   }
   .sw.depth {
-    background: var(--color-accent);
+    background: var(--dl-color-accent);
   }
   .sw.temp {
-    background: var(--color-warm);
+    background: var(--dl-color-warm);
   }
   .sw.deco {
-    background: var(--color-error);
+    background: var(--dl-color-error);
     height: 3px;
   }
   .sw.ceiling {
     height: 8px;
-    background: color-mix(in srgb, var(--color-error) 28%, transparent);
-    border-bottom: 1px dashed var(--color-error);
+    background: color-mix(in srgb, var(--dl-color-error) 28%, transparent);
+    border-bottom: 1px dashed var(--dl-color-error);
   }
   .sw.switch {
-    background: var(--color-success);
+    background: var(--dl-color-success);
   }
   .facts {
     display: grid;
@@ -400,25 +400,25 @@
     gap: 12px 16px;
     margin: 14px 0 0;
     padding: 12px 6px 0;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
   }
   .facts dt {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .facts dd {
     margin: 2px 0 0;
     font-size: 17px;
     font-weight: 500;
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .note {
     display: block;
     font-size: 11.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   @media (max-width: 480px) {
     .how {

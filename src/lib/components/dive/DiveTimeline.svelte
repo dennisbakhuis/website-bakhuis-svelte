@@ -200,7 +200,8 @@
           y2={TRACK + (tick.labelled ? 15 : 12)}
         />
         {#if tick.labelled}
-          <text class="year num" x={tick.x} y={HEIGHT - 6} text-anchor="middle">{tick.year}</text>
+          <text class="year dl-num" x={tick.x} y={HEIGHT - 6} text-anchor="middle">{tick.year}</text
+          >
         {/if}
       {/each}
 
@@ -212,14 +213,14 @@
       <line class="stem" x1={toX} x2={toX} y1={LABEL_Y + 5} y2={TRACK} />
 
       <text
-        class="label num"
+        class="label dl-num"
         class:hot={drag?.kind === 'from' || drag?.kind === 'band'}
         x={fromX >= 110 ? fromX - 10 : fromX + 10}
         y={LABEL_Y}
         text-anchor={fromX >= 110 ? 'end' : 'start'}>{labelOf(days[0], 'from')}</text
       >
       <text
-        class="label num"
+        class="label dl-num"
         class:hot={drag?.kind === 'to' || drag?.kind === 'band'}
         x={toX <= width - 110 ? toX + 10 : toX - 10}
         y={LABEL_Y}
@@ -286,9 +287,9 @@
   }
   .strip {
     position: relative;
-    border-radius: var(--radius-md, var(--radius));
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border-radius: var(--dl-radius-md);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border);
     overflow: hidden;
   }
   .strip.dragging {
@@ -303,17 +304,17 @@
     cursor: pointer;
   }
   .track {
-    stroke: var(--color-border-strong);
+    stroke: var(--dl-color-border-strong);
     stroke-width: 2;
     stroke-linecap: round;
   }
   .band {
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 4;
     stroke-linecap: round;
   }
   .mark {
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 1;
     opacity: 0.55;
     transition: opacity 160ms ease;
@@ -322,28 +323,28 @@
     opacity: 0.12;
   }
   .tick {
-    stroke: var(--color-text-faint);
+    stroke: var(--dl-color-text-faint);
     stroke-width: 1;
   }
   .year {
     font-size: 11px;
-    fill: var(--color-text-faint);
+    fill: var(--dl-color-text-faint);
   }
   .stem {
-    stroke: var(--color-border-strong);
+    stroke: var(--dl-color-border-strong);
     stroke-width: 1;
     stroke-dasharray: 2 2;
   }
   .label {
     font-size: 11.5px;
-    fill: var(--color-text-muted);
+    fill: var(--dl-color-text-muted);
   }
   .label.hot {
-    fill: var(--color-text);
+    fill: var(--dl-color-text);
   }
   .handle {
-    fill: var(--color-bg-elevated);
-    stroke: var(--color-accent);
+    fill: var(--dl-color-bg-elevated);
+    stroke: var(--dl-color-accent);
     stroke-width: 2;
     cursor: ew-resize;
     outline: none;
@@ -353,20 +354,20 @@
   }
   .handle:hover,
   .handle.hot {
-    fill: var(--color-accent);
+    fill: var(--dl-color-accent);
     r: 8;
   }
   .handle:focus-visible {
-    stroke: var(--color-focus-ring);
+    stroke: var(--dl-color-focus-ring);
     stroke-width: 3;
   }
   .hint {
     margin: 0;
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .hint strong {
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-weight: 500;
   }
   .link {
@@ -374,7 +375,7 @@
     border: 0;
     padding: 0;
     font: inherit;
-    color: var(--color-link);
+    color: var(--dl-color-link);
     cursor: pointer;
     text-decoration: underline;
   }

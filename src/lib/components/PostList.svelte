@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatDate } from '$lib/dive/format';
+  import { formatDate } from '$lib/format';
 
   type Item = {
     path: string;

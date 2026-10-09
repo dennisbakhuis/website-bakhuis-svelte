@@ -1,8 +1,7 @@
 <script lang="ts">
-  import Markdown from '$lib/components/Markdown.svelte';
-  import OwnerBar from '$lib/components/OwnerBar.svelte';
+  import OwnerBar from '$lib/divelog/components/OwnerBar.svelte';
   import { formatDate, pluralize } from '$lib/dive/format';
-  import { reveal } from '$lib/anim/reveal';
+  import { reveal } from '$lib/divelog/anim/reveal';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -19,9 +18,9 @@
   );
 </script>
 
-<section class="page container">
+<section class="page dl-container">
   <a class="back" href={urls.log()}>← Dive log</a>
-  <p class="kicker">Gear</p>
+  <p class="dl-kicker">Gear</p>
   <h1>What I dive with</h1>
   <p class="lede">
     Setups are the combinations I actually dive; items are the pieces. Each shows how many logged
@@ -39,14 +38,17 @@
   {#if data.gear.setups.length}
     <div class="setups" use:reveal={{ stagger: 90 }}>
       {#each data.gear.setups as setup (setup.id)}
-        <article class="card setup" id={setup.slug} data-reveal>
+        <article class="dl-card setup" id={setup.slug} data-reveal>
           <header>
             <h2>{setup.name}</h2>
-            <a class="count num" href={urls.filter({ setup: setup.slug })}
+            <a class="count dl-num" href={urls.filter({ setup: setup.slug })}
               >{pluralize(setup.dive_count, 'dive')} →</a
             >
           </header>
-          {#if setup.description_md}<Markdown source={setup.description_md} />{/if}
+          {#if setup.description_html}
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -- sanitised by the backend -->
+            <div class="dl-prose">{@html setup.description_html}</div>
+          {/if}
           <ul class="setup-items">
             {#each setup.items as item (item.id)}
               <li>
@@ -67,18 +69,21 @@
       <h3>{group.category}</h3>
       <div class="items">
         {#each group.items as item (item.id)}
-          <article class="card item" id="item-{item.id}" data-reveal>
+          <article class="dl-card item" id="item-{item.id}" data-reveal>
             {#if item.photo_url}
               <img src={item.photo_url} alt={item.name} loading="lazy" />
             {/if}
             <div class="item-body">
               <h4>{item.name}</h4>
               <p class="muted">{item.brand} {item.model}</p>
-              <p class="facts num">
+              <p class="facts dl-num">
                 {#if item.acquired}since {formatDate(item.acquired)} ·
                 {/if}{pluralize(item.dive_count, 'dive')}
               </p>
-              {#if item.notes_md}<Markdown source={item.notes_md} />{/if}
+              {#if item.notes_html}
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -- sanitised by the backend -->
+                <div class="dl-prose">{@html item.notes_html}</div>
+              {/if}
             </div>
           </article>
         {/each}
@@ -110,11 +115,11 @@
 <style>
   .page {
     padding-top: 40px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   .back {
     text-decoration: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 14px;
     display: inline-block;
     margin-bottom: 24px;
@@ -123,11 +128,11 @@
     font-size: clamp(34px, 5vw, 52px);
   }
   .empty {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     padding: 24px 0;
   }
   .lede {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 1.1rem;
     max-width: 52ch;
     margin-bottom: 32px;
@@ -140,7 +145,7 @@
   }
   .setup {
     padding: 22px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .setup header {
     display: flex;
@@ -169,10 +174,10 @@
   }
   .setup-items a {
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .setup-items a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .section-title {
     font-size: 26px;
@@ -181,11 +186,11 @@
     margin-top: 28px;
   }
   .category h3 {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 12px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 12px;
   }
   .items {
@@ -209,12 +214,12 @@
     margin-bottom: 2px;
   }
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 14px;
   }
   .facts {
     font-size: 12.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .retired ul {
     padding-left: 18px;

@@ -82,11 +82,11 @@ describe('stats view', () => {
     expect(dotRadiusBy(site, 'uniform', 4)).toBe(4.5);
     expect(dotRadiusBy(site, 'minutes', 800)).toBe(6.5);
     expect(dotMeasureMax([site, { ...site, minutes: 50 }], 'minutes')).toBe(200);
-    expect(typeColour('quarry lake')).toBe('var(--tag-training)');
-    expect(typeColour('sea')).toBe('var(--color-accent)');
+    expect(typeColour('quarry lake')).toBe('var(--dl-tag-training)');
+    expect(typeColour('sea')).toBe('var(--dl-color-accent)');
     const scale = colourScale([site, { ...site, last_year: 2010 }], 'year');
     expect(scale).toEqual({ min: 2010, max: 2024 });
-    expect(dotColour(site, 'type', scale)).toBe('var(--color-accent)');
+    expect(dotColour(site, 'type', scale)).toBe('var(--dl-color-accent)');
     expect(dotColour(site, 'year', scale)).toMatch(/^hsl\(/);
     expect(dotColour({ ...site, max_depth_m: 30 }, 'depth', { min: 0, max: 60 })).toMatch(/^hsl\(/);
     expect(barHeights([1, 2, 4], (v) => v)).toEqual([25, 50, 100]);

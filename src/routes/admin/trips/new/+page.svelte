@@ -3,7 +3,7 @@
   import { adminJson, AdminApiError } from '$lib/admin/client';
   import { slugify } from '$lib/admin/slug';
   import type { TripAdmin, TripIn } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -43,7 +43,7 @@
 <p class="breadcrumb"><a href={urls.admin.trips()}>Trips</a> › New trip</p>
 <h1>New trip</h1>
 
-<form class="card form" onsubmit={save}>
+<form class="dl-card form" onsubmit={save}>
   <div class="field-row">
     <label>Name<input type="text" bind:value={name} required /></label>
     <label
@@ -62,14 +62,14 @@
   <label>Description (markdown)<textarea rows="6" bind:value={description_md}></textarea></label>
   {#if error}<p class="error">{error}</p>{/if}
   <div class="actions">
-    <button type="submit" class="btn btn-solid btn-sm">Create</button>
+    <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm">Create</button>
   </div>
 </form>
 
 <style>
   .breadcrumb {
     font-size: 13.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 6px;
   }
   .breadcrumb a {
@@ -81,7 +81,7 @@
     flex-direction: column;
     gap: 12px;
     margin-top: 16px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .actions {
     display: flex;

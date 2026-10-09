@@ -108,7 +108,7 @@
       </span>
       <span class="main">
         <span class="title">
-          <span class="number num">#{dive.number}</span>
+          <span class="number dl-num">#{dive.number}</span>
           {#if dive.title && dive.section && !hideSite}
             {dive.section}<span class="section">· {dive.title}</span>
           {:else}
@@ -140,10 +140,10 @@
           {/if}
         </span>
         <span class="tags">
-          {#each dive.tags as tag (tag)}<span class="tag" data-tag={tag}>{tag}</span>{/each}
+          {#each dive.tags as tag (tag)}<span class="dl-tag" data-tag={tag}>{tag}</span>{/each}
         </span>
       </span>
-      <span class="numbers num">
+      <span class="numbers dl-num">
         <span><small>date</small>{formatDate(dive.date)}</span>
         <span>
           <small>depth</small>{formatDepth(dive.max_depth_m)}
@@ -203,11 +203,13 @@
   {/each}
   {#if shown < dives.length}
     <div class="more">
-      <button type="button" class="btn btn-ghost" onclick={() => (shown += pageSize * 2)}
-        >Show more <span class="num">({dives.length - shown} left)</span></button
+      <button type="button" class="dl-btn dl-btn-ghost" onclick={() => (shown += pageSize * 2)}
+        >Show more <span class="dl-num">({dives.length - shown} left)</span></button
       >
-      <button type="button" class="btn btn-ghost btn-sm" onclick={() => (shown = dives.length)}
-        >Show all</button
+      <button
+        type="button"
+        class="dl-btn dl-btn-ghost dl-btn-sm"
+        onclick={() => (shown = dives.length)}>Show all</button
       >
     </div>
   {/if}
@@ -222,7 +224,7 @@
     padding: 20px 0 0;
   }
   .empty {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     padding: 40px 0;
   }
   .group + .group {
@@ -230,29 +232,29 @@
   }
   .month {
     position: sticky;
-    top: var(--header-h);
+    top: var(--dl-header-h);
     z-index: 2;
     margin: 0;
     padding: 14px 0 10px;
-    background: var(--color-bg);
-    font-family: var(--font-mono);
+    background: var(--dl-color-bg);
+    font-family: var(--dl-font-mono);
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .month .count {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .month .trip {
     margin-left: 0.4em;
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
     text-decoration: none;
     letter-spacing: 0.08em;
   }
   .month .trip:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .dives {
     list-style: none;
@@ -263,7 +265,7 @@
     gap: 8px;
   }
   .dives li {
-    scroll-margin-top: calc(var(--header-h) + 48px);
+    scroll-margin-top: calc(var(--dl-header-h) + 48px);
   }
   .dive {
     display: grid;
@@ -271,9 +273,9 @@
     gap: 16px;
     align-items: center;
     padding: 12px 16px 12px 12px;
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
+    border-radius: var(--dl-radius);
+    border: 1px solid var(--dl-color-border);
+    background: var(--dl-color-surface);
     text-decoration: none;
     color: inherit;
     transition:
@@ -281,19 +283,19 @@
       transform 0.15s ease;
   }
   .dive:hover {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
     transform: translateX(2px);
   }
   .cover {
-    --map-bg: var(--color-surface-2);
+    --map-bg: var(--dl-color-surface-2);
     width: 96px;
     height: 64px;
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-2);
+    border-radius: var(--dl-radius-sm);
+    background: var(--dl-color-surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
     overflow: hidden;
   }
@@ -311,13 +313,13 @@
     height: 32px;
   }
   .surface {
-    stroke: var(--color-border-strong);
+    stroke: var(--dl-color-border-strong);
     stroke-width: 1px;
     vector-effect: non-scaling-stroke;
   }
   .profile {
-    fill: var(--color-accent-soft);
-    stroke: var(--color-accent);
+    fill: var(--dl-color-accent-soft);
+    stroke: var(--dl-color-accent);
     stroke-width: 1.5px;
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
@@ -329,7 +331,7 @@
     min-width: 0;
   }
   .title {
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-weight: 600;
     font-size: 17px;
     display: flex;
@@ -339,16 +341,16 @@
   }
   .number {
     font-size: 12px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-weight: 400;
   }
   .section {
     font-weight: 400;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 14px;
   }
   .where {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 14px;
   }
   .tags {
@@ -374,25 +376,25 @@
     height: 3px;
     margin-top: 4px;
     border-radius: 2px;
-    background: var(--color-border);
+    background: var(--dl-color-border);
     overflow: hidden;
     direction: rtl;
   }
   .bar i {
     display: block;
     height: 100%;
-    background: var(--color-accent);
+    background: var(--dl-color-accent);
     border-radius: 2px;
   }
   .numbers .profile-mark {
     justify-content: center;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .numbers small {
     font-size: 10px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   @media (max-width: 820px) {
     .dive {

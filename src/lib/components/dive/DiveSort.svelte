@@ -36,7 +36,7 @@
   </label>
   <button
     type="button"
-    class="btn btn-ghost btn-sm"
+    class="dl-btn dl-btn-ghost dl-btn-sm"
     onclick={() => onChange({ ...filter, desc: !filter.desc })}
     aria-label="Toggle sort direction"
   >
@@ -44,7 +44,7 @@
   </button>
   {#if onJump && years.length > 1}
     <label class="sort">
-      <span class="visually-hidden">Jump to year</span>
+      <span class="dl-visually-hidden">Jump to year</span>
       <select
         value=""
         onchange={(e) => {
@@ -74,15 +74,15 @@
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   select {
     font: inherit;
     font-size: 14.5px;
-    color: var(--color-text);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    color: var(--dl-color-text);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius-sm);
     padding: 6px 10px;
   }
   @media (max-width: 480px) {

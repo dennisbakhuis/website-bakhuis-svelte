@@ -456,9 +456,9 @@
       {#each tools.filter((t) => t.kinds.includes(map.kind)) as t (t.tool)}
         <button
           type="button"
-          class="btn btn-sm"
-          class:btn-solid={tool === t.tool}
-          class:btn-ghost={tool !== t.tool}
+          class="dl-btn dl-btn-sm"
+          class:dl-btn-solid={tool === t.tool}
+          class:dl-btn-ghost={tool !== t.tool}
           role="radio"
           aria-checked={tool === t.tool}
           onclick={() => {
@@ -500,17 +500,21 @@
       >
     {/if}
     <span class="spacer"></span>
-    <button type="button" class="btn btn-ghost btn-sm" onclick={undo} disabled={!history.length}
-      >Undo</button
+    <button
+      type="button"
+      class="dl-btn dl-btn-ghost dl-btn-sm"
+      onclick={undo}
+      disabled={!history.length}>Undo</button
     >
     <button
       type="button"
-      class="btn btn-ghost btn-sm"
+      class="dl-btn dl-btn-ghost dl-btn-sm"
       onclick={deleteSelection}
       disabled={!selectedNode && !selectedEdge && !selectedArea && !selectedLine}>Delete</button
     >
-    <button type="button" class="btn btn-ghost btn-sm" onclick={openJson}>JSON</button>
-    <button type="button" class="btn btn-ghost btn-sm danger" onclick={clear}>Clear</button>
+    <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={openJson}>JSON</button>
+    <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm danger" onclick={clear}>Clear</button
+    >
   </div>
 
   <div class="canvas-row">
@@ -562,7 +566,7 @@
 
     <aside class="panel">
       {#if tool === 'survey' && node}
-        <h3>Shot from <span class="num">{node.label || node.id}</span></h3>
+        <h3>Shot from <span class="dl-num">{node.label || node.id}</span></h3>
         <div class="xy">
           <label
             >Distance (m)<input
@@ -589,13 +593,17 @@
             bind:value={survey.depth}
           /></label
         >
-        <button type="button" class="btn btn-solid btn-sm" onclick={addShot}>Add station</button>
+        <button type="button" class="dl-btn dl-btn-solid dl-btn-sm" onclick={addShot}
+          >Add station</button
+        >
         <p class="muted">
           Compass bearings are true to the drawing's north ({map.north}°). Each shot becomes a
           station and a surveyed line with its distance and azimuth stored.
         </p>
       {:else if node}
-        <h3>{node.type === 'object' ? 'Object' : 'Station'} <span class="num">{node.id}</span></h3>
+        <h3>
+          {node.type === 'object' ? 'Object' : 'Station'} <span class="dl-num">{node.id}</span>
+        </h3>
         <label>
           Type
           <select
@@ -626,7 +634,7 @@
             {#if node.color}
               <button
                 type="button"
-                class="btn btn-ghost btn-sm"
+                class="dl-btn dl-btn-ghost dl-btn-sm"
                 onclick={() => patchNode({ color: null })}>default</button
               >
             {/if}
@@ -697,7 +705,7 @@
           </div>
         {/if}
       {:else if edge}
-        <h3>Line <span class="num">{edge.from} → {edge.to}</span></h3>
+        <h3>Line <span class="dl-num">{edge.from} → {edge.to}</span></h3>
         <div class="xy">
           <label>
             Distance (m)
@@ -743,7 +751,8 @@
         </label>
       {:else if line}
         <h3>
-          {LINE_KINDS.find((k) => k.kind === line.kind)?.label} <span class="num">{line.id}</span>
+          {LINE_KINDS.find((k) => k.kind === line.kind)?.label}
+          <span class="dl-num">{line.id}</span>
         </h3>
         <label>
           Kind
@@ -785,7 +794,7 @@
           {line.points.length} points · {Math.round(lineLength(line))} m. Drag the handles to reshape.
         </p>
       {:else if area}
-        <h3>Area <span class="num">{area.id}</span></h3>
+        <h3>Area <span class="dl-num">{area.id}</span></h3>
         <label>
           Kind
           <select
@@ -957,9 +966,13 @@
       <textarea rows="10" bind:value={jsonText} spellcheck="false"></textarea>
       {#if jsonError}<p class="error">{jsonError}</p>{/if}
       <div class="json-actions">
-        <button type="button" class="btn btn-solid btn-sm" onclick={applyJson}>Apply JSON</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick={() => (showJson = false)}
-          >Close</button
+        <button type="button" class="dl-btn dl-btn-solid dl-btn-sm" onclick={applyJson}
+          >Apply JSON</button
+        >
+        <button
+          type="button"
+          class="dl-btn dl-btn-ghost dl-btn-sm"
+          onclick={() => (showJson = false)}>Close</button
         >
         <span class="muted">Paste a map exported from survey software, or copy this one out.</span>
       </div>
@@ -980,17 +993,17 @@
     flex-direction: column;
     gap: 4px;
     font-size: 12.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .editor input,
   .editor select,
   .editor textarea {
     font: inherit;
     font-size: 14px;
-    color: var(--color-text);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    color: var(--dl-color-text);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius-sm);
     padding: 6px 8px;
     width: 100%;
   }
@@ -1050,7 +1063,7 @@
   }
   .hint {
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin: 8px 0 0;
   }
   .panel {
@@ -1058,27 +1071,27 @@
     flex-direction: column;
     gap: 10px;
     padding: 14px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    background: var(--color-surface);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-surface);
   }
   .panel h3 {
     font-size: 15px;
     margin: 0;
   }
   .section {
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
     padding-top: 8px;
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
   .section summary {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     cursor: pointer;
   }
   .xy {
@@ -1087,16 +1100,16 @@
     gap: 8px;
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
     margin: 0;
   }
   .danger:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
   .json textarea {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 12.5px;
     width: 100%;
   }
@@ -1108,7 +1121,7 @@
     margin-top: 8px;
   }
   .error {
-    color: var(--color-error);
+    color: var(--dl-color-error);
     font-size: 13px;
   }
   @media (max-width: 760px) {

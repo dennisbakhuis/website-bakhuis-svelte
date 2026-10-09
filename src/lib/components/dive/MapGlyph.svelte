@@ -258,7 +258,7 @@
     fill: currentColor;
   }
   .ring {
-    fill: var(--map-bg, var(--color-bg-elevated));
+    fill: var(--map-bg, var(--dl-color-bg-elevated));
     stroke: currentColor;
     stroke-width: 2px;
     vector-effect: non-scaling-stroke;
@@ -275,16 +275,16 @@
     stroke-width: 1.5px;
   }
   .accent {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .warm {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
   }
   .inverse {
-    color: var(--map-bg, var(--color-bg-elevated));
+    color: var(--map-bg, var(--dl-color-bg-elevated));
   }
   .inverse-fill {
-    fill: var(--map-bg, var(--color-bg-elevated));
+    fill: var(--map-bg, var(--dl-color-bg-elevated));
   }
   .object.house {
     color: #f4a261;

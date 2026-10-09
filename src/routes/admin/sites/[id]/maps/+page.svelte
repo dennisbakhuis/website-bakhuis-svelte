@@ -11,7 +11,7 @@
     type SiteMap,
     type SiteMapOut,
   } from '$lib/dive/sitemap';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -147,15 +147,18 @@
   <div class="head">
     <div class="title">
       <h1>Maps of {site.name}</h1>
-      <a class="btn btn-ghost btn-sm" href={urls.site(site.slug)} target="_blank" rel="noopener"
-        >View ↗</a
+      <a
+        class="dl-btn dl-btn-ghost dl-btn-sm"
+        href={urls.site(site.slug)}
+        target="_blank"
+        rel="noopener">View ↗</a
       >
     </div>
     <div class="actions">
-      <button type="button" class="btn btn-ghost btn-sm" onclick={() => create('stickmap')}
+      <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={() => create('stickmap')}
         >+ Stick map</button
       >
-      <button type="button" class="btn btn-ghost btn-sm" onclick={() => create('sitemap')}
+      <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={() => create('sitemap')}
         >+ Site map</button
       >
     </div>
@@ -167,34 +170,36 @@
         <li class="map-row" class:open={openId === m.id}>
           <span class="badge">{defaultTitle(m.kind)}</span>
           <span class="map-title">{m.title || defaultTitle(m.kind)}</span>
-          <span class="muted num">{mapSummary(m)} · saved {m.revision}×</span>
+          <span class="muted dl-num">{mapSummary(m)} · saved {m.revision}×</span>
           {#if site.default_map === `drawn:${m.id}`}<span class="star">★ first</span>{/if}
           <span class="row-actions">
             <button
               type="button"
-              class="btn btn-ghost btn-sm"
+              class="dl-btn dl-btn-ghost dl-btn-sm"
               onclick={() => move(i, -1)}
               aria-label="Move up">↑</button
             >
             <button
               type="button"
-              class="btn btn-ghost btn-sm"
+              class="dl-btn dl-btn-ghost dl-btn-sm"
               onclick={() => move(i, 1)}
               aria-label="Move down">↓</button
             >
             {#if site.default_map !== `drawn:${m.id}`}
-              <button type="button" class="btn btn-ghost btn-sm" onclick={() => star(m)}
+              <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={() => star(m)}
                 >☆ first</button
               >
             {/if}
             <button
               type="button"
-              class="btn btn-ghost btn-sm"
+              class="dl-btn dl-btn-ghost dl-btn-sm"
               onclick={() => (openId === m.id ? close() : open(m))}
               >{openId === m.id ? 'Close' : 'Edit'}</button
             >
-            <button type="button" class="btn btn-ghost btn-sm danger" onclick={() => remove(m)}
-              >Delete</button
+            <button
+              type="button"
+              class="dl-btn dl-btn-ghost dl-btn-sm danger"
+              onclick={() => remove(m)}>Delete</button
             >
           </span>
         </li>
@@ -209,7 +214,7 @@
   {/if}
 
   {#if openMap && draft}
-    <div class="editor card">
+    <div class="editor dl-card">
       {#key editorKey}
         <SiteMapEditor
           value={draft}
@@ -226,7 +231,7 @@
         >
         <button
           type="button"
-          class="btn btn-solid btn-sm"
+          class="dl-btn dl-btn-solid dl-btn-sm"
           disabled={!dirty || saving}
           onclick={save}>{saving ? 'Saving…' : 'Save map'}</button
         >
@@ -238,11 +243,11 @@
 <style>
   .crumbs {
     font-size: 13.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin-bottom: 6px;
   }
   .crumbs a {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .title {
     display: flex;
@@ -279,12 +284,12 @@
     gap: 10px;
     flex-wrap: wrap;
     padding: 8px 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    background: var(--color-surface);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-surface);
   }
   .map-row.open {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .map-title {
     font-weight: 500;
@@ -295,26 +300,26 @@
     gap: 4px;
   }
   .badge {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 2px 8px;
     border-radius: 999px;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
+    background: var(--dl-color-accent-soft);
+    color: var(--dl-color-accent);
   }
   .star {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
     font-size: 13px;
   }
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 13.5px;
   }
   .editor {
     padding: 14px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -325,11 +330,11 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
     padding-top: 10px;
   }
   .danger:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
 </style>

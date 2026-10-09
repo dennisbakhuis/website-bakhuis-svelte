@@ -1,6 +1,5 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import Markdown from '$lib/components/Markdown.svelte';
   import DetailTop from '$lib/components/dive/DetailTop.svelte';
   import WorldMap from '$lib/components/dive/WorldMap.svelte';
   import { flagEmoji, formatDepth, formatHours, pluralize } from '$lib/dive/format';
@@ -13,14 +12,14 @@
   const stats = $derived(region.stats);
 </script>
 
-<section class="region container detail">
+<section class="region dl-container dl-detail">
   <DetailTop
     back={{ href: urls.sites(), label: 'Dive sites' }}
     owner={data.owner ? { edit: { label: 'Edit region', href: data.editHref } } : null}
   />
-  <p class="kicker">Region · {flagEmoji(region.country_code)} {region.country ?? ''}</p>
+  <p class="dl-kicker">Region · {flagEmoji(region.country_code)} {region.country ?? ''}</p>
   <h1>{region.name}</h1>
-  <p class="where num">
+  <p class="where dl-num">
     {pluralize(region.sites.length, 'site')} · {pluralize(region.dives, 'dive')}{region.waters
       .length
       ? ` · ${region.waters.join(', ')}`
@@ -31,24 +30,24 @@
     <dl class="band">
       <div>
         <dt>Dives</dt>
-        <dd class="num">{stats.dives}</dd>
+        <dd class="dl-num">{stats.dives}</dd>
       </div>
       <div>
         <dt>Sites dived</dt>
-        <dd class="num">{stats.sites}</dd>
+        <dd class="dl-num">{stats.sites}</dd>
       </div>
       <div>
         <dt>Time underwater</dt>
-        <dd class="num">{formatHours(stats.minutes)}</dd>
+        <dd class="dl-num">{formatHours(stats.minutes)}</dd>
       </div>
       <div>
         <dt>Deepest</dt>
-        <dd class="num">{formatDepth(stats.max_depth_m)}</dd>
+        <dd class="dl-num">{formatDepth(stats.max_depth_m)}</dd>
       </div>
       {#if stats.first_year}
         <div>
           <dt>First · last</dt>
-          <dd class="num">
+          <dd class="dl-num">
             {stats.first_year}{stats.last_year && stats.last_year !== stats.first_year
               ? ` · ${stats.last_year}`
               : ''}
@@ -60,7 +59,7 @@
           <dt>Most dived</dt>
           <dd>
             <a href={urls.site(stats.top_site.slug)}>{stats.top_site.name}</a>
-            <span class="num faint">{pluralize(stats.top_site.dives, 'dive')}</span>
+            <span class="dl-num faint">{pluralize(stats.top_site.dives, 'dive')}</span>
           </dd>
         </div>
       {/if}
@@ -80,7 +79,10 @@
 
   <div class="grid">
     <div class="prose-block">
-      {#if region.body_md}<Markdown source={region.body_md} />{/if}
+      {#if region.body_html}
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -- sanitised by the backend -->
+        <div class="dl-prose">{@html region.body_html}</div>
+      {/if}
     </div>
     <aside>
       <h2>Sites</h2>
@@ -92,7 +94,9 @@
           </li>
         {/each}
       </ul>
-      <a class="btn btn-ghost btn-sm" href={urls.filter({ region: region.id })}>All dives here →</a>
+      <a class="dl-btn dl-btn-ghost dl-btn-sm" href={urls.filter({ region: region.id })}
+        >All dives here →</a
+      >
     </aside>
   </div>
 </section>
@@ -100,14 +104,14 @@
 <style>
   .region {
     padding-top: 40px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   h1 {
     font-size: clamp(30px, 5vw, 48px);
     margin-bottom: 6px;
   }
   .where {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 28px;
   }
   .band {
@@ -116,16 +120,16 @@
     gap: 14px 18px;
     margin: 0 0 20px;
     padding: 18px 20px;
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-elevated);
+    border-radius: var(--dl-radius);
+    border: 1px solid var(--dl-color-border);
+    background: var(--dl-color-bg-elevated);
   }
   .band dt {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .band dd {
     margin: 2px 0 0;
@@ -145,10 +149,10 @@
     text-decoration: none;
   }
   .band .top-site a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 12.5px;
     font-weight: 400;
   }
@@ -182,14 +186,14 @@
   }
   .sites a {
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-weight: 500;
   }
   .sites a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
     text-transform: capitalize;
   }

@@ -24,14 +24,14 @@
 
 <div class="owner-bar" class:compact role="group" aria-label="Owner actions">
   <a
-    class={compact ? 'owner-link' : 'btn btn-ghost btn-sm'}
+    class={compact ? 'owner-link' : 'dl-btn dl-btn-ghost dl-btn-sm'}
     href={edit.href}
     target={edit.external ? '_blank' : undefined}
     rel={edit.external ? 'noopener' : undefined}>✎ {edit.label}</a
   >
   {#each actions as action (action.href)}
     <a
-      class={compact ? 'owner-link' : 'btn btn-ghost btn-sm'}
+      class={compact ? 'owner-link' : 'dl-btn dl-btn-ghost dl-btn-sm'}
       href={action.href}
       target={action.external ? '_blank' : undefined}
       rel={action.external ? 'noopener' : undefined}>{action.label}</a
@@ -49,12 +49,12 @@
     flex-wrap: wrap;
     margin: 16px 0 0;
     padding: 10px 12px;
-    border: 1px dashed var(--color-warm);
-    border-radius: var(--radius);
+    border: 1px dashed var(--dl-color-warm);
+    border-radius: var(--dl-radius);
   }
   .note {
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .owner-bar.compact {
     gap: 4px 12px;
@@ -64,17 +64,17 @@
     border-radius: 0;
   }
   .owner-link {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
     text-decoration: none;
     white-space: nowrap;
   }
   .owner-link:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .compact .note {
     font-size: 12px;
     padding: 1px 8px;
-    border: 1px dashed var(--color-warm);
+    border: 1px dashed var(--dl-color-warm);
     border-radius: 999px;
     white-space: nowrap;
   }

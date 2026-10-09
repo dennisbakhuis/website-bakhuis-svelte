@@ -2,7 +2,7 @@
   import { adminJson, AdminApiError } from '$lib/admin/client';
   import { slugify } from '$lib/admin/slug';
   import type { Region, RegionIn } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
 
   let {
     region = null,
@@ -55,7 +55,7 @@
   }
 </script>
 
-<form class="card form" onsubmit={save}>
+<form class="dl-card form" onsubmit={save}>
   <div class="field-row">
     <label>Name<input type="text" bind:value={form.name} required /></label>
     <label
@@ -79,7 +79,7 @@
   <label>Description (markdown)<textarea rows="12" bind:value={form.body_md}></textarea></label>
   {#if error}<p class="error">{error}</p>{/if}
   <div class="actions">
-    <button type="submit" class="btn btn-solid btn-sm" disabled={saving}
+    <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm" disabled={saving}
       >{saving ? 'Saving…' : region ? 'Save' : 'Create'}</button
     >
   </div>
@@ -92,10 +92,10 @@
     flex-direction: column;
     gap: 12px;
     margin-bottom: 24px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   input[readonly] {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .actions {
     display: flex;

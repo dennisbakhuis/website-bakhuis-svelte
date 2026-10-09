@@ -24,7 +24,7 @@
   const detail = $derived(DETAIL.test(page.url.pathname));
 </script>
 
-<nav class="dive-nav container" class:detail aria-label="Dive log sections">
+<nav class="dive-nav dl-container" class:detail aria-label="Dive log sections">
   {#each items as item (item.href)}
     <a
       href={item.href}
@@ -42,25 +42,25 @@
     margin-bottom: -28px;
   }
   .dive-nav.detail {
-    max-width: var(--container-detail);
+    max-width: var(--dl-container-detail);
   }
   .dive-nav a {
     padding: 6px 14px;
     border-radius: 999px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--dl-color-border);
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
-    color: var(--color-text-muted);
-    background: var(--color-bg-elevated);
+    color: var(--dl-color-text-muted);
+    background: var(--dl-color-bg-elevated);
   }
   .dive-nav a:hover {
-    color: var(--color-text);
-    border-color: var(--color-border-strong);
+    color: var(--dl-color-text);
+    border-color: var(--dl-color-border-strong);
   }
   .dive-nav a.active {
-    background: var(--color-text);
-    border-color: var(--color-text);
-    color: var(--color-bg);
+    background: var(--dl-color-text);
+    border-color: var(--dl-color-text);
+    color: var(--dl-color-bg);
   }
 </style>

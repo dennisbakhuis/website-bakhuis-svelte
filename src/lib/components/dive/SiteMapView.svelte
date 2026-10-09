@@ -1019,28 +1019,28 @@
   .frame:fullscreen {
     width: 100vw;
     height: 100vh;
-    background: var(--color-bg);
+    background: var(--dl-color-bg);
   }
   .frame:fullscreen .sitemap {
     border: none;
     border-radius: 0;
   }
   .view-controls .fullscreen.on {
-    color: var(--color-accent);
-    border-color: var(--color-accent);
+    color: var(--dl-color-accent);
+    border-color: var(--dl-color-accent);
   }
   .sitemap {
-    --map-bg: var(--color-bg-elevated);
+    --map-bg: var(--dl-color-bg-elevated);
     --map-coral: #2f8f6f;
     --map-sand: #d8c9a3;
     display: block;
     width: 100%;
     height: 100%;
     background: var(--map-bg);
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-family: var(--font-mono);
+    border-radius: var(--dl-radius);
+    border: 1px solid var(--dl-color-border);
+    color: var(--dl-color-text);
+    font-family: var(--dl-font-mono);
     touch-action: pan-y;
     user-select: none;
     cursor: grab;
@@ -1050,7 +1050,7 @@
     touch-action: none;
   }
   .sitemap:focus-visible {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .sitemap.editable {
     cursor: crosshair;
@@ -1067,27 +1067,27 @@
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    border: 1px solid var(--color-border-strong);
-    background: color-mix(in srgb, var(--color-bg-elevated) 85%, transparent);
-    color: var(--color-text);
+    border: 1px solid var(--dl-color-border-strong);
+    background: color-mix(in srgb, var(--dl-color-bg-elevated) 85%, transparent);
+    color: var(--dl-color-text);
     font-size: 16px;
     line-height: 1;
     cursor: pointer;
     padding: 0;
   }
   .view-controls button:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    border-color: var(--dl-color-accent);
+    color: var(--dl-color-accent);
   }
   .view-controls .reset {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
   }
   .view-controls .toggle {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 13px;
   }
   .view-controls .toggle.off {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     text-decoration: line-through;
   }
   .hint {
@@ -1096,10 +1096,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
-    color: var(--color-text);
+    background: color-mix(in srgb, var(--dl-color-bg) 70%, transparent);
+    color: var(--dl-color-text);
     font-size: 14px;
-    border-radius: var(--radius);
+    border-radius: var(--dl-radius);
     pointer-events: none;
   }
   .grid line {
@@ -1118,7 +1118,7 @@
     stroke-width: 2.5px;
   }
   .area.depth polygon {
-    stroke: color-mix(in srgb, var(--color-accent) 30%, transparent);
+    stroke: color-mix(in srgb, var(--dl-color-accent) 30%, transparent);
     stroke-width: 1.5px;
   }
   .area.coral polygon {
@@ -1130,12 +1130,12 @@
     stroke: color-mix(in srgb, var(--map-sand) 40%, transparent);
   }
   .area.shallows polygon {
-    fill: color-mix(in srgb, var(--color-accent) 14%, transparent);
-    stroke: color-mix(in srgb, var(--color-accent) 50%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-accent) 14%, transparent);
+    stroke: color-mix(in srgb, var(--dl-color-accent) 50%, transparent);
   }
   .area.wall polygon {
-    fill: color-mix(in srgb, var(--color-warm) 10%, transparent);
-    stroke: var(--color-warm);
+    fill: color-mix(in srgb, var(--dl-color-warm) 10%, transparent);
+    stroke: var(--dl-color-warm);
     stroke-dasharray: 8 4;
   }
   .area.wreck polygon {
@@ -1143,8 +1143,8 @@
     stroke: currentColor;
   }
   .area.reeds polygon {
-    fill: color-mix(in srgb, var(--color-success) 18%, transparent);
-    stroke: color-mix(in srgb, var(--color-success) 60%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-success) 18%, transparent);
+    stroke: color-mix(in srgb, var(--dl-color-success) 60%, transparent);
   }
   .area.other polygon {
     fill: color-mix(in srgb, currentColor 8%, transparent);
@@ -1155,17 +1155,17 @@
   }
   .area.selected polygon,
   .editable .area:hover polygon {
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 3px;
   }
   .area-label.band {
-    fill: color-mix(in srgb, var(--color-accent) 70%, var(--color-text));
-    font-family: var(--font-mono);
+    fill: color-mix(in srgb, var(--dl-color-accent) 70%, var(--dl-color-text));
+    font-family: var(--dl-font-mono);
     stroke-width: 0.35em;
   }
   .area-label {
-    fill: var(--color-text-muted);
-    font-family: var(--font-sans);
+    fill: var(--dl-color-text-muted);
+    font-family: var(--dl-font-mono);
     paint-order: stroke;
     stroke: var(--map-bg);
     stroke-width: 0.5em;
@@ -1175,7 +1175,7 @@
     pointer-events: none;
   }
   .arrow {
-    fill: var(--color-warm);
+    fill: var(--dl-color-warm);
   }
   .line .hit {
     fill: none;
@@ -1207,15 +1207,15 @@
     fill: var(--map-sand);
   }
   .line.depth .stroke {
-    stroke: color-mix(in srgb, var(--color-accent) 70%, var(--color-text));
+    stroke: color-mix(in srgb, var(--dl-color-accent) 70%, var(--dl-color-text));
     stroke-width: 1.5px;
   }
   .line.path .stroke {
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-dasharray: 8 5;
   }
   .line.wall .stroke {
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-dasharray: 8 3 1 3;
   }
   .line.pipe .stroke {
@@ -1227,22 +1227,22 @@
   }
   .line.selected .stroke,
   .editable .line:hover .stroke {
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 3px;
   }
   .line-label {
-    fill: var(--color-text-muted);
+    fill: var(--dl-color-text-muted);
     paint-order: stroke;
     stroke: var(--map-bg);
     stroke-width: 0.6em;
     stroke-linejoin: round;
   }
   .line.depth .line-label {
-    fill: color-mix(in srgb, var(--color-accent) 70%, var(--color-text));
+    fill: color-mix(in srgb, var(--dl-color-accent) 70%, var(--dl-color-text));
   }
   .vertex {
     fill: var(--map-bg);
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 2px;
     vector-effect: non-scaling-stroke;
     cursor: grab;
@@ -1255,17 +1255,17 @@
   }
   .draft {
     fill: none;
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 2px;
     stroke-dasharray: 6 4;
     vector-effect: non-scaling-stroke;
   }
   .draft-point {
-    fill: var(--color-accent);
+    fill: var(--dl-color-accent);
   }
   .draft-point.first {
     fill: var(--map-bg);
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 2px;
     vector-effect: non-scaling-stroke;
   }
@@ -1283,7 +1283,7 @@
     opacity: 0.6;
   }
   .edge.route .line {
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-dasharray: 10 6;
   }
   .routed .edge:not(.on-route) .line {
@@ -1293,7 +1293,7 @@
     opacity: 0.35;
   }
   .edge.on-route .line {
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-width: 4px;
   }
   .sitemap {
@@ -1318,7 +1318,7 @@
     pointer-events: none;
   }
   .route-arrow {
-    fill: var(--color-warm);
+    fill: var(--dl-color-warm);
     stroke: var(--map-bg);
     stroke-width: 1px;
     stroke-linejoin: round;
@@ -1353,13 +1353,13 @@
   }
   .turn-ring {
     fill: none;
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-width: 3px;
     stroke-dasharray: 4 3;
     vector-effect: non-scaling-stroke;
   }
   .pin-shape {
-    fill: var(--color-warm);
+    fill: var(--dl-color-warm);
     stroke: var(--map-bg);
     stroke-width: 1.5px;
     vector-effect: non-scaling-stroke;
@@ -1369,8 +1369,8 @@
     font-weight: 700;
   }
   .pin-note {
-    fill: var(--color-text);
-    font-family: var(--font-sans);
+    fill: var(--dl-color-text);
+    font-family: var(--dl-font-mono);
     paint-order: stroke;
     stroke: var(--map-bg);
     stroke-width: 0.6em;
@@ -1381,7 +1381,7 @@
   }
   .pin.selected .pin-shape,
   .editable .pin:hover .pin-shape {
-    fill: var(--color-accent);
+    fill: var(--dl-color-accent);
   }
   .edge .hit {
     stroke: transparent;
@@ -1393,11 +1393,11 @@
   }
   .editable .edge:hover .line,
   .edge.selected .line {
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 3px;
   }
   .distance {
-    fill: var(--color-text-muted);
+    fill: var(--dl-color-text-muted);
     paint-order: stroke;
     stroke: var(--map-bg);
     stroke-width: 0.8em;
@@ -1411,8 +1411,8 @@
   }
   .node.selected,
   .editable .node:hover {
-    color: var(--color-accent);
-    filter: drop-shadow(0 0 3px var(--color-accent));
+    color: var(--dl-color-accent);
+    filter: drop-shadow(0 0 3px var(--dl-color-accent));
   }
   .node.selected :global(.object),
   .editable .node:hover :global(.object) {
@@ -1420,7 +1420,7 @@
   }
   .label {
     fill: currentColor;
-    font-family: var(--font-sans);
+    font-family: var(--dl-font-mono);
     font-weight: 600;
     paint-order: stroke;
     stroke: var(--map-bg);
@@ -1428,8 +1428,8 @@
     stroke-linejoin: round;
   }
   .depth {
-    fill: var(--color-accent);
-    font-family: var(--font-mono);
+    fill: var(--dl-color-accent);
+    font-family: var(--dl-font-mono);
     paint-order: stroke;
     stroke: var(--map-bg);
     stroke-width: 0.6em;
@@ -1437,21 +1437,21 @@
   }
   .compass line,
   .scale line {
-    stroke: var(--color-text-muted);
+    stroke: var(--dl-color-text-muted);
     stroke-width: 1.5px;
     vector-effect: non-scaling-stroke;
   }
   .compass path {
-    fill: var(--color-text-muted);
+    fill: var(--dl-color-text-muted);
   }
   .compass text,
   .not-to-scale {
-    fill: var(--color-text-faint);
-    font-family: var(--font-mono);
+    fill: var(--dl-color-text-faint);
+    font-family: var(--dl-font-mono);
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
   .scale text {
-    fill: var(--color-text-muted);
+    fill: var(--dl-color-text-muted);
   }
 </style>

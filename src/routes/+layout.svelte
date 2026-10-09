@@ -1,14 +1,16 @@
 <script lang="ts">
   import '$lib/styles/theme.css';
+  import '$lib/styles/divelog-tokens.css';
+  import '$lib/styles/divelog.css';
   import { page } from '$app/state';
   import { site } from '$lib/site';
   import { metaFor, canonicalUrl, personLD, jsonLdScript, ogImageFor } from '$lib/seo';
   import { urls } from '$lib/divelog-config';
   import { goHref } from '$lib/go-targets';
-  import Toast from '$lib/components/Toast.svelte';
+  import Toast from '$lib/divelog/components/Toast.svelte';
   import { version } from '$app/environment';
   import { onMount } from 'svelte';
-  import { reducedMotion } from '$lib/anim/motion';
+  import { reducedMotion } from '$lib/divelog/anim/motion';
 
   let { children, data } = $props();
 

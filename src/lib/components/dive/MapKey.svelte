@@ -21,9 +21,9 @@
     {/each}
   {:else}
     <span class="ramp" class:depth={colour === 'depth'}>
-      <em class="num">{colour === 'year' ? scale.min : '0 m'}</em>
+      <em class="dl-num">{colour === 'year' ? scale.min : '0 m'}</em>
       <i></i>
-      <em class="num">{colour === 'year' ? scale.max : `${Math.round(scale.max)} m`}</em>
+      <em class="dl-num">{colour === 'year' ? scale.max : `${Math.round(scale.max)} m`}</em>
     </span>
   {/if}
   {#if hint}
@@ -38,8 +38,8 @@
     gap: 14px;
     padding: 10px 8px 4px;
     font-size: 12.5px;
-    color: var(--color-text-muted);
-    font-family: var(--font-mono);
+    color: var(--dl-color-text-muted);
+    font-family: var(--dl-font-mono);
     align-items: center;
   }
   .legend i {
@@ -69,6 +69,6 @@
   }
   .hint {
     margin-left: auto;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
 </style>

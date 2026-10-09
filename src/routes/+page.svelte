@@ -3,7 +3,7 @@
   import { site, skills, work, likes } from '$lib/site';
   import { goHref } from '$lib/go-targets';
   import { startDescent, type DescentState } from '$lib/anim/descent';
-  import { reveal } from '$lib/anim/reveal';
+  import { reveal } from '$lib/divelog/anim/reveal';
   import Hero from '$lib/components/home/Hero.svelte';
   import DepthGauge from '$lib/components/home/DepthGauge.svelte';
   import Bubbles from '$lib/components/home/Bubbles.svelte';
@@ -12,7 +12,7 @@
   import DivelogProvider from '$lib/components/dive/DivelogProvider.svelte';
   import { divelogConfig, urls } from '$lib/divelog-config';
   import WritingTile from '$lib/components/home/WritingTile.svelte';
-  import { formatDate } from '$lib/dive/format';
+  import { formatDate } from '$lib/format';
   import { latestMatches } from '$lib/dive/sparkline';
 
   let { data } = $props();

@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { adminJson, AdminApiError } from '$lib/admin/client';
   import type { PersonPrivate } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -52,7 +52,7 @@
 <p class="breadcrumb"><a href={urls.admin.people()}>People</a> › New person</p>
 <h1>New person</h1>
 
-<form class="card form" onsubmit={save}>
+<form class="dl-card form" onsubmit={save}>
   <div class="field-row">
     <label>First name<input type="text" bind:value={form.first_name} required /></label>
     <label>Last name (private)<input type="text" bind:value={form.last_name} /></label>
@@ -79,14 +79,14 @@
   <label>Notes (private)<textarea rows="2" bind:value={form.notes}></textarea></label>
   {#if error}<p class="error">{error}</p>{/if}
   <div class="actions">
-    <button type="submit" class="btn btn-solid btn-sm">Add</button>
+    <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm">Add</button>
   </div>
 </form>
 
 <style>
   .breadcrumb {
     font-size: 13.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 6px;
   }
   .breadcrumb a {
@@ -98,7 +98,7 @@
     flex-direction: column;
     gap: 12px;
     margin-top: 16px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .actions {
     display: flex;

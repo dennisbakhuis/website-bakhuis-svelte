@@ -48,8 +48,8 @@ describe('sitesToGeoJSON', () => {
     const [vinkeveen, zeeland, dahab] = data.features;
     expect(vinkeveen.geometry.coordinates).toEqual([5, 52]);
     expect(vinkeveen.properties.r).toBeGreaterThan(zeeland.properties.r);
-    expect(vinkeveen.properties.fill).toBe('tag-drift');
-    expect(dahab.properties.fill).toBe('color-accent');
+    expect(vinkeveen.properties.fill).toBe('dl-tag-drift');
+    expect(dahab.properties.fill).toBe('dl-color-accent');
     expect(data.features.every((f) => f.properties.dim === 0)).toBe(true);
     expect(data.features.map((f) => f.properties.total)).toEqual([40, 10, 25]);
     expect(data.features.map((f) => f.properties.sel)).toEqual([40, 10, 25]);

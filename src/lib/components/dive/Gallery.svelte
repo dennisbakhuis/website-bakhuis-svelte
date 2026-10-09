@@ -68,10 +68,10 @@
     position: relative;
     display: block;
     padding: 0;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius);
     overflow: hidden;
-    background: var(--color-surface);
+    background: var(--dl-color-surface);
     aspect-ratio: 4 / 3;
     cursor: zoom-in;
   }
@@ -91,7 +91,7 @@
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 14px;
     padding: 16px;
   }
@@ -132,10 +132,10 @@
     max-height: 85vh;
     max-width: 100%;
     object-fit: contain;
-    border-radius: var(--radius);
+    border-radius: var(--dl-radius);
   }
   figcaption {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     text-align: center;
     font-size: 14px;
   }

@@ -21,7 +21,7 @@
 </script>
 
 <h1>
-  Dives <span class="count num">{data.dives.length}</span>{#if drafts}<span class="drafts"
+  Dives <span class="count dl-num">{data.dives.length}</span>{#if drafts}<span class="drafts"
       >{drafts} draft{drafts === 1 ? '' : 's'}</span
     >{/if}
 </h1>
@@ -47,16 +47,16 @@
   <tbody>
     {#each rows as dive (dive.number)}
       <tr>
-        <td class="num">{dive.number}</td>
-        <td class="num">{formatDate(dive.date)}</td>
+        <td class="dl-num">{dive.number}</td>
+        <td class="dl-num">{formatDate(dive.date)}</td>
         <td
           ><a href={urls.admin.dive(dive.number)}>{dive.title || dive.site?.name || 'Untitled'}</a
           >{#if dive.title && dive.site}<span class="muted"> · {dive.site.name}</span>{/if}</td
         >
-        <td class="num">{dive.max_depth_m} m</td>
-        <td class="num">{dive.duration_min} min</td>
+        <td class="dl-num">{dive.max_depth_m} m</td>
+        <td class="dl-num">{dive.duration_min} min</td>
         <td>{dive.tags.join(', ')}</td>
-        <td class="num">{dive.attachments.length || ''}</td>
+        <td class="dl-num">{dive.attachments.length || ''}</td>
         <td><span class="status status-{dive.visibility}">{dive.visibility}</span></td>
         <td
           ><a class="view" href={urls.dive(dive.number)} target="_blank" rel="noopener">view ↗</a
@@ -70,14 +70,14 @@
 <style>
   .count {
     font-size: 16px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-weight: 400;
   }
   .drafts {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 12px;
     font-weight: 400;
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
     margin-left: 12px;
   }
   .view {
@@ -97,24 +97,24 @@
     width: auto;
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .status {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     padding: 2px 8px;
     border-radius: 999px;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
   }
   .status-draft {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
   }
   .status-private {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .status-public {
-    color: var(--color-success);
+    color: var(--dl-color-success);
   }
 </style>

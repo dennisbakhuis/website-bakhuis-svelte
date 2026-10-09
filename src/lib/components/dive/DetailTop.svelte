@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import OwnerBar, { type OwnerAction } from '$lib/components/OwnerBar.svelte';
+  import OwnerBar, { type OwnerAction } from '$lib/divelog/components/OwnerBar.svelte';
 
   let {
     back,
@@ -49,14 +49,14 @@
   }
   .back {
     text-decoration: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .back:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .left :global(.owner-bar)::before {
     content: '·';
     margin-right: 8px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
 </style>

@@ -14,9 +14,11 @@
 </script>
 
 <div class="head">
-  <h1>Trips <span class="count num">{data.trips.length}</span></h1>
-  <button type="button" class="btn btn-solid btn-sm" onclick={() => goto(urls.admin.newTrip())}
-    >+ New trip</button
+  <h1>Trips <span class="count dl-num">{data.trips.length}</span></h1>
+  <button
+    type="button"
+    class="dl-btn dl-btn-solid dl-btn-sm"
+    onclick={() => goto(urls.admin.newTrip())}>+ New trip</button
   >
 </div>
 <p class="muted">
@@ -34,13 +36,16 @@
     {#each rows as t (t.slug)}
       <tr>
         <td><a href={urls.admin.trip(t.slug)}>{t.name}</a></td>
-        <td class="num">{formatDate(t.start_date)} – {formatDate(t.end_date)}</td>
+        <td class="dl-num">{formatDate(t.start_date)} – {formatDate(t.end_date)}</td>
         <td
           >{#if t.custom}<span class="badge">custom</span>{/if}</td
         >
         <td class="row-actions">
-          <a class="btn btn-ghost btn-sm" href={urls.trip(t.slug)} target="_blank" rel="noopener"
-            >view ↗</a
+          <a
+            class="dl-btn dl-btn-ghost dl-btn-sm"
+            href={urls.trip(t.slug)}
+            target="_blank"
+            rel="noopener">view ↗</a
           >
         </td>
       </tr>
@@ -58,11 +63,11 @@
   }
   .count {
     font-size: 16px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-weight: 400;
   }
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 13.5px;
     max-width: 68ch;
   }
@@ -76,13 +81,13 @@
     text-align: right;
   }
   .badge {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 2px 8px;
     border-radius: 999px;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
+    background: var(--dl-color-accent-soft);
+    color: var(--dl-color-accent);
   }
 </style>

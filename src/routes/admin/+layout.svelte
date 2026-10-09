@@ -75,7 +75,7 @@
           {/each}
         </nav>
         <div class="right">
-          <a href={urls.admin.newDive()} class="btn btn-sm new-dive">+ New dive</a>
+          <a href={urls.admin.newDive()} class="dl-btn dl-btn-sm new-dive">+ New dive</a>
           {#if repo}
             <span
               class="repo repo-{repo.state}"
@@ -89,7 +89,7 @@
             {#if repo.state === 'unpushed' || repo.state === 'conflict' || repo.state === 'error'}
               <button
                 type="button"
-                class="btn btn-ghost btn-sm"
+                class="dl-btn dl-btn-ghost dl-btn-sm"
                 disabled={repoBusy}
                 onclick={() => repoAction('push')}>push</button
               >
@@ -97,18 +97,20 @@
             {#if repo.state !== 'disabled'}
               <button
                 type="button"
-                class="btn btn-ghost btn-sm"
+                class="dl-btn dl-btn-ghost dl-btn-sm"
                 disabled={repoBusy}
                 onclick={() => repoAction('pull')}>pull</button
               >
             {/if}
           {/if}
           <a href={urls.log()} class="muted">view site</a>
-          <button type="button" class="btn btn-ghost btn-sm" onclick={logout}>Sign out</button>
+          <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={logout}
+            >Sign out</button
+          >
         </div>
       </header>
     {/if}
-    <div class="admin-body">
+    <div class="admin-body dl-admin-body">
       {@render children()}
     </div>
   </div>
@@ -119,7 +121,7 @@
     min-height: 100svh;
     display: flex;
     flex-direction: column;
-    background: var(--c-abyss);
+    background: var(--dl-c-abyss);
   }
   .bar {
     position: sticky;
@@ -128,18 +130,18 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 10px var(--space-page-x);
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-bg);
+    padding: 10px var(--dl-space-page-x);
+    border-bottom: 1px solid var(--dl-color-border);
+    background: var(--dl-color-bg);
     flex-wrap: wrap;
   }
   .brand {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 13px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     text-decoration: none;
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   nav {
     display: flex;
@@ -148,15 +150,15 @@
   }
   nav a {
     text-decoration: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     padding: 6px 10px;
     border-radius: 6px;
     font-size: 14px;
   }
   nav a:hover,
   nav a[aria-current='page'] {
-    color: var(--color-text);
-    background: var(--color-surface);
+    color: var(--dl-color-text);
+    background: var(--dl-color-surface);
   }
   .right {
     margin-left: auto;
@@ -168,89 +170,37 @@
     white-space: nowrap;
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
     text-decoration: none;
   }
   .repo {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 3px 9px;
     border-radius: 999px;
-    border: 1px solid var(--color-border);
-    color: var(--color-text-muted);
+    border: 1px solid var(--dl-color-border);
+    color: var(--dl-color-text-muted);
   }
   .repo-clean {
-    color: var(--color-success);
+    color: var(--dl-color-success);
   }
   .repo-unpushed,
   .repo-pushing {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
   }
   .repo-conflict,
   .repo-error {
-    color: var(--color-error);
-    border-color: var(--color-error);
+    color: var(--dl-color-error);
+    border-color: var(--dl-color-error);
   }
   .admin-body {
     flex: 1;
-    padding: 24px var(--space-page-x) 80px;
+    padding: 24px var(--dl-space-page-x) 80px;
     max-width: 1100px;
     width: 100%;
     margin: 0 auto;
-  }
-  .admin-body :global(h1) {
-    font-size: 26px;
-    margin-bottom: 18px;
-  }
-  .admin-body :global(input),
-  .admin-body :global(select),
-  .admin-body :global(textarea) {
-    font: inherit;
-    font-size: 14.5px;
-    color: var(--color-text);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
-    padding: 8px 10px;
-    width: 100%;
-  }
-  .admin-body :global(label) {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 12.5px;
-    color: var(--color-text-muted);
-  }
-  .admin-body :global(.field-row) {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-  }
-  .admin-body :global(.error) {
-    color: var(--color-error);
-    font-size: 14px;
-  }
-  .admin-body :global(table) {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-  .admin-body :global(th),
-  .admin-body :global(td) {
-    text-align: left;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--color-border);
-    vertical-align: top;
-  }
-  .admin-body :global(th) {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    font-weight: 500;
   }
 </style>

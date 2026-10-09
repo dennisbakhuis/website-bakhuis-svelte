@@ -66,7 +66,7 @@
     flex-wrap: wrap;
     gap: 12px 16px;
     padding: 8px 8px 2px;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
     margin-top: 6px;
   }
   .options label {
@@ -74,16 +74,16 @@
     align-items: center;
     gap: 6px;
     font-size: 12.5px;
-    color: var(--color-text-muted);
-    font-family: var(--font-mono);
+    color: var(--dl-color-text-muted);
+    font-family: var(--dl-font-mono);
   }
   .options select {
     font: inherit;
     font-size: 12.5px;
-    color: var(--color-text);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    color: var(--dl-color-text);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius-sm);
     padding: 4px 8px;
   }
   .switch {
@@ -100,8 +100,8 @@
     width: 30px;
     height: 16px;
     border-radius: 999px;
-    background: var(--color-surface-2);
-    border: 1px solid var(--color-border-strong);
+    background: var(--dl-color-surface-2);
+    border: 1px solid var(--dl-color-border-strong);
     position: relative;
     transition: background 0.15s ease;
   }
@@ -113,21 +113,21 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: var(--color-text-muted);
+    background: var(--dl-color-text-muted);
     transition:
       transform 0.15s ease,
       background 0.15s ease;
   }
   .switch input:checked + .knob {
-    background: var(--color-accent-soft);
-    border-color: var(--color-accent);
+    background: var(--dl-color-accent-soft);
+    border-color: var(--dl-color-accent);
   }
   .switch input:checked + .knob::after {
     transform: translateX(14px);
-    background: var(--color-accent);
+    background: var(--dl-color-accent);
   }
   .switch input:focus-visible + .knob {
-    outline: 2px solid var(--color-focus-ring);
+    outline: 2px solid var(--dl-color-focus-ring);
     outline-offset: 2px;
   }
 </style>

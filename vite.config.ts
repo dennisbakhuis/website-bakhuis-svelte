@@ -40,6 +40,7 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/lib/paraglide/**',
         'src/lib/anim/**',
+        'src/lib/divelog/anim/**',
         'src/lib/cap-widget-loader.ts',
       ],
       thresholds: {

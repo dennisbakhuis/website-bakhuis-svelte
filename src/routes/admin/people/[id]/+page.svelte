@@ -2,7 +2,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
   import type { PersonPrivate } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -85,14 +85,14 @@
 <div class="head">
   <h1>{data.person.name}</h1>
   <a
-    class="btn btn-ghost btn-sm"
+    class="dl-btn dl-btn-ghost dl-btn-sm"
     href={urls.person(data.person.slug)}
     target="_blank"
     rel="noopener">View ↗</a
   >
 </div>
 
-<form class="card form" onsubmit={save}>
+<form class="dl-card form" onsubmit={save}>
   <div class="field-row">
     <label>First name<input type="text" bind:value={form.first_name} required /></label>
     <label>Last name (private)<input type="text" bind:value={form.last_name} /></label>
@@ -124,7 +124,7 @@
           .first_name[0]}{/if}
     </span>
     <label class="file">
-      <span class="btn btn-ghost btn-sm">Upload avatar</span>
+      <span class="dl-btn dl-btn-ghost dl-btn-sm">Upload avatar</span>
       <input
         type="file"
         accept="image/*"
@@ -139,11 +139,11 @@
 
   {#if error}<p class="error">{error}</p>{/if}
   <div class="actions">
-    <button type="submit" class="btn btn-solid btn-sm">Save</button>
+    <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm">Save</button>
   </div>
 </form>
 
-<section class="card danger-zone">
+<section class="dl-card danger-zone">
   <h2>Delete person</h2>
   <p class="muted">
     {#if data.person.dives}
@@ -156,7 +156,7 @@
   {#if deleteError}<p class="error">{deleteError}</p>{/if}
   <button
     type="button"
-    class="btn btn-ghost btn-sm danger"
+    class="dl-btn dl-btn-ghost dl-btn-sm danger"
     disabled={data.person.dives > 0}
     title={data.person.dives
       ? `Named on ${data.person.dives} ${data.person.dives === 1 ? 'dive' : 'dives'}`
@@ -171,7 +171,7 @@
 <style>
   .breadcrumb {
     font-size: 13.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 6px;
   }
   .breadcrumb a {
@@ -185,7 +185,7 @@
     flex-wrap: wrap;
   }
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 13.5px;
   }
   .form {
@@ -194,7 +194,7 @@
     flex-direction: column;
     gap: 12px;
     margin: 16px 0 24px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .avatar-row {
     display: flex;
@@ -206,13 +206,13 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-weight: 600;
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
     overflow: hidden;
     flex: none;
   }
@@ -233,7 +233,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    border: 1px dashed var(--color-border-strong);
+    border: 1px dashed var(--dl-color-border-strong);
   }
   .danger-zone h2 {
     font-size: 15px;
@@ -243,8 +243,8 @@
     align-self: flex-start;
   }
   .danger:not(:disabled):hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
   .danger:disabled {
     opacity: 0.6;

@@ -2,7 +2,6 @@
   import { goto } from '$app/navigation';
   import DiveTable from '$lib/components/dive/DiveTable.svelte';
   import WorldMap from '$lib/components/dive/WorldMap.svelte';
-  import Markdown from '$lib/components/Markdown.svelte';
   import DetailTop from '$lib/components/dive/DetailTop.svelte';
   import {
     flagEmoji,
@@ -36,7 +35,7 @@
   }
 </script>
 
-<section class="person container detail">
+<section class="person dl-container dl-detail">
   <DetailTop
     back={{ href: urls.people(), label: 'Dive buddies' }}
     owner={data.owner ? { edit: { label: 'Edit person', href: data.editHref } } : null}
@@ -50,10 +49,10 @@
       {/if}
     </span>
     <div>
-      <p class="kicker">Dive buddy</p>
+      <p class="dl-kicker">Dive buddy</p>
       <h1>{person.name}</h1>
       {#if stats.first_dive}
-        <p class="where num">
+        <p class="where dl-num">
           Since {formatDate(stats.first_dive)}{stats.last_dive
             ? ` · last dive ${formatDate(stats.last_dive)}`
             : ''}
@@ -65,27 +64,27 @@
   <dl class="facts">
     <div>
       <dt>Dives together</dt>
-      <dd class="num">{stats.dives}</dd>
+      <dd class="dl-num">{stats.dives}</dd>
     </div>
     <div>
       <dt>Time underwater</dt>
-      <dd class="num">{formatHours(stats.minutes)}</dd>
+      <dd class="dl-num">{formatHours(stats.minutes)}</dd>
     </div>
     <div>
       <dt>Deepest together</dt>
-      <dd class="num">{formatDepth(stats.max_depth_m)}</dd>
+      <dd class="dl-num">{formatDepth(stats.max_depth_m)}</dd>
     </div>
     <div>
       <dt>Longest dive</dt>
-      <dd class="num">{Math.round(stats.longest_min)} min</dd>
+      <dd class="dl-num">{Math.round(stats.longest_min)} min</dd>
     </div>
     <div>
       <dt>Coldest</dt>
-      <dd class="num">{formatTemp(stats.coldest_c)}</dd>
+      <dd class="dl-num">{formatTemp(stats.coldest_c)}</dd>
     </div>
     <div>
       <dt>Countries · sites</dt>
-      <dd class="num">{stats.countries} · {stats.sites}</dd>
+      <dd class="dl-num">{stats.countries} · {stats.sites}</dd>
     </div>
   </dl>
 
@@ -122,7 +121,10 @@
   {/if}
 
   {#if person.bio_md}
-    <section class="block prose-block"><Markdown source={person.bio_md} /></section>
+    <section class="block prose-block">
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -- sanitised by the backend -->
+      <div class="dl-prose">{@html person.bio_html}</div>
+    </section>
   {/if}
 
   {#if data.map.dots.length}
@@ -137,7 +139,7 @@
       {#if topSites.length}
         <section class="block">
           <h2>Sites we dived together</h2>
-          <ul class="hbars card">
+          <ul class="hbars dl-card">
             {#each topSites as site, i (site.slug)}
               <li>
                 <a class="hbar-row" href={urls.site(site.slug)}>
@@ -145,13 +147,13 @@
                   <span class="hbar-track"
                     ><span class="hbar" style="width: {siteWidths[i]}%"></span></span
                   >
-                  <span class="hbar-value num">{site.dives}</span>
+                  <span class="hbar-value dl-num">{site.dives}</span>
                 </a>
               </li>
             {/each}
           </ul>
           {#if stats.sites > topSites.length}
-            <p class="more num">
+            <p class="more dl-num">
               and {pluralize(stats.sites - topSites.length, 'other site')}
             </p>
           {/if}
@@ -169,7 +171,7 @@
               >
                 <span class="flag" aria-hidden="true">{flagEmoji(country.country_code)}</span>
                 {country.country_name}
-                <span class="num faint">{country.dives}</span>
+                <span class="dl-num faint">{country.dives}</span>
               </a>
             {/each}
           </div>
@@ -192,7 +194,7 @@
             )}"
           >
             {trip.name}
-            <span class="num faint">{trip.dives}</span>
+            <span class="dl-num faint">{trip.dives}</span>
           </a>
         {/each}
       </div>
@@ -202,12 +204,12 @@
   {#if data.years.length > 1}
     <section class="block">
       <h2>By year</h2>
-      <div class="bars card" style="--n: {data.years.length}">
+      <div class="bars dl-card" style="--n: {data.years.length}">
         {#each data.years as year, i (year.year)}
           <div class="bar-col" title="{year.year}: {year.dives} dives">
-            <span class="bar-value num">{year.dives}</span>
+            <span class="bar-value dl-num">{year.dives}</span>
             <span class="bar" style="height: {yearHeights[i]}%"></span>
-            <span class="bar-label num">{String(year.year).slice(2)}</span>
+            <span class="bar-label dl-num">{String(year.year).slice(2)}</span>
           </div>
         {/each}
       </div>
@@ -223,7 +225,7 @@
 <style>
   .person {
     padding-top: 40px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   .head {
     display: flex;
@@ -235,14 +237,14 @@
     width: 96px;
     height: 96px;
     border-radius: 50%;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-size: 30px;
     font-weight: 600;
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
     overflow: hidden;
     flex: none;
   }
@@ -256,7 +258,7 @@
     margin-bottom: 6px;
   }
   .where {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .facts {
     display: grid;
@@ -264,17 +266,17 @@
     gap: 14px 16px;
     margin: 0 0 36px;
     padding: 16px 18px;
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-elevated);
+    border-radius: var(--dl-radius);
+    border: 1px solid var(--dl-color-border);
+    background: var(--dl-color-bg-elevated);
   }
   .facts dt {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     white-space: nowrap;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .facts dd {
     margin: 2px 0 0;
@@ -292,13 +294,13 @@
     grid-column: 1 / -1;
   }
   .private {
-    border: 1px dashed var(--color-warm);
-    border-radius: var(--radius);
+    border: 1px dashed var(--dl-color-warm);
+    border-radius: var(--dl-radius);
     padding: 16px;
     margin-bottom: 36px;
   }
   .private h2 {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
     font-size: 15px;
     margin-bottom: 12px;
   }
@@ -330,7 +332,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .hbar-row {
     display: grid;
@@ -342,7 +344,7 @@
     color: inherit;
   }
   .hbar-row:hover .name {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .name {
     font-size: 14px;
@@ -353,24 +355,24 @@
   .hbar-track {
     height: 8px;
     border-radius: 4px;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     overflow: hidden;
   }
   .hbar {
     display: block;
     height: 100%;
     border-radius: 4px;
-    background: var(--color-accent);
+    background: var(--dl-color-accent);
   }
   .hbar-value {
     font-size: 12px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     text-align: right;
   }
   .more {
     margin: 8px 0 0;
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .flags {
     display: flex;
@@ -383,20 +385,20 @@
     gap: 8px;
     padding: 5px 12px;
     border-radius: 999px;
-    border: 1px solid var(--color-border-strong);
+    border: 1px solid var(--dl-color-border-strong);
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-size: 14px;
   }
   .flag-chip:hover {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .flag {
     font-size: 17px;
     line-height: 1;
   }
   .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 12.5px;
   }
   @media (max-width: 760px) {
@@ -419,7 +421,7 @@
     height: 140px;
     align-items: end;
     padding: 16px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .bar-col {
     display: flex;
@@ -434,14 +436,14 @@
     max-width: 32px;
     min-height: 2px;
     border-radius: 4px 4px 2px 2px;
-    background: var(--color-warm);
+    background: var(--dl-color-warm);
   }
   .bar-value {
     font-size: 11px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .bar-label {
     font-size: 10.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
 </style>

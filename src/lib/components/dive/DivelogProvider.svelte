@@ -12,4 +12,6 @@
   configureAdminClient(config.apiBase);
 </script>
 
-{@render children()}
+<div class="divelog" style="display: contents">
+  {@render children()}
+</div>

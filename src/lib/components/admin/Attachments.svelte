@@ -3,7 +3,7 @@
   import { adminApi, adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
   import { diveToInput } from '$lib/admin/dive-input';
   import type { Attachment, DiveAdmin } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
 
   let { dive }: { dive: DiveAdmin } = $props();
 
@@ -67,7 +67,7 @@
 </script>
 
 <section class="attachments">
-  <h2>Photos, scans & files <span class="num muted">{dive.attachments.length}</span></h2>
+  <h2>Photos, scans & files <span class="dl-num muted">{dive.attachments.length}</span></h2>
 
   <div
     class="dropzone"
@@ -96,7 +96,7 @@
       {kind === 'scan' ? 'scans start private' : 'public'}
     </label>
     <label class="file">
-      <span class="btn btn-ghost btn-sm"
+      <span class="dl-btn dl-btn-ghost dl-btn-sm"
         >{uploading ? `Uploading ${uploading}…` : 'Choose files'}</span
       >
       <input
@@ -149,7 +149,7 @@
                 />
                 public
               </label>
-              <span class="muted num"
+              <span class="muted dl-num"
                 >{a.width ? `${a.width}×${a.height} · ` : ''}{Math.round(a.bytes / 1024)} kB</span
               >
               <a href={a.url} target="_blank" rel="noopener" class="muted">open</a>
@@ -159,7 +159,7 @@
             {#if a.kind === 'photo'}
               <button
                 type="button"
-                class="btn btn-ghost btn-sm"
+                class="dl-btn dl-btn-ghost dl-btn-sm"
                 disabled={a.id === dive.cover_attachment_id}
                 onclick={() => setCover(a)}
                 >{a.id === dive.cover_attachment_id ? 'Cover' : 'Set cover'}</button
@@ -167,18 +167,20 @@
             {/if}
             <button
               type="button"
-              class="btn btn-ghost btn-sm"
+              class="dl-btn dl-btn-ghost dl-btn-sm"
               onclick={() => move(a, -1)}
               aria-label="Move up">↑</button
             >
             <button
               type="button"
-              class="btn btn-ghost btn-sm"
+              class="dl-btn dl-btn-ghost dl-btn-sm"
               onclick={() => move(a, 1)}
               aria-label="Move down">↓</button
             >
-            <button type="button" class="btn btn-ghost btn-sm danger" onclick={() => remove(a)}
-              >Delete</button
+            <button
+              type="button"
+              class="dl-btn dl-btn-ghost dl-btn-sm danger"
+              onclick={() => remove(a)}>Delete</button
             >
           </div>
         </li>
@@ -195,7 +197,7 @@
     font-size: 20px;
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
     font-weight: 400;
   }
@@ -205,14 +207,14 @@
     align-items: center;
     gap: 14px;
     padding: 16px;
-    border: 1px dashed var(--color-border-strong);
-    border-radius: var(--radius);
-    background: var(--color-bg-elevated);
+    border: 1px dashed var(--dl-color-border-strong);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-bg-elevated);
     margin-bottom: 16px;
   }
   .dropzone.dragging {
-    border-color: var(--color-accent);
-    background: var(--color-accent-soft);
+    border-color: var(--dl-color-accent);
+    background: var(--dl-color-accent-soft);
   }
   .kind {
     flex-direction: row;
@@ -249,19 +251,19 @@
     gap: 12px;
     align-items: center;
     padding: 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    background: var(--color-surface);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-surface);
   }
   .row.cover {
-    border-color: var(--color-warm);
+    border-color: var(--dl-color-warm);
   }
   .preview {
     width: 96px;
     height: 72px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--dl-radius-sm);
     overflow: hidden;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -292,8 +294,8 @@
     justify-content: flex-end;
   }
   .danger:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
   @media (max-width: 720px) {
     .row {

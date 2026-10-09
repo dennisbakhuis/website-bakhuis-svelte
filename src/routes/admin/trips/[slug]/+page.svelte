@@ -2,7 +2,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { adminJson, AdminApiError } from '$lib/admin/client';
   import type { TripAdmin, TripIn } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -70,12 +70,15 @@
     {data.trip.name}
     {#if data.trip.custom}<span class="badge">custom</span>{/if}
   </h1>
-  <a class="btn btn-ghost btn-sm" href={urls.trip(data.trip.slug)} target="_blank" rel="noopener"
-    >View ↗</a
+  <a
+    class="dl-btn dl-btn-ghost dl-btn-sm"
+    href={urls.trip(data.trip.slug)}
+    target="_blank"
+    rel="noopener">View ↗</a
   >
 </div>
 
-<form class="card form" onsubmit={save}>
+<form class="dl-card form" onsubmit={save}>
   <div class="field-row">
     <label>Name<input type="text" bind:value={form.name} required /></label>
     <label>Slug<input type="text" value={data.trip.slug} disabled /></label>
@@ -89,18 +92,18 @@
   >
   {#if error}<p class="error">{error}</p>{/if}
   <div class="actions">
-    <button type="submit" class="btn btn-solid btn-sm">Save</button>
+    <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm">Save</button>
   </div>
 </form>
 
 {#if data.trip.custom}
-  <section class="card danger-zone">
+  <section class="dl-card danger-zone">
     <h2>Remove override</h2>
     <p class="muted">
       The derived trip stays — built automatically from the logged dives — only this name, dates and
       description go away.
     </p>
-    <button type="button" class="btn btn-ghost btn-sm danger" onclick={removeOverride}
+    <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm danger" onclick={removeOverride}
       >Remove override</button
     >
   </section>
@@ -109,7 +112,7 @@
 <style>
   .breadcrumb {
     font-size: 13.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 6px;
   }
   .breadcrumb a {
@@ -123,14 +126,14 @@
     flex-wrap: wrap;
   }
   .badge {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 2px 8px;
     border-radius: 999px;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
+    background: var(--dl-color-accent-soft);
+    color: var(--dl-color-accent);
     vertical-align: middle;
   }
   .form {
@@ -139,7 +142,7 @@
     flex-direction: column;
     gap: 12px;
     margin: 16px 0 24px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .actions {
     display: flex;
@@ -150,14 +153,14 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    border: 1px dashed var(--color-border-strong);
+    border: 1px dashed var(--dl-color-border-strong);
   }
   .danger-zone h2 {
     font-size: 15px;
     margin: 0;
   }
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 13.5px;
     max-width: 68ch;
   }
@@ -165,7 +168,7 @@
     align-self: flex-start;
   }
   .danger:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
 </style>

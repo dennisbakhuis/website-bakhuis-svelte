@@ -173,9 +173,9 @@
       <div class="tools" role="radiogroup" aria-label="Annotation tool">
         <button
           type="button"
-          class="btn btn-sm"
-          class:btn-solid={tool === 'route'}
-          class:btn-ghost={tool !== 'route'}
+          class="dl-btn dl-btn-sm"
+          class:dl-btn-solid={tool === 'route'}
+          class:dl-btn-ghost={tool !== 'route'}
           role="radio"
           aria-checked={tool === 'route'}
           onclick={() => (tool = 'route')}
@@ -184,9 +184,9 @@
         >
         <button
           type="button"
-          class="btn btn-sm"
-          class:btn-solid={tool === 'turn'}
-          class:btn-ghost={tool !== 'turn'}
+          class="dl-btn dl-btn-sm"
+          class:dl-btn-solid={tool === 'turn'}
+          class:dl-btn-ghost={tool !== 'turn'}
           role="radio"
           aria-checked={tool === 'turn'}
           onclick={() => (tool = 'turn')}
@@ -194,9 +194,9 @@
         >
         <button
           type="button"
-          class="btn btn-sm"
-          class:btn-solid={tool === 'pin'}
-          class:btn-ghost={tool !== 'pin'}
+          class="dl-btn dl-btn-sm"
+          class:dl-btn-solid={tool === 'pin'}
+          class:dl-btn-ghost={tool !== 'pin'}
           role="radio"
           aria-checked={tool === 'pin'}
           onclick={() => (tool = 'pin')}
@@ -207,24 +207,29 @@
         <div class="tools">
           <button
             type="button"
-            class="btn btn-ghost btn-sm"
+            class="dl-btn dl-btn-ghost dl-btn-sm"
             disabled={!steps.length}
             onclick={back}
             title="Take back the last click">↶ Back</button
           >
           <button
             type="button"
-            class="btn btn-ghost btn-sm"
+            class="dl-btn dl-btn-ghost dl-btn-sm"
             disabled={!canTurnHere}
             onclick={turnHere}
             title="The dive turned where the route now ends">Turned here</button
           >
-          <button type="button" class="btn btn-ghost btn-sm" disabled={!hasRoute} onclick={clear}
-            >Clear route</button
+          <button
+            type="button"
+            class="dl-btn dl-btn-ghost dl-btn-sm"
+            disabled={!hasRoute}
+            onclick={clear}>Clear route</button
           >
         </div>
       {/if}
-      <button type="button" class="btn btn-ghost btn-sm" onclick={() => choose('')}>Remove</button>
+      <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={() => choose('')}
+        >Remove</button
+      >
     {/if}
   </div>
 
@@ -283,7 +288,7 @@
         </label>
         <button
           type="button"
-          class="btn btn-ghost btn-sm danger"
+          class="dl-btn dl-btn-ghost dl-btn-sm danger"
           onclick={() => {
             onChange(removePin(value!, pin.id));
             selectedPin = null;
@@ -325,7 +330,7 @@
   }
   .hint {
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin: 0;
   }
   .pin-row {
@@ -337,7 +342,7 @@
     flex: 1;
   }
   .danger:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
+    border-color: var(--dl-color-error);
+    color: var(--dl-color-error);
   }
 </style>

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import Markdown from '$lib/components/Markdown.svelte';
   import DiveTable from '$lib/components/dive/DiveTable.svelte';
   import WorldMap from '$lib/components/dive/WorldMap.svelte';
   import DiveGlobe from '$lib/components/dive/DiveGlobe.svelte';
@@ -26,16 +25,16 @@
   const fit = $derived(boundsOf(data.map_sites));
 </script>
 
-<section class="trip container detail">
+<section class="trip dl-container dl-detail">
   <DetailTop
     back={{ href: urls.trips(), label: 'Dive trips' }}
     owner={data.owner ? { edit: { label: 'Edit trip', href: data.editHref } } : null}
   />
-  <p class="kicker">
+  <p class="dl-kicker">
     Trip · {trip.countries.map((c) => `${flagEmoji(c.country_code)} ${c.country_name}`).join(', ')}
   </p>
   <h1>{trip.name}</h1>
-  <p class="where num">
+  <p class="where dl-num">
     {formatDateRange(trip.start_date, trip.end_date)} · {pluralize(
       trip.days,
       'day',
@@ -47,23 +46,23 @@
   <dl class="band">
     <div>
       <dt>Dives</dt>
-      <dd class="num">{stats.dives}</dd>
+      <dd class="dl-num">{stats.dives}</dd>
     </div>
     <div>
       <dt>Diving days</dt>
-      <dd class="num">{divingDays}</dd>
+      <dd class="dl-num">{divingDays}</dd>
     </div>
     <div>
       <dt>Sites</dt>
-      <dd class="num">{stats.sites}</dd>
+      <dd class="dl-num">{stats.sites}</dd>
     </div>
     <div>
       <dt>Time underwater</dt>
-      <dd class="num">{formatHours(stats.minutes)}</dd>
+      <dd class="dl-num">{formatHours(stats.minutes)}</dd>
     </div>
     <div>
       <dt>Deepest</dt>
-      <dd class="num">{formatDepth(stats.max_depth_m)}</dd>
+      <dd class="dl-num">{formatDepth(stats.max_depth_m)}</dd>
     </div>
   </dl>
 
@@ -81,7 +80,10 @@
   {/if}
 
   {#if trip.description_md}
-    <div class="prose-block"><Markdown source={trip.description_md} /></div>
+    <div class="prose-block">
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -- sanitised by the backend -->
+      <div class="dl-prose">{@html trip.description_html}</div>
+    </div>
   {/if}
 
   {#if trip.buddies.length}
@@ -90,7 +92,7 @@
       <div class="chips">
         {#each trip.buddies as buddy (buddy.slug)}
           <a class="chip" href={urls.person(buddy.slug)}
-            >{buddy.name} <span class="num faint">{buddy.dives}</span></a
+            >{buddy.name} <span class="dl-num faint">{buddy.dives}</span></a
           >
         {/each}
       </div>
@@ -112,22 +114,22 @@
 <style>
   .trip {
     padding-top: 40px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   h1 {
     font-size: clamp(30px, 5vw, 48px);
     margin-bottom: 6px;
   }
   .where {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 28px;
   }
   .where a {
-    color: var(--color-text);
+    color: var(--dl-color-text);
     text-decoration: none;
   }
   .where a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .band {
     display: grid;
@@ -135,16 +137,16 @@
     gap: 14px 18px;
     margin: 0 0 20px;
     padding: 18px 20px;
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-elevated);
+    border-radius: var(--dl-radius);
+    border: 1px solid var(--dl-color-border);
+    background: var(--dl-color-bg-elevated);
   }
   .band dt {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .band dd {
     margin: 2px 0 0;
@@ -176,17 +178,17 @@
     align-items: baseline;
     padding: 4px 12px;
     border-radius: 999px;
-    border: 1px solid var(--color-border-strong);
-    background: var(--color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    background: var(--dl-color-surface);
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-size: 14px;
   }
   .chip:hover {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 12.5px;
   }
 </style>

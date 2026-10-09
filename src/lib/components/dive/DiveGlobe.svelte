@@ -29,7 +29,7 @@
     type SizeMode,
   } from '$lib/dive/stats-view';
   import { flagEmoji, formatDate, formatMinutes, pluralize } from '$lib/dive/format';
-  import { reducedMotion } from '$lib/anim/motion';
+  import { reducedMotion } from '$lib/divelog/anim/motion';
   import MapKey from './MapKey.svelte';
   import MapOptions from './MapOptions.svelte';
   import 'maplibre-gl/dist/maplibre-gl.css';
@@ -104,13 +104,13 @@
   const tally = $derived(filtered ? tallySites(dives) : null);
 
   // Paint expressions cannot read CSS custom properties, so the dot colours are
-  // resolved against the document once the component is in the browser.
+  // resolved against the map element (the `--dl-*` tokens live on the
+  // DivelogProvider wrapper) once the component is in the browser.
   const resolved: Record<string, string> = {};
   function resolve(value: string): string {
     const token = /^var\((--[\w-]+)\)$/.exec(value)?.[1];
-    if (!token || typeof document === 'undefined') return value;
-    resolved[token] ??=
-      getComputedStyle(document.documentElement).getPropertyValue(token).trim() || value;
+    if (!token || !container) return value;
+    resolved[token] ??= getComputedStyle(container).getPropertyValue(token).trim() || value;
     return resolved[token];
   }
 
@@ -286,10 +286,10 @@
               minzoom: Math.max(layer.minzoom ?? 0, DETAIL_MIN_ZOOM),
             }))
           : [];
-      const bg = resolve('var(--color-bg)');
-      const accent = resolve('var(--color-accent)');
-      const warm = resolve('var(--color-warm)');
-      const text = resolve('var(--color-text)');
+      const bg = resolve('var(--dl-color-bg)');
+      const accent = resolve('var(--dl-color-accent)');
+      const warm = resolve('var(--dl-color-warm)');
+      const text = resolve('var(--dl-color-text)');
 
       const instance = new maplibre.Map({
         container,
@@ -555,12 +555,12 @@
     >
       {#if hovered}
         <strong>{flagEmoji(hovered.country_code)} {hovered.name}</strong>
-        <span class="num"
+        <span class="dl-num"
           >{hovered.dives}
           {hovered.dives === 1 ? 'dive' : 'dives'} · {formatMinutes(hovered.minutes)} · max {hovered.max_depth_m}
           m</span
         >
-        <span class="num faint"
+        <span class="dl-num faint"
           >{hovered.first_year === hovered.last_year
             ? hovered.last_year
             : `${hovered.first_year}–${hovered.last_year}`} · {hovered.site_type}</span
@@ -583,13 +583,13 @@
             >{flagEmoji(site.country_code)}
             <a href={urls.site(site.slug)}>{site.name}</a></strong
           >
-          <span class="num faint"
+          <span class="dl-num faint"
             >{site.site_type} · {site.first_year === site.last_year
               ? site.last_year
               : `${site.first_year}–${site.last_year}`}</span
           >
         </header>
-        <p class="num stats">
+        <p class="dl-num stats">
           {#if site.dim && tally && !tally.has(site.slug)}
             None of the {pluralize(site.total, 'dive')} here match the current filters.
           {:else}
@@ -602,9 +602,9 @@
             {#each selectedDives.slice(0, POPUP_DIVES) as dive (dive.number)}
               <li>
                 <a href={urls.dive(dive.number)}>
-                  <span class="num no">#{dive.number}</span>
+                  <span class="dl-num no">#{dive.number}</span>
                   {#if dive.title}<span class="title">{dive.title}</span>{/if}
-                  <span class="num faint"
+                  <span class="dl-num faint"
                     >{formatDate(dive.date)} · {dive.max_depth_m} m · {formatMinutes(
                       dive.duration_min,
                     )}</span
@@ -642,7 +642,7 @@
       <button type="button" class="chip" onclick={flyHome}>{fit ? '↺ Trip' : '🌍 World'}</button>
       {#each targets as target (target.code)}
         <button type="button" class="chip" onclick={() => flyTo(target.bounds)}>
-          {target.label} <span class="num">{target.dives}</span>
+          {target.label} <span class="dl-num">{target.dives}</span>
         </button>
       {/each}
     </div>
@@ -653,7 +653,7 @@
     <MapOptions {size} {colour} labels={ready ? labels : null} {onOptions} onLabels={setLabels} />
   {/if}
 
-  <ul class="visually-hidden">
+  <ul class="dl-visually-hidden">
     {#each sites as site (site.slug)}
       <li><a href={urls.site(site.slug)}>{site.name}: {site.dives} dives</a></li>
     {/each}
@@ -669,21 +669,21 @@
     aspect-ratio: 16 / 10;
     min-height: 420px;
     overflow: hidden;
-    border-radius: var(--radius);
+    border-radius: var(--dl-radius);
     background:
       radial-gradient(
         ellipse 60% 70% at 50% 50%,
-        color-mix(in srgb, var(--color-accent) 12%, transparent),
+        color-mix(in srgb, var(--dl-color-accent) 12%, transparent),
         transparent 70%
       ),
-      var(--color-bg);
+      var(--dl-color-bg);
   }
   @media (max-width: 640px) {
     .stage {
       aspect-ratio: auto;
       height: 72vh;
       border-radius: 0;
-      margin: 0 calc(-1 * var(--space-page-x, 16px));
+      margin: 0 calc(-1 * var(--dl-space-page-x, 16px));
     }
   }
   .canvas,
@@ -721,19 +721,19 @@
     left: 12px;
     bottom: 28px;
     margin: 0;
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     pointer-events: none;
   }
   .tooltip {
     position: absolute;
     transform: translate(14px, 14px);
     padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--dl-radius-sm);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    box-shadow: var(--dl-shadow-sm);
     font-size: 13.5px;
     display: flex;
     flex-direction: column;
@@ -750,12 +750,12 @@
   .tooltip.visible {
     opacity: 1;
   }
-  .tooltip .num {
-    color: var(--color-text-muted);
+  .tooltip .dl-num {
+    color: var(--dl-color-text-muted);
     font-size: 12px;
   }
   .tooltip .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .chips {
     display: flex;
@@ -766,9 +766,9 @@
   .chip {
     font: inherit;
     font-size: 13px;
-    color: var(--color-text);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
+    color: var(--dl-color-text);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
     border-radius: 999px;
     padding: 5px 12px;
     cursor: pointer;
@@ -778,17 +778,17 @@
   }
   .chip:hover,
   .chip:focus-visible {
-    border-color: var(--color-accent);
-    background: var(--color-bg-elevated);
+    border-color: var(--dl-color-accent);
+    background: var(--dl-color-bg-elevated);
   }
-  .chip .num {
-    color: var(--color-text-muted);
+  .chip .dl-num {
+    color: var(--dl-color-text-muted);
     font-size: 12px;
     margin-left: 4px;
   }
   .chip.active {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    border-color: var(--dl-color-accent);
+    color: var(--dl-color-accent);
   }
   .popup {
     position: absolute;
@@ -802,10 +802,10 @@
     flex-direction: column;
     gap: 10px;
     padding: 14px 16px 12px;
-    border-radius: var(--radius);
-    background: color-mix(in srgb, var(--color-bg-elevated) 94%, transparent);
-    border: 1px solid var(--color-border-strong);
-    box-shadow: var(--shadow-md);
+    border-radius: var(--dl-radius);
+    background: color-mix(in srgb, var(--dl-color-bg-elevated) 94%, transparent);
+    border: 1px solid var(--dl-color-border-strong);
+    box-shadow: var(--dl-shadow-md);
     backdrop-filter: blur(6px);
     font-size: 13.5px;
   }
@@ -819,19 +819,19 @@
     font-size: 15px;
   }
   .popup header a {
-    color: var(--color-text);
+    color: var(--dl-color-text);
     text-decoration: none;
   }
   .popup header a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .popup .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 12px;
   }
   .popup .stats {
     margin: 0;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 12.5px;
   }
   .popup .close {
@@ -843,14 +843,14 @@
     border: 0;
     border-radius: 50%;
     background: transparent;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 20px;
     line-height: 1;
     cursor: pointer;
   }
   .popup .close:hover {
-    background: var(--color-surface-2);
-    color: var(--color-text);
+    background: var(--dl-color-surface-2);
+    color: var(--dl-color-text);
   }
   .dives {
     list-style: none;
@@ -858,22 +858,22 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
   }
   .dives a {
     display: grid;
     grid-template-columns: auto 1fr;
     column-gap: 8px;
     padding: 6px 0;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--dl-color-border);
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .dives a:hover .title {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .dives .no {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 12px;
     grid-row: 1 / -1;
     padding-top: 2px;
@@ -899,7 +899,7 @@
       bottom: 0;
       width: auto;
       max-height: 60%;
-      border-radius: var(--radius) var(--radius) 0 0;
+      border-radius: var(--dl-radius) var(--dl-radius) 0 0;
     }
   }
 </style>

@@ -11,7 +11,7 @@
     sortPeople,
     type PeopleSort,
   } from '$lib/dive/people';
-  import { reveal } from '$lib/anim/reveal';
+  import { reveal } from '$lib/divelog/anim/reveal';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -44,8 +44,8 @@
   }
 </script>
 
-<section class="page container">
-  <p class="kicker">Dive buddies</p>
+<section class="page dl-container">
+  <p class="dl-kicker">Dive buddies</p>
   <h1>{data.people.length} people, <span class="accent">one log</span></h1>
   <p class="lede">
     Nobody dives alone. Everyone here has been on the other end of a buddy check at least once;
@@ -77,7 +77,7 @@
         <option value={c.code}>{flagEmoji(c.code)} {countryLabel(c.code)} ({c.people})</option>
       {/each}
     </select>
-    <span class="count num"
+    <span class="count dl-num"
       >{pluralize(shown.length, 'person', 'people')}{country
         ? ` in ${countryLabel(country)}`
         : ''}</span
@@ -87,7 +87,7 @@
   <ul class="people" use:reveal={{ stagger: 25 }}>
     {#each shown as person (person.slug)}
       <li data-reveal>
-        <a class="person card" href={urls.person(person.slug)}>
+        <a class="person dl-card" href={urls.person(person.slug)}>
           <span class="avatar" class:has-image={person.avatar_url}>
             {#if person.avatar_url}
               <img src={person.avatar_url} alt="" width="56" height="56" loading="lazy" />
@@ -97,10 +97,10 @@
           </span>
           <span class="body">
             <span class="name">{person.name}</span>
-            <span class="meta num">
+            <span class="meta dl-num">
               {pluralize(person.stats.dives, 'dive')} · {formatHours(person.stats.minutes)}
             </span>
-            <span class="meta faint num">
+            <span class="meta faint dl-num">
               {#if person.stats.first_dive}
                 {@const first = person.stats.first_dive.slice(0, 4)}
                 {@const last = person.stats.last_dive?.slice(0, 4)}
@@ -109,7 +109,7 @@
                   : `since ${first}`}
               {/if}
             </span>
-            <span class="meta faint num">
+            <span class="meta faint dl-num">
               {pluralize(person.stats.countries, 'country', 'countries')}
             </span>
           </span>
@@ -122,16 +122,16 @@
 <style>
   .page {
     padding-top: 56px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   h1 {
     font-size: clamp(34px, 5vw, 52px);
   }
   .accent {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .lede {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 1.1rem;
     max-width: 56ch;
     margin-bottom: 36px;
@@ -145,41 +145,41 @@
   }
   .sorts {
     display: inline-flex;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius-sm);
     overflow: hidden;
   }
   .sorts button {
     font: inherit;
     font-size: 14px;
     padding: 8px 12px;
-    background: var(--color-surface);
-    color: var(--color-text-muted);
+    background: var(--dl-color-surface);
+    color: var(--dl-color-text-muted);
     border: none;
     cursor: pointer;
   }
   .sorts button + button {
-    border-left: 1px solid var(--color-border-strong);
+    border-left: 1px solid var(--dl-color-border-strong);
   }
   .sorts button.active {
-    background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
-    color: var(--color-text);
+    background: color-mix(in srgb, var(--dl-color-accent) 14%, var(--dl-color-surface));
+    color: var(--dl-color-text);
   }
   .toolbar select {
     font: inherit;
     font-size: 14px;
-    color: var(--color-text);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    color: var(--dl-color-text);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius-sm);
     padding: 8px 12px;
   }
   .toolbar select.active {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .count {
     margin-left: auto;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
   }
   .people {
@@ -208,19 +208,19 @@
   }
   .person:hover {
     transform: translateY(-2px);
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .avatar {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-weight: 600;
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
     overflow: hidden;
   }
   .avatar img {
@@ -235,7 +235,7 @@
     min-width: 0;
   }
   .name {
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-size: 17px;
     font-weight: 600;
   }
@@ -244,9 +244,9 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
 </style>

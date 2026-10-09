@@ -24,8 +24,8 @@
   } from '$lib/dive/charts-view';
   import { flagEmoji, formatHours } from '$lib/dive/format';
   import { today } from '$lib/dive/timeline';
-  import { counter } from '$lib/anim/counter';
-  import { inView } from '$lib/anim/inview';
+  import { counter } from '$lib/divelog/anim/counter';
+  import { inView } from '$lib/divelog/anim/inview';
 
   let {
     dives,
@@ -120,7 +120,7 @@
 </script>
 
 <div class="charts">
-  <div class="chart card" use:inView>
+  <div class="chart dl-card" use:inView>
     <h3>Dives per year</h3>
     <div class="bars" style="--n: {years.length}">
       {#each years as year, i (year.year)}
@@ -136,20 +136,20 @@
           onclick={() => onChange(toggleYear(filter, year.year))}
         >
           <span class="bar-stack">
-            <span class="bar-value num" style="bottom: {pct(year.selected, yearMax)}%"
+            <span class="bar-value dl-num" style="bottom: {pct(year.selected, yearMax)}%"
               >{narrowed && !year.selected ? '' : year.selected}</span
             >
             {#if narrowed}<span class="bar ghost" style="height: {pct(year.total, yearMax)}%"
               ></span>{/if}
             <span class="bar" style="height: {pct(year.selected, yearMax)}%"></span>
           </span>
-          <span class="bar-label num">{String(year.year).slice(2)}</span>
+          <span class="bar-label dl-num">{String(year.year).slice(2)}</span>
         </button>
       {/each}
     </div>
   </div>
 
-  <div class="chart card" use:inView>
+  <div class="chart dl-card" use:inView>
     <h3>Hours underwater, cumulative</h3>
     {#if cumulative.length > 1}
       <svg
@@ -163,7 +163,9 @@
       >
         {#each grid as hours (hours)}
           <line x1={PAD.l} x2={W - PAD.r} y1={cy(hours)} y2={cy(hours)} class="grid" />
-          <text x={PAD.l - 6} y={cy(hours) + 3} text-anchor="end" class="axis num">{hours} h</text>
+          <text x={PAD.l - 6} y={cy(hours) + 3} text-anchor="end" class="axis dl-num"
+            >{hours} h</text
+          >
         {/each}
         <line x1={PAD.l} x2={W - PAD.r} y1={H - PAD.b} y2={H - PAD.b} class="grid base" />
         {#if narrowed}
@@ -173,7 +175,7 @@
         <path d={solidPath.area} class="cum-area" />
         <path d={solidPath.line} class="cum-line" pathLength="1" />
         {#each axis as year (year)}
-          <text x={cx(year - cumulative[0].year)} y={H - 6} text-anchor="middle" class="axis num"
+          <text x={cx(year - cumulative[0].year)} y={H - 6} text-anchor="middle" class="axis dl-num"
             >{year}</text
           >
         {/each}
@@ -183,13 +185,13 @@
           <circle cx={cx(i)} cy={cy(readout.selectedHours)} r="3.5" class="dot" />
         {/if}
         {#if endPoint}
-          <text x={W - PAD.r + 6} y={cy(endPoint.selectedHours) + 3} class="end num"
+          <text x={W - PAD.r + 6} y={cy(endPoint.selectedHours) + 3} class="end dl-num"
             >{Math.round(endPoint.selectedHours)} h</text
           >
         {/if}
       </svg>
       {#if readout}
-        <p class="readout num">
+        <p class="readout dl-num">
           <span class="year">{readout.year}</span>
           <span>{Math.round(readout.selectedHours)} h by year end</span>
           <span class="faint"
@@ -202,7 +204,7 @@
   </div>
 
   {#if rhythm.length}
-    <div class="chart card" use:inView>
+    <div class="chart dl-card" use:inView>
       <h3>Rhythm</h3>
       <dl class="tiles">
         {#each rhythm as tile (tile.label)}
@@ -212,7 +214,7 @@
             <dd>
               {#if parsed}
                 <span
-                  class="num"
+                  class="dl-num"
                   use:counter={{
                     value: parsed.n,
                     suffix: parsed.suffix,
@@ -222,7 +224,7 @@
                   }}>{tile.value}</span
                 >
               {:else}
-                <span class="num">{tile.value}</span>
+                <span class="dl-num">{tile.value}</span>
               {/if}
               {#if tile.note}<small>{tile.note}</small>{/if}
             </dd>
@@ -233,7 +235,7 @@
   {/if}
 
   {#if depths.length}
-    <div class="chart card" use:inView>
+    <div class="chart dl-card" use:inView>
       <h3>Max depth</h3>
       <div class="bars" style="--n: {depths.length}">
         {#each depths as band, i (band.label)}
@@ -249,7 +251,7 @@
             onclick={() => onChange(toggleDepthBand(filter, band))}
           >
             <span class="bar-stack">
-              <span class="bar-value num" style="bottom: {pct(band.selected, depthMax)}%"
+              <span class="bar-value dl-num" style="bottom: {pct(band.selected, depthMax)}%"
                 >{narrowed && !band.selected ? '' : band.selected}</span
               >
               {#if narrowed}<span
@@ -258,7 +260,7 @@
                 ></span>{/if}
               <span class="bar depth" style="height: {pct(band.selected, depthMax)}%"></span>
             </span>
-            <span class="bar-label num">{band.label}</span>
+            <span class="bar-label dl-num">{band.label}</span>
           </button>
         {/each}
       </div>
@@ -266,7 +268,7 @@
   {/if}
 
   {#if durations.length}
-    <div class="chart card" use:inView>
+    <div class="chart dl-card" use:inView>
       <h3>Bottom time</h3>
       <div class="bars" style="--n: {durations.length}">
         {#each durations as band, i (band.label)}
@@ -282,7 +284,7 @@
             onclick={() => onChange(toggleDurationBand(filter, band))}
           >
             <span class="bar-stack">
-              <span class="bar-value num" style="bottom: {pct(band.selected, durationMax)}%"
+              <span class="bar-value dl-num" style="bottom: {pct(band.selected, durationMax)}%"
                 >{narrowed && !band.selected ? '' : band.selected}</span
               >
               {#if narrowed}<span
@@ -291,7 +293,7 @@
                 ></span>{/if}
               <span class="bar time" style="height: {pct(band.selected, durationMax)}%"></span>
             </span>
-            <span class="bar-label num">{band.label}</span>
+            <span class="bar-label dl-num">{band.label}</span>
           </button>
         {/each}
       </div>
@@ -299,7 +301,7 @@
   {/if}
 
   {#if water.length}
-    <div class="chart card" use:inView>
+    <div class="chart dl-card" use:inView>
       <h3>Water by country</h3>
       <ul class="hbars">
         {#each water as row, i (row.code)}
@@ -327,7 +329,7 @@
                   style="left: {tempX(row.median)}%; background: {tempColour(row.median)}"
                 ></span>
               </span>
-              <span class="hbar-value num">{Math.round(row.median)} °C</span>
+              <span class="hbar-value dl-num">{Math.round(row.median)} °C</span>
             </button>
           </li>
         {/each}
@@ -336,7 +338,7 @@
   {/if}
 
   {#if tags.length}
-    <div class="chart card" use:inView>
+    <div class="chart dl-card" use:inView>
       <h3>Dive types</h3>
       <ul class="hbars">
         {#each tags as tag, i (tag.tag)}
@@ -350,13 +352,16 @@
               title="{tag.total} dives{narrowed ? ` · ${tag.selected} selected` : ''}"
               onclick={() => onChange(toggleTag(filter, tag.tag))}
             >
-              <span class="tag" data-tag={tag.tag}>{tag.tag}</span>
-              <span class="hbar-track" style="--bar: var(--tag-{tag.tag}, var(--color-accent))">
+              <span class="dl-tag" data-tag={tag.tag}>{tag.tag}</span>
+              <span
+                class="hbar-track"
+                style="--bar: var(--dl-tag-{tag.tag}, var(--dl-color-accent))"
+              >
                 {#if narrowed}<span class="hbar ghost" style="width: {pct(tag.total, tagMax)}%"
                   ></span>{/if}
                 <span class="hbar" style="width: {pct(tag.selected, tagMax)}%"></span>
               </span>
-              <span class="hbar-value num">{tag.selected}</span>
+              <span class="hbar-value dl-num">{tag.selected}</span>
             </button>
           </li>
         {/each}
@@ -365,7 +370,7 @@
   {/if}
 
   {#if sites.length}
-    <div class="chart card" use:inView>
+    <div class="chart dl-card" use:inView>
       <h3>Most dived sites</h3>
       <ul class="hbars">
         {#each sites as site, i (site.slug)}
@@ -387,7 +392,7 @@
                   ></span>{/if}
                 <span class="hbar" style="width: {pct(site.selected, siteMax)}%"></span>
               </span>
-              <span class="hbar-value num">{site.selected}</span>
+              <span class="hbar-value dl-num">{site.selected}</span>
             </button>
           </li>
         {/each}
@@ -396,7 +401,7 @@
   {/if}
 
   {#if people.length}
-    <div class="chart card" use:inView>
+    <div class="chart dl-card" use:inView>
       <h3>Dived most with</h3>
       <ul class="hbars">
         {#each people as person, i (person.slug)}
@@ -406,7 +411,7 @@
               class="hbar-row wide"
               class:active={filter.person === person.slug}
               class:empty={narrowed && !person.selected}
-              style="--i: {i}; --bar: var(--color-warm)"
+              style="--i: {i}; --bar: var(--dl-color-warm)"
               title="{person.name}: {person.total} dives{narrowed
                 ? ` · ${person.selected} selected`
                 : ''}"
@@ -420,7 +425,7 @@
                   ></span>{/if}
                 <span class="hbar" style="width: {pct(person.selected, peopleMax)}%"></span>
               </span>
-              <span class="hbar-value num">{person.selected}</span>
+              <span class="hbar-value dl-num">{person.selected}</span>
             </button>
           </li>
         {/each}
@@ -441,7 +446,7 @@
     grid-column: span 2;
     min-width: 0;
     padding: 20px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .chart:last-child:nth-child(3n + 1) {
     grid-column: span 6;
@@ -472,11 +477,11 @@
   }
   h3 {
     font-size: 14px;
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin-bottom: 18px;
   }
 
@@ -488,11 +493,11 @@
     margin: 0;
   }
   .tile dt {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     margin-bottom: 4px;
     white-space: nowrap;
   }
@@ -502,17 +507,17 @@
     flex-direction: column;
     gap: 2px;
   }
-  .tile .num {
-    font-family: var(--font-display);
+  .tile .dl-num {
+    font-family: var(--dl-font-display);
     font-size: 20px;
     font-weight: 600;
     line-height: 1.1;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     white-space: nowrap;
   }
   .tile small {
     font-size: 11.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
 
   /* Vertical bars: each column is a button that narrows the log to its band. */
@@ -540,7 +545,7 @@
     border-radius: 4px;
   }
   .bar-col:focus-visible {
-    outline: 2px solid var(--color-focus-ring);
+    outline: 2px solid var(--dl-color-focus-ring);
     outline-offset: 2px;
   }
   .bar-stack {
@@ -559,7 +564,7 @@
     max-width: 36px;
     min-height: 2px;
     border-radius: 4px 4px 2px 2px;
-    background: var(--color-accent);
+    background: var(--dl-color-accent);
     transform-origin: bottom;
     transition:
       height 0.45s ease,
@@ -568,10 +573,10 @@
     transition-delay: 0s, calc(var(--i, 0) * 30ms), 0s;
   }
   .bar.depth {
-    background: var(--tag-deep);
+    background: var(--dl-tag-deep);
   }
   .bar.time {
-    background: var(--color-warm);
+    background: var(--dl-color-warm);
   }
   .bar.ghost {
     opacity: 0.16;
@@ -583,15 +588,15 @@
     filter: brightness(1.2);
   }
   .bar-col.active .bar:not(.ghost) {
-    outline: 2px solid var(--color-warm);
+    outline: 2px solid var(--dl-color-warm);
     outline-offset: 2px;
   }
   .bar-col.active .bar-label,
   .bar-col:hover .bar-label {
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .bar-col.active .bar-label {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
   }
   .bar-col.empty .bar-label {
     opacity: 0.5;
@@ -604,12 +609,12 @@
     margin-bottom: 3px;
     font-size: 11px;
     line-height: 1;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     transition: bottom 0.45s ease;
   }
   .bar-label {
     font-size: 10.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     white-space: nowrap;
     transition: color 0.15s ease;
   }
@@ -622,7 +627,7 @@
     touch-action: pan-y;
   }
   .grid {
-    stroke: var(--color-border);
+    stroke: var(--dl-color-border);
     stroke-width: 1;
     stroke-dasharray: 2 3;
   }
@@ -630,12 +635,12 @@
     stroke-dasharray: none;
   }
   .cum-area {
-    fill: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-accent) 16%, transparent);
     transition: opacity 0.8s ease 0.6s;
   }
   .cum-line {
     fill: none;
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 2;
     stroke-linejoin: round;
     stroke-linecap: round;
@@ -650,30 +655,30 @@
     opacity: 0;
   }
   .cum-area.ghost {
-    fill: color-mix(in srgb, var(--color-text-faint) 10%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-text-faint) 10%, transparent);
   }
   .cum-line.ghost {
-    stroke: var(--color-text-faint);
+    stroke: var(--dl-color-text-faint);
     stroke-width: 1;
     stroke-dasharray: none;
     opacity: 0.6;
   }
   .cursor {
-    stroke: var(--color-text-faint);
+    stroke: var(--dl-color-text-faint);
     stroke-width: 1;
     stroke-dasharray: 2 2;
   }
   .dot {
-    fill: var(--color-bg-elevated);
-    stroke: var(--color-accent);
+    fill: var(--dl-color-bg-elevated);
+    stroke: var(--dl-color-accent);
     stroke-width: 2;
   }
   .axis {
-    fill: var(--color-text-faint);
+    fill: var(--dl-color-text-faint);
     font-size: 9.5px;
   }
   .end {
-    fill: var(--color-text);
+    fill: var(--dl-color-text);
     font-size: 10.5px;
     font-weight: 600;
   }
@@ -683,14 +688,14 @@
     gap: 4px 12px;
     margin: 10px 0 0;
     font-size: 12px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .readout .year {
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-weight: 600;
   }
   .readout .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
 
   /* Horizontal bars: rows are buttons that narrow the log to that value. */
@@ -718,7 +723,7 @@
     border-radius: 4px;
   }
   .hbar-row:focus-visible {
-    outline: 2px solid var(--color-focus-ring);
+    outline: 2px solid var(--dl-color-focus-ring);
     outline-offset: 2px;
   }
   .hbar-row.wide {
@@ -728,20 +733,20 @@
     grid-template-columns: 128px 1fr 44px;
   }
   .hbar-row:hover .name,
-  .hbar-row:hover .tag {
-    color: var(--color-accent);
+  .hbar-row:hover .dl-tag {
+    color: var(--dl-color-accent);
   }
   .hbar-row.active .name,
-  .hbar-row.active .tag {
-    color: var(--color-warm);
+  .hbar-row.active .dl-tag {
+    color: var(--dl-color-warm);
   }
   .hbar-row.active .hbar-track,
   .hbar-row.active .range-track {
-    outline: 1.5px solid var(--color-warm);
+    outline: 1.5px solid var(--dl-color-warm);
     outline-offset: 2px;
   }
   .hbar-row.empty .name,
-  .hbar-row.empty .tag,
+  .hbar-row.empty .dl-tag,
   .hbar-row.empty .hbar-value {
     opacity: 0.5;
   }
@@ -760,7 +765,7 @@
     position: relative;
     height: 8px;
     border-radius: 4px;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
   }
   .hbar-track {
     overflow: hidden;
@@ -769,7 +774,7 @@
     position: absolute;
     inset: 0 auto 0 0;
     border-radius: 4px;
-    background: var(--bar, var(--color-accent));
+    background: var(--bar, var(--dl-color-accent));
     transform-origin: left;
     transition:
       width 0.45s ease,
@@ -784,7 +789,7 @@
   }
   .hbar-value {
     font-size: 12px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     text-align: right;
   }
 
@@ -794,7 +799,7 @@
     top: 0;
     height: 100%;
     border-radius: 4px;
-    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+    background: color-mix(in srgb, var(--dl-color-accent) 30%, transparent);
     transform-origin: center;
     transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i, 0) * 45ms);
   }
@@ -805,7 +810,7 @@
     height: 12px;
     border-radius: 50%;
     translate: -50% -50%;
-    border: 2px solid var(--color-bg-elevated);
+    border: 2px solid var(--dl-color-bg-elevated);
     transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i, 0) * 45ms + 0.2s);
   }
   .chart:global([data-anim]:not([data-inview])) .range {

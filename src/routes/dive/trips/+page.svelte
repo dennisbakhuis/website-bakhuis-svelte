@@ -1,7 +1,7 @@
 <script lang="ts">
   import { flagEmoji, formatDateRange, formatDepth, pluralize } from '$lib/dive/format';
   import type { TripSummary } from '$lib/dive/types';
-  import { reveal } from '$lib/anim/reveal';
+  import { reveal } from '$lib/divelog/anim/reveal';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -24,8 +24,8 @@
   );
 </script>
 
-<section class="page container">
-  <p class="kicker">Dive trips</p>
+<section class="page dl-container">
+  <p class="dl-kicker">Dive trips</p>
   <h1>
     {pluralize(data.trips.length, 'trip')},
     <span class="accent">{pluralize(countries, 'country', 'countries')}</span>
@@ -41,11 +41,11 @@
 
   {#each years as group (group.year)}
     <section class="year" use:reveal={{ stagger: 30 }}>
-      <h2 data-reveal class="num">{group.year}</h2>
+      <h2 data-reveal class="dl-num">{group.year}</h2>
       <ul class="trips">
         {#each group.trips as trip (trip.slug)}
           <li data-reveal>
-            <a class="trip card" href={urls.trip(trip.slug)}>
+            <a class="trip dl-card" href={urls.trip(trip.slug)}>
               <span class="thumb" class:empty={!trip.cover_url}>
                 {#if trip.cover_url}
                   <img src={trip.cover_url} alt="" loading="lazy" width="168" height="124" />
@@ -57,7 +57,7 @@
               </span>
               <span class="body">
                 <span class="trip-name">{trip.name}</span>
-                <span class="trip-meta num">
+                <span class="trip-meta dl-num">
                   {formatDateRange(trip.start_date, trip.end_date)} · {pluralize(trip.days, 'day')}
                 </span>
                 <span class="trip-meta">
@@ -66,9 +66,9 @@
                     .join(', ')}
                 </span>
                 <span class="trip-foot">
-                  <span class="num">{pluralize(trip.stats.dives, 'dive')}</span>
-                  <span class="num">{pluralize(trip.stats.sites, 'site')}</span>
-                  {#if trip.stats.max_depth_m}<span class="num faint"
+                  <span class="dl-num">{pluralize(trip.stats.dives, 'dive')}</span>
+                  <span class="dl-num">{pluralize(trip.stats.sites, 'site')}</span>
+                  {#if trip.stats.max_depth_m}<span class="dl-num faint"
                       >max {formatDepth(trip.stats.max_depth_m)}</span
                     >{/if}
                 </span>
@@ -89,22 +89,22 @@
 <style>
   .page {
     padding-top: 56px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   h1 {
     font-size: clamp(34px, 5vw, 52px);
   }
   .accent {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .lede {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 1.1rem;
     max-width: 60ch;
     margin-bottom: 36px;
   }
   .empty {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .year {
     margin-bottom: 36px;
@@ -135,14 +135,14 @@
   }
   .trip:hover {
     transform: translateY(-2px);
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .thumb {
     width: 84px;
     height: 62px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--dl-radius-sm);
     overflow: hidden;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -163,13 +163,13 @@
     min-width: 0;
   }
   .trip-name {
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-size: 16px;
     font-weight: 600;
   }
   .trip-meta {
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .trip-foot {
     display: flex;
@@ -179,10 +179,10 @@
     margin-top: auto;
     padding-top: 6px;
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .cross {
     display: flex;
@@ -191,10 +191,10 @@
     font-size: 14px;
   }
   .cross a {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     text-decoration: none;
   }
   .cross a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
 </style>

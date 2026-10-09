@@ -2,7 +2,7 @@
   import { invalidateAll } from '$app/navigation';
   import { adminJson, adminUpload, AdminApiError } from '$lib/admin/client';
   import type { GearItem, GearSetup } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -128,14 +128,16 @@
 
 <div class="head">
   <h1>Gear</h1>
-  <a class="btn btn-ghost btn-sm" href={urls.gear()} target="_blank" rel="noopener">View ↗</a>
+  <a class="dl-btn dl-btn-ghost dl-btn-sm" href={urls.gear()} target="_blank" rel="noopener"
+    >View ↗</a
+  >
 </div>
 {#if error}<p class="error">{error}</p>{/if}
 
 <div class="columns">
   <section>
     <h2>Setups</h2>
-    <form class="card form" onsubmit={saveSetup}>
+    <form class="dl-card form" onsubmit={saveSetup}>
       <div class="field-row">
         <label>Name<input type="text" bind:value={setup.name} required /></label>
         <label>Slug<input type="text" bind:value={setup.slug} placeholder="auto" /></label>
@@ -146,7 +148,7 @@
         {#each data.items as i (i.id)}
           <button
             type="button"
-            class="tag"
+            class="dl-tag"
             class:active={setup.item_ids.includes(i.id)}
             aria-pressed={setup.item_ids.includes(i.id)}
             onclick={() => (setup.item_ids = toggle(setup.item_ids, i.id))}>{i.name}</button
@@ -154,30 +156,32 @@
         {/each}
       </div>
       <div class="actions">
-        <button type="submit" class="btn btn-solid btn-sm"
+        <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm"
           >{setup.id ? 'Save setup' : 'Create setup'}</button
         >
         {#if setup.id}<button
             type="button"
-            class="btn btn-ghost btn-sm"
+            class="dl-btn dl-btn-ghost dl-btn-sm"
             onclick={() => (setup = emptySetup())}>Cancel</button
           >{/if}
       </div>
     </form>
     <ul class="list">
       {#each data.setups as s (s.id)}
-        <li class="card row">
+        <li class="dl-card row">
           <div>
             <strong>{s.name}</strong><br /><span class="muted"
               >{s.items.map((i) => i.name).join(', ') || 'no items'}</span
             >
           </div>
           <div class="row-actions">
-            <button type="button" class="btn btn-ghost btn-sm" onclick={() => editSetup(s)}
+            <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={() => editSetup(s)}
               >Edit</button
             >
-            <button type="button" class="btn btn-ghost btn-sm" onclick={() => removeSetup(s)}
-              >Delete</button
+            <button
+              type="button"
+              class="dl-btn dl-btn-ghost dl-btn-sm"
+              onclick={() => removeSetup(s)}>Delete</button
             >
           </div>
         </li>
@@ -187,7 +191,7 @@
 
   <section>
     <h2>Items</h2>
-    <form class="card form" onsubmit={saveItem}>
+    <form class="dl-card form" onsubmit={saveItem}>
       <div class="field-row">
         <label>Name<input type="text" bind:value={item.name} required /></label>
         <label>
@@ -203,19 +207,19 @@
       </div>
       <label>Notes (markdown)<textarea rows="2" bind:value={item.notes_md}></textarea></label>
       <div class="actions">
-        <button type="submit" class="btn btn-solid btn-sm"
+        <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm"
           >{item.id ? 'Save item' : 'Create item'}</button
         >
         {#if item.id}<button
             type="button"
-            class="btn btn-ghost btn-sm"
+            class="dl-btn dl-btn-ghost dl-btn-sm"
             onclick={() => (item = emptyItem())}>Cancel</button
           >{/if}
       </div>
     </form>
     <ul class="list">
       {#each data.items as i (i.id)}
-        <li class="card row">
+        <li class="dl-card row">
           <div class="thumb">
             {#if i.photo_url}<img src={i.photo_url} alt="" />{/if}
           </div>
@@ -226,18 +230,20 @@
             >
           </div>
           <div class="row-actions">
-            <label class="file btn btn-ghost btn-sm"
+            <label class="file dl-btn dl-btn-ghost dl-btn-sm"
               >Photo<input
                 type="file"
                 accept="image/*"
                 onchange={(e) => photo(i, e.currentTarget.files)}
               /></label
             >
-            <button type="button" class="btn btn-ghost btn-sm" onclick={() => editItem(i)}
+            <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={() => editItem(i)}
               >Edit</button
             >
-            <button type="button" class="btn btn-ghost btn-sm" onclick={() => removeItem(i)}
-              >Delete</button
+            <button
+              type="button"
+              class="dl-btn dl-btn-ghost dl-btn-sm"
+              onclick={() => removeItem(i)}>Delete</button
             >
           </div>
         </li>
@@ -273,19 +279,19 @@
     flex-direction: column;
     gap: 10px;
     margin-bottom: 14px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
   }
-  .chips .tag {
+  .chips .dl-tag {
     cursor: pointer;
   }
-  .tag.active {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+  .dl-tag.active {
+    border-color: var(--dl-color-accent);
+    color: var(--dl-color-accent);
   }
   .actions {
     display: flex;
@@ -313,7 +319,7 @@
     width: 48px;
     height: 36px;
     border-radius: 4px;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     overflow: hidden;
   }
   .thumb img {
@@ -322,7 +328,7 @@
     object-fit: cover;
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
   }
   .row-actions {
@@ -334,7 +340,7 @@
   .file {
     cursor: pointer;
     flex-direction: row;
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .file input {
     display: none;

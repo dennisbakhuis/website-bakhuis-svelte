@@ -49,7 +49,7 @@
 </script>
 
 {#if maps.length}
-  <section class="panel card">
+  <section class="panel dl-card">
     {#if maps.length > 1 || owner}
       <div class="tabs" role="tablist">
         {#each maps as m, i (m.ref)}
@@ -112,7 +112,7 @@
         {#if selected?.annotation.note}<p class="muted">{selected.annotation.note}</p>{/if}
         <div class="foot">
           <MapLegend map={drawn} />
-          <span class="muted num">{defaultTitle(drawn.kind)} · {mapSummary(drawn)}</span>
+          <span class="muted dl-num">{defaultTitle(drawn.kind)} · {mapSummary(drawn)}</span>
         </div>
         {#if drawn.notes}<p class="muted">{drawn.notes}</p>{/if}
       {:else if active.url}
@@ -128,7 +128,7 @@
 <style>
   .panel {
     padding: 10px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -141,10 +141,10 @@
   }
   .tabs button {
     background: none;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--dl-color-border);
     border-radius: 999px;
     padding: 5px 12px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 13px;
     display: inline-flex;
     gap: 6px;
@@ -152,19 +152,19 @@
     cursor: pointer;
   }
   .tabs button.active {
-    color: var(--color-text);
-    border-color: var(--color-accent);
-    background: var(--color-accent-soft);
+    color: var(--dl-color-text);
+    border-color: var(--dl-color-accent);
+    background: var(--dl-color-accent-soft);
   }
   .tabs button.private {
     border-style: dashed;
   }
   .coll {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .dives button {
     font-size: 12px;
@@ -173,22 +173,22 @@
   .open {
     margin-left: auto;
     font-size: 12px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .star {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
   }
   .warning {
     margin: 0;
     padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    border: 1px dashed var(--color-warm);
-    color: var(--color-warm);
+    border-radius: var(--dl-radius-sm);
+    border: 1px dashed var(--dl-color-warm);
+    color: var(--dl-color-warm);
     font-size: 13px;
   }
   .warning .credit {
     display: block;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .image {
     margin: 0;
@@ -200,13 +200,13 @@
     width: 100%;
     height: auto;
     display: block;
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
+    border-radius: var(--dl-radius-sm);
+    background: var(--dl-color-surface);
   }
   .image figcaption {
     font-size: 12px;
-    color: var(--color-text-faint);
-    font-family: var(--font-mono);
+    color: var(--dl-color-text-faint);
+    font-family: var(--dl-font-mono);
     text-align: right;
   }
   .foot {
@@ -217,7 +217,7 @@
     flex-wrap: wrap;
   }
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 13px;
     margin: 0;
   }

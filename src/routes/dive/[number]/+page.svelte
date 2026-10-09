@@ -14,7 +14,6 @@
   import DiveFacts from '$lib/components/dive/DiveFacts.svelte';
   import DiveProfile from '$lib/components/dive/DiveProfile.svelte';
   import Gallery from '$lib/components/dive/Gallery.svelte';
-  import Markdown from '$lib/components/Markdown.svelte';
   import SiteMapView from '$lib/components/dive/SiteMapView.svelte';
   import SiteMapThumb from '$lib/components/dive/SiteMapThumb.svelte';
   import MapLegend from '$lib/components/dive/MapLegend.svelte';
@@ -147,19 +146,19 @@
 {#snippet pager()}
   <span class="pager">
     {#if dive.prev_number}<a href={urls.dive(dive.prev_number)} rel="prev"
-        >← <span class="num">#{dive.prev_number}</span>{#if dive.prev_site_name}<span
+        >← <span class="dl-num">#{dive.prev_number}</span>{#if dive.prev_site_name}<span
             class="pager-name">{dive.prev_site_name}</span
           >{/if}</a
       >{/if}
     {#if dive.next_number}<a href={urls.dive(dive.next_number)} rel="next"
         >{#if dive.next_site_name}<span class="pager-name">{dive.next_site_name}</span>{/if}<span
-          class="num">#{dive.next_number}</span
+          class="dl-num">#{dive.next_number}</span
         > →</a
       >{/if}
   </span>
 {/snippet}
 
-<article class="dive container detail">
+<article class="dive dl-container dl-detail">
   <DetailTop
     back={{ href: urls.log(), label: 'Dive log' }}
     owner={data.owner
@@ -188,8 +187,8 @@
         aria-hidden="true"
       ></div>
     {/if}
-    <p class="kicker">
-      Dive <span class="num">#{dive.number}</span> · {formatLongDate(dive.date)}{dive.time_in
+    <p class="dl-kicker">
+      Dive <span class="dl-num">#{dive.number}</span> · {formatLongDate(dive.date)}{dive.time_in
         ? ` · ${formatTime(dive.time_in)}${dive.time_out ? `–${formatTime(dive.time_out)}` : ''}`
         : ''}
       {#if dive.visibility !== 'public'}<span class="status">{dive.visibility}</span>{/if}
@@ -212,7 +211,7 @@
     {/if}
     {#if dive.tags.length || showTypesRaw}
       <p class="tags">
-        {#each dive.tags as tag (tag)}<a class="tag" data-tag={tag} href={urls.filter({ tag })}
+        {#each dive.tags as tag (tag)}<a class="dl-tag" data-tag={tag} href={urls.filter({ tag })}
             >{tag}</a
           >{/each}
         {#if showTypesRaw}<span class="raw" title="As ticked in the paper log"
@@ -259,7 +258,7 @@
     <div class="context-cards" class:single={!dive.site || !dive.buddies.length}>
       {#if dive.site}
         {@const site = dive.site}
-        <article class="card where" class:no-thumb={!drawnMap && !locatorMap?.url && !sitePhoto}>
+        <article class="dl-card where" class:no-thumb={!drawnMap && !locatorMap?.url && !sitePhoto}>
           {#if drawnMap || locatorMap?.url || sitePhoto}
             <div class="where-thumb" class:drawn={!!drawnMap}>
               {#if drawnMap}
@@ -284,11 +283,11 @@
               <span>{site.site_type}</span>
               {#if site.system}<span>part of {site.system}</span>{/if}
               {#if site.max_depth_m !== null && !sameDepth(site.max_depth_m, dive.max_depth_m)}<span
-                  class="num">site max {formatDepth(site.max_depth_m)}</span
+                  class="dl-num">site max {formatDepth(site.max_depth_m)}</span
                 >{/if}
             </p>
             {#if site.summary}<p class="where-summary">{site.summary}</p>{/if}
-            {#if siteVisits}<p class="where-visits num">{siteVisits}</p>{/if}
+            {#if siteVisits}<p class="where-visits dl-num">{siteVisits}</p>{/if}
             {#if sitePhoto?.credit && !drawnMap && !locatorMap?.url}<p class="where-credit">
                 Photo: {sitePhoto.credit}
               </p>{/if}
@@ -301,7 +300,7 @@
         </article>
       {/if}
       {#if dive.buddies.length}
-        <article class="card with">
+        <article class="dl-card with">
           <p class="eyebrow">With</p>
           <ul class="team">
             {#each dive.buddies as buddy (buddy.slug)}
@@ -320,14 +319,15 @@
                       >{/if}</span
                   >
                   {#if buddy.dives_together > 1}
-                    <span class="buddy-meta num"
+                    <span class="buddy-meta dl-num"
                       ><a href={urls.filter({ with: buddy.slug })}
                         >{pluralize(buddy.dives_together, 'dive')} together</a
                       ></span
                     >
-                    {#if since(buddy)}<span class="buddy-meta faint num">{since(buddy)}</span>{/if}
+                    {#if since(buddy)}<span class="buddy-meta faint dl-num">{since(buddy)}</span
+                      >{/if}
                   {:else if !buddy.first_together}
-                    <span class="buddy-meta num">the only dive together</span>
+                    <span class="buddy-meta dl-num">the only dive together</span>
                   {/if}
                 </span>
               </li>
@@ -350,7 +350,7 @@
           {dive.map.title || defaultTitle(dive.map.kind)}
         </p>
       </div>
-      {#if mapLine}<p class="map-summary num">{mapLine}</p>{/if}
+      {#if mapLine}<p class="map-summary dl-num">{mapLine}</p>{/if}
       <SiteMapView
         map={dive.map}
         title={routeAnnotation
@@ -385,7 +385,7 @@
       <div class="map-head">
         <h2>Profile</h2>
         {#if dive.profile_meta}
-          <p class="map-summary num">
+          <p class="map-summary dl-num">
             {#if dive.profile_meta.deco_model}{dive.profile_meta.deco_model}{/if}
             {#if dive.profile_meta.gf}· GF {dive.profile_meta.gf}{/if}
             {#if dive.profile_meta.deco}· deco{/if}
@@ -419,7 +419,8 @@
         </div>
       {/if}
       {#if activeTab === 'story'}
-        <Markdown source={story} />
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -- sanitised by the backend -->
+        <div class="dl-prose">{@html dive.body_html}</div>
       {:else if activeTab === 'original'}
         <blockquote class="original">{dive.notes_nl}</blockquote>
       {:else}
@@ -496,7 +497,9 @@
 
   {#if dive.site}
     <section class="block">
-      <a class="btn btn-ghost" href={urls.site(dive.site.slug)}>All dives at {dive.site.name} →</a>
+      <a class="dl-btn dl-btn-ghost" href={urls.site(dive.site.slug)}
+        >All dives at {dive.site.name} →</a
+      >
     </section>
   {/if}
 
@@ -516,15 +519,15 @@
   }
   .map-summary {
     font-size: 14px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .map-head + .map-summary {
     margin: -6px 0 12px;
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .map-title {
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .map-note {
     margin: 10px 0 0;
@@ -534,7 +537,7 @@
     gap: 16px;
     margin: 8px 0 0;
     font-size: 12px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .way-key span::before {
     content: '';
@@ -558,12 +561,12 @@
   .pin-list {
     margin: 8px 0 0;
     padding-left: 22px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 14px;
   }
   .dive {
     padding-top: 40px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   .crumbs {
     display: flex;
@@ -576,10 +579,10 @@
   }
   .crumbs a {
     text-decoration: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .crumbs a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .pager {
     display: flex;
@@ -592,10 +595,10 @@
     gap: 0.4em;
     min-width: 0;
     text-decoration: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .pager a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .pager-name {
     overflow: hidden;
@@ -605,7 +608,7 @@
   }
   .status {
     margin-left: 8px;
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-size: 11px;
@@ -614,31 +617,31 @@
     font-size: clamp(30px, 5vw, 48px);
     margin-bottom: 10px;
   }
-  .head .kicker {
+  .head .dl-kicker {
     align-items: flex-start;
   }
-  .head .kicker::before {
+  .head .dl-kicker::before {
     flex: none;
     margin-top: 0.55em;
   }
   .location {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 15.5px;
   }
   .location > span:not(.flag) + span::before {
     content: '·';
     margin-right: 0.35em;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .location a {
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .location a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .section {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .flag {
     margin-right: 0.35em;
@@ -649,13 +652,13 @@
     flex-wrap: wrap;
     align-items: center;
   }
-  .tags .tag {
+  .tags .dl-tag {
     text-decoration: none;
   }
   .raw {
     font-size: 12px;
-    color: var(--color-text-faint);
-    font-family: var(--font-mono);
+    color: var(--dl-color-text-faint);
+    font-family: var(--dl-font-mono);
   }
   .numbers {
     display: grid;
@@ -663,19 +666,19 @@
     gap: 14px;
     margin: 28px 0 0;
     padding: 20px;
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-elevated);
+    border-radius: var(--dl-radius);
+    border: 1px solid var(--dl-color-border);
+    background: var(--dl-color-bg-elevated);
   }
   .numbers .wide {
     grid-column: 1 / -1;
   }
   .numbers dt {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .numbers dd {
     margin: 2px 0 0;
@@ -685,12 +688,12 @@
   .numbers dd.small {
     font-size: 14px;
     font-weight: 400;
-    color: var(--color-text);
+    color: var(--dl-color-text);
   }
   .crumbs.bottom {
     margin: 44px 0 0;
     padding-top: 20px;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
   }
   .head {
     position: relative;
@@ -699,7 +702,7 @@
   .head.has-bg {
     padding: 28px 24px 18px;
     margin: 0 -24px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--dl-radius-lg);
     overflow: hidden;
   }
   .head-bg {
@@ -728,9 +731,9 @@
     z-index: -1;
     background: linear-gradient(
       90deg,
-      var(--color-bg) 0%,
-      color-mix(in srgb, var(--color-bg) 70%, transparent) 55%,
-      color-mix(in srgb, var(--color-bg) 35%, transparent) 100%
+      var(--dl-color-bg) 0%,
+      color-mix(in srgb, var(--dl-color-bg) 70%, transparent) 55%,
+      color-mix(in srgb, var(--dl-color-bg) 35%, transparent) 100%
     );
   }
   .pills {
@@ -745,27 +748,27 @@
     display: inline-block;
     max-width: 100%;
     padding: 3px 10px;
-    border: 1px solid var(--color-border-strong);
+    border: 1px solid var(--dl-color-border-strong);
     border-radius: 999px;
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     text-decoration: none;
   }
   .pill a {
-    color: var(--color-text);
+    color: var(--dl-color-text);
     text-decoration: none;
   }
   .pill a:hover,
   a.pill:hover {
-    color: var(--color-accent);
-    border-color: var(--color-accent);
+    color: var(--dl-color-accent);
+    border-color: var(--dl-color-accent);
   }
   a.pill-trip {
-    color: var(--color-warm);
-    border-color: color-mix(in srgb, var(--color-warm) 45%, transparent);
+    color: var(--dl-color-warm);
+    border-color: color-mix(in srgb, var(--dl-color-warm) 45%, transparent);
   }
   .also {
     margin-left: 0.4em;
@@ -781,11 +784,11 @@
   }
   .eyebrow {
     margin: 0 0 6px;
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .where {
     position: relative;
@@ -799,21 +802,21 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .where:hover {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .where-thumb {
     width: 148px;
     height: 110px;
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-2);
+    border-radius: var(--dl-radius-sm);
+    background: var(--dl-color-surface-2);
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .where-thumb.drawn {
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
+    background: var(--dl-color-bg-elevated);
+    border: 1px solid var(--dl-color-border);
   }
   .where-thumb img {
     width: 100%;
@@ -825,7 +828,7 @@
     margin: 0 0 4px;
   }
   .stretched {
-    color: var(--color-text);
+    color: var(--dl-color-text);
     text-decoration: none;
   }
   .stretched::after {
@@ -835,19 +838,19 @@
     border-radius: inherit;
   }
   .where:hover .stretched {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .where-meta {
     display: flex;
     flex-wrap: wrap;
     margin: 0 0 8px;
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .where-meta span:not(:last-child)::after {
     content: '·';
     margin: 0 6px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .where-summary {
     margin: 0 0 8px;
@@ -857,12 +860,12 @@
   .where-visits {
     margin: 0;
     font-size: 12.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .where-credit {
     margin: 6px 0 0;
     font-size: 11.5px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .where-links {
     margin: 8px 0 0;
@@ -896,11 +899,11 @@
   }
   .buddy-name a:hover,
   .buddy-meta a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .buddy-meta a {
     text-decoration: underline;
-    text-decoration-color: var(--color-border-strong);
+    text-decoration-color: var(--dl-color-border-strong);
     text-underline-offset: 2px;
   }
   .avatar {
@@ -908,15 +911,15 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--color-surface-2);
-    border: 1px solid var(--color-border-strong);
+    background: var(--dl-color-surface-2);
+    border: 1px solid var(--dl-color-border-strong);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-weight: 600;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .avatar img {
     width: 100%;
@@ -936,26 +939,26 @@
     gap: 8px;
   }
   .badge {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     font-weight: 500;
     letter-spacing: 0.04em;
     padding: 1px 8px;
     border-radius: 999px;
-    color: var(--color-warm);
-    background: var(--color-warm-soft);
+    color: var(--dl-color-warm);
+    background: var(--dl-color-warm-soft);
   }
   .buddy-meta {
     font-size: 12.5px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .buddy-meta.faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .provenance {
     margin: 10px 0 0;
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   @media (max-width: 720px) {
     .context-cards {
@@ -983,38 +986,38 @@
     margin-bottom: 14px;
   }
   .block.private {
-    border-top: 1px dashed var(--color-warm);
+    border-top: 1px dashed var(--dl-color-warm);
     padding-top: 20px;
   }
   .block.private h2 {
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
     font-size: 16px;
   }
   .tabs {
     display: flex;
     gap: 4px;
     margin-bottom: 16px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--dl-color-border);
   }
   .tabs button {
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
     padding: 8px 14px;
-    color: var(--color-text-muted);
-    font-family: var(--font-display);
+    color: var(--dl-color-text-muted);
+    font-family: var(--dl-font-display);
     font-weight: 600;
     margin-bottom: -1px;
   }
   .tabs button.active {
-    color: var(--color-text);
-    border-bottom-color: var(--color-accent);
+    color: var(--dl-color-text);
+    border-bottom-color: var(--dl-color-accent);
   }
   .original {
     margin: 0;
     padding: 12px 18px;
-    border-left: 3px solid var(--color-border-strong);
-    color: var(--color-text-muted);
+    border-left: 3px solid var(--dl-color-border-strong);
+    color: var(--dl-color-text-muted);
     white-space: pre-wrap;
     font-style: italic;
   }

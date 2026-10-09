@@ -14,7 +14,7 @@
   } from '$lib/admin/dive-input';
   import { siteIdFor, slugify } from '$lib/admin/slug';
   import type { DiveAdmin, GearSetup, PersonPrivate, Region, Site, Trip } from '$lib/dive/types';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
   import DiveRouteEditor from './DiveRouteEditor.svelte';
   import { getDivelog } from '$lib/dive/context';
 
@@ -281,7 +281,9 @@
 
 {#if !dive && template}
   <div class="copy-last">
-    <button type="button" class="btn btn-ghost btn-sm" onclick={copyLast}>Copy last dive</button>
+    <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={copyLast}
+      >Copy last dive</button
+    >
     <span class="muted"
       >#{template.number} · {template.label}: site, trip, people, gear, gas, suit and weights</span
     >
@@ -369,12 +371,17 @@
         {/if}
       </label>
       {#if site}
-        <a class="btn btn-ghost btn-sm" href={urls.site(site.slug)} target="_blank">view ↗</a>
-        <button type="button" class="btn btn-ghost btn-sm" onclick={() => (form.site_id = null)}
-          >clear</button
+        <a class="dl-btn dl-btn-ghost dl-btn-sm" href={urls.site(site.slug)} target="_blank"
+          >view ↗</a
+        >
+        <button
+          type="button"
+          class="dl-btn dl-btn-ghost dl-btn-sm"
+          onclick={() => (form.site_id = null)}>clear</button
         >
       {/if}
-      <button type="button" class="btn btn-ghost btn-sm" onclick={openSiteDialog}>+ New site</button
+      <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={openSiteDialog}
+        >+ New site</button
       >
     </div>
     <div class="field-row">
@@ -398,7 +405,7 @@
             {#each trips as trip (trip.slug)}<option value={trip.slug}>{trip.name}</option>{/each}
           </select>
         </label>
-        <button type="button" class="btn btn-ghost btn-sm" onclick={openTripDialog}
+        <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={openTripDialog}
           >+ New trip</button
         >
       </div>
@@ -519,7 +526,7 @@
           <label>Out (bar)<input type="number" bind:value={tank.pressure_out_bar} /></label>
           <button
             type="button"
-            class="btn btn-ghost btn-sm"
+            class="dl-btn dl-btn-ghost dl-btn-sm"
             aria-label="Remove tank"
             onclick={() => (form.tanks = form.tanks.filter((_, j) => j !== i))}>×</button
           >
@@ -528,14 +535,14 @@
       <div class="tank-actions">
         <button
           type="button"
-          class="btn btn-ghost btn-sm"
+          class="dl-btn dl-btn-ghost dl-btn-sm"
           onclick={() =>
             (form.tanks = [...form.tanks, emptyTank(form.tanks.length ? 'stage' : 'back')])}
           >+ tank</button
         >
         <button
           type="button"
-          class="btn btn-ghost btn-sm"
+          class="dl-btn dl-btn-ghost dl-btn-sm"
           onclick={() => (form.tanks = [...form.tanks, emptyTank('deco')])}>+ deco gas</button
         >
         <span class="hint"
@@ -583,7 +590,7 @@
       {#each presets.tags as tag (tag)}
         <button
           type="button"
-          class="tag"
+          class="dl-tag"
           class:active={form.tags.includes(tag)}
           data-tag={tag}
           aria-pressed={form.tags.includes(tag)}
@@ -607,7 +614,7 @@
       {#each people as person (person.id)}
         <button
           type="button"
-          class="tag"
+          class="dl-tag"
           class:active={form.people_ids.includes(person.id)}
           aria-pressed={form.people_ids.includes(person.id)}
           title={personLabel(person)}
@@ -628,7 +635,7 @@
           }
         }}
       />
-      <button type="button" class="btn btn-ghost btn-sm" onclick={addBuddy}>Add</button>
+      <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm" onclick={addBuddy}>Add</button>
     </div>
     <div class="field-row">
       <label>Guide<input type="text" bind:value={form.guide} /></label>
@@ -652,7 +659,7 @@
         {#if !siteMaps.length}
           <p class="muted">No drawn map for {site.name} yet.</p>
           <a
-            class="btn btn-ghost btn-sm"
+            class="dl-btn dl-btn-ghost dl-btn-sm"
             href={urls.admin.siteMaps(site.id)}
             target="_blank"
             rel="noopener">Draw a map ↗</a
@@ -660,7 +667,7 @@
         {/if}
         <button
           type="button"
-          class="btn btn-ghost btn-sm"
+          class="dl-btn dl-btn-ghost dl-btn-sm"
           disabled={refreshing}
           onclick={refreshMaps}
           title="Fetch the site's maps again, e.g. after drawing one in another tab"
@@ -687,15 +694,22 @@
   </fieldset>
 
   <div class="save-bar">
-    <button type="submit" class="btn btn-solid" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
+    <button type="submit" class="dl-btn dl-btn-solid" disabled={busy}
+      >{busy ? 'Saving…' : 'Save'}</button
+    >
     {#if dirty}<span class="unsaved">● unsaved changes</span>{/if}
     {#if error}<span class="error">{error}</span>{/if}
     {#if dive}
       <span class="spacer"></span>
-      <a class="btn btn-ghost btn-sm" href={urls.dive(dive.number)} target="_blank" rel="noopener"
-        >View dive ↗</a
+      <a
+        class="dl-btn dl-btn-ghost dl-btn-sm"
+        href={urls.dive(dive.number)}
+        target="_blank"
+        rel="noopener">View dive ↗</a
       >
-      <button type="button" class="btn btn-ghost btn-sm danger" onclick={remove}>Delete</button>
+      <button type="button" class="dl-btn dl-btn-ghost dl-btn-sm danger" onclick={remove}
+        >Delete</button
+      >
     {/if}
   </div>
 </form>
@@ -732,11 +746,13 @@
     {/if}
     {#if siteError}<p class="error">{siteError}</p>{/if}
     <div class="mini-actions">
-      <button type="submit" class="btn btn-solid btn-sm" disabled={siteBusy}
+      <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm" disabled={siteBusy}
         >{siteBusy ? 'Creating…' : 'Create site'}</button
       >
-      <button type="button" class="btn btn-ghost btn-sm" onclick={() => siteDialog?.close()}
-        >Cancel</button
+      <button
+        type="button"
+        class="dl-btn dl-btn-ghost dl-btn-sm"
+        onclick={() => siteDialog?.close()}>Cancel</button
       >
     </div>
   </form>
@@ -753,11 +769,13 @@
     {#if slugify(newTrip.name)}<p class="muted">slug <code>{slugify(newTrip.name)}</code></p>{/if}
     {#if tripError}<p class="error">{tripError}</p>{/if}
     <div class="mini-actions">
-      <button type="submit" class="btn btn-solid btn-sm" disabled={tripBusy}
+      <button type="submit" class="dl-btn dl-btn-solid dl-btn-sm" disabled={tripBusy}
         >{tripBusy ? 'Creating…' : 'Create trip'}</button
       >
-      <button type="button" class="btn btn-ghost btn-sm" onclick={() => tripDialog?.close()}
-        >Cancel</button
+      <button
+        type="button"
+        class="dl-btn dl-btn-ghost dl-btn-sm"
+        onclick={() => tripDialog?.close()}>Cancel</button
       >
     </div>
   </form>
@@ -773,9 +791,9 @@
   .tank {
     align-items: end;
     padding: 8px 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius-sm);
+    background: var(--dl-color-surface);
   }
   .tank label {
     min-width: 0;
@@ -791,10 +809,10 @@
   }
   .tank-actions .hint {
     font-size: 12px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
     margin: 0;
   }
@@ -804,20 +822,20 @@
     gap: 18px;
   }
   fieldset {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
+    border: 1px solid var(--dl-color-border);
+    border-radius: var(--dl-radius);
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   legend {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     padding: 0 6px;
   }
   .site-pick {
@@ -838,10 +856,10 @@
     list-style: none;
     margin: 4px 0 0;
     padding: 4px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-md);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius-sm);
+    box-shadow: var(--dl-shadow-md);
     max-height: 320px;
     overflow: auto;
   }
@@ -851,7 +869,7 @@
     background: none;
     border: none;
     padding: 8px 10px;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     border-radius: 4px;
     display: flex;
     justify-content: space-between;
@@ -860,19 +878,19 @@
   }
   .options button:hover,
   .options button[aria-selected='true'] {
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
   }
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
   }
-  .chips .tag {
+  .chips .dl-tag {
     cursor: pointer;
   }
-  .tag.active {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+  .dl-tag.active {
+    border-color: var(--dl-color-accent);
+    color: var(--dl-color-accent);
   }
   .add-buddy {
     display: flex;
@@ -888,10 +906,10 @@
     bottom: 0;
     z-index: 6;
     padding: 10px 14px;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius);
-    background: var(--color-bg-elevated);
-    box-shadow: var(--shadow-md);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-bg-elevated);
+    box-shadow: var(--dl-shadow-md);
   }
   .save-bar .spacer {
     flex: 1;
@@ -900,12 +918,12 @@
     margin: 0;
   }
   .unsaved {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 12px;
-    color: var(--color-warm);
+    color: var(--dl-color-warm);
   }
   .danger:hover {
-    color: var(--color-error);
+    color: var(--dl-color-error);
   }
   .copy-last {
     display: flex;
@@ -925,18 +943,18 @@
     align-items: center;
   }
   .options .new-option {
-    color: var(--color-accent);
-    border-top: 1px solid var(--color-border);
+    color: var(--dl-color-accent);
+    border-top: 1px solid var(--dl-color-border);
     border-radius: 0;
   }
   dialog.mini {
     width: min(460px, calc(100vw - 32px));
     padding: 20px;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius);
-    background: var(--color-bg-elevated);
-    color: var(--color-text);
-    box-shadow: var(--shadow-md);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius);
+    background: var(--dl-color-bg-elevated);
+    color: var(--dl-color-text);
+    box-shadow: var(--dl-shadow-md);
   }
   dialog.mini::backdrop {
     background: rgb(0 0 0 / 0.55);
@@ -955,7 +973,7 @@
     gap: 8px;
   }
   textarea {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 13.5px;
     line-height: 1.5;
   }

@@ -26,9 +26,11 @@
 </script>
 
 <div class="head">
-  <h1>People <span class="count num">{data.people.length}</span></h1>
-  <button type="button" class="btn btn-solid btn-sm" onclick={() => goto(urls.admin.newPerson())}
-    >+ New person</button
+  <h1>People <span class="count dl-num">{data.people.length}</span></h1>
+  <button
+    type="button"
+    class="dl-btn dl-btn-solid dl-btn-sm"
+    onclick={() => goto(urls.admin.newPerson())}>+ New person</button
   >
 </div>
 <p class="muted">
@@ -52,13 +54,16 @@
         </td>
         <td
           ><a href={urls.admin.person(p.id)}>{label(p)}</a>
-          <span class="muted num">{p.id}</span></td
+          <span class="muted dl-num">{p.id}</span></td
         >
         <td>{p.display === 'hidden' ? '— hidden —' : p.name}</td>
-        <td class="num">{p.dives}</td>
+        <td class="dl-num">{p.dives}</td>
         <td class="row-actions">
-          <a class="btn btn-ghost btn-sm" href={urls.person(p.slug)} target="_blank" rel="noopener"
-            >view ↗</a
+          <a
+            class="dl-btn dl-btn-ghost dl-btn-sm"
+            href={urls.person(p.slug)}
+            target="_blank"
+            rel="noopener">view ↗</a
           >
         </td>
       </tr>
@@ -76,24 +81,24 @@
   }
   .count {
     font-size: 16px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-weight: 400;
   }
   .muted {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 13.5px;
   }
   .avatar {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-weight: 600;
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
     overflow: hidden;
     flex: none;
   }

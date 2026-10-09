@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { reducedMotion } from '$lib/anim/motion';
+  import { reducedMotion } from '$lib/divelog/anim/motion';
 
   let { progress }: { progress: number } = $props();
 

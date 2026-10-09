@@ -104,7 +104,7 @@
     height: 100%;
     display: block;
     pointer-events: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .area {
     fill: color-mix(in srgb, currentColor 10%, transparent);
@@ -112,11 +112,11 @@
   }
   .area.depth,
   .area.shallows {
-    fill: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-accent) 12%, transparent);
   }
   .area.coral,
   .area.reeds {
-    fill: color-mix(in srgb, var(--color-success) 16%, transparent);
+    fill: color-mix(in srgb, var(--dl-color-success) 16%, transparent);
   }
   .shape {
     fill: none;
@@ -126,11 +126,11 @@
     vector-effect: non-scaling-stroke;
   }
   .shape.depth {
-    stroke: color-mix(in srgb, var(--color-accent) 45%, transparent);
+    stroke: color-mix(in srgb, var(--dl-color-accent) 45%, transparent);
   }
   .shape.path,
   .shape.wall {
-    stroke: color-mix(in srgb, var(--color-warm) 60%, transparent);
+    stroke: color-mix(in srgb, var(--dl-color-warm) 60%, transparent);
     stroke-dasharray: 4 3;
   }
   .edge {
@@ -148,7 +148,7 @@
     opacity: 0.6;
   }
   .entrance {
-    fill: var(--color-accent);
+    fill: var(--dl-color-accent);
   }
   .dive-route {
     fill: none;
@@ -160,7 +160,7 @@
   }
   .turn {
     fill: none;
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-width: 1.5px;
     vector-effect: non-scaling-stroke;
   }

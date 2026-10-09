@@ -155,8 +155,8 @@
     {#each numbers as fact (fact.label)}
       <div title={fact.title}>
         <dt>{fact.label}</dt>
-        <dd class:num={fact.numeric}>
-          {fact.value}{#if fact.sub}<small class="sub num">{fact.sub}</small>{/if}
+        <dd class:dl-num={fact.numeric}>
+          {fact.value}{#if fact.sub}<small class="sub dl-num">{fact.sub}</small>{/if}
         </dd>
       </div>
     {/each}
@@ -168,7 +168,7 @@
     {#each kit as fact (fact.label)}
       <div>
         <dt>{fact.label}</dt>
-        <dd class:num={fact.numeric}>{fact.value}</dd>
+        <dd class:dl-num={fact.numeric}>{fact.value}</dd>
       </div>
     {/each}
     {#if dive.gear_setup}<div>
@@ -192,9 +192,9 @@
   .facts {
     margin: 22px 0 0;
     padding: 16px 18px;
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-elevated);
+    border-radius: var(--dl-radius);
+    border: 1px solid var(--dl-color-border);
+    background: var(--dl-color-bg-elevated);
   }
   .row {
     display: grid;
@@ -214,12 +214,12 @@
     grid-column: 1 / -1;
   }
   dt {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     white-space: nowrap;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   dd {
     margin: 2px 0 0;
@@ -236,7 +236,7 @@
     display: block;
     font-size: 11.5px;
     font-weight: 400;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .spark-tile {
     grid-column: span 2;
@@ -251,11 +251,11 @@
     display: block;
   }
   .spark-area {
-    fill: var(--color-accent-soft);
+    fill: var(--dl-color-accent-soft);
   }
   .spark-line {
     fill: none;
-    stroke: var(--color-accent);
+    stroke: var(--dl-color-accent);
     stroke-width: 1.5;
     stroke-linejoin: round;
   }
@@ -264,16 +264,16 @@
     align-items: center;
     gap: 10px;
     margin: 16px 0 12px;
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .divider::after {
     content: '';
     flex: 1;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--dl-color-border);
   }
   @media (max-width: 480px) {
     .facts {

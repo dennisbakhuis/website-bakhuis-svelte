@@ -64,7 +64,7 @@
   dot size = {SIZE_MODES.find((m) => m.mode === size)?.label} · click to filter
 {/snippet}
 
-<div class="map card" class:compact>
+<div class="map dl-card" class:compact>
   <svg viewBox="0 0 {map.width} {map.height}" role="img" aria-labelledby="map-title" class="world">
     <title id="map-title">{label || `World map with ${map.dots.length} dive sites`}</title>
     <path d={map.spherePath} class="sphere" />
@@ -108,19 +108,19 @@
   <div class="tooltip" class:visible={hovered} aria-live="polite">
     {#if hovered}
       <strong>{flagEmoji(hovered.country_code)} {hovered.name}</strong>
-      <span class="num"
+      <span class="dl-num"
         >{hovered.dives}
         {hovered.dives === 1 ? 'dive' : 'dives'} · {formatMinutes(hovered.minutes)} · max {hovered.max_depth_m}
         m</span
       >
-      <span class="num faint"
+      <span class="dl-num faint"
         >{hovered.first_year === hovered.last_year
           ? hovered.last_year
           : `${hovered.first_year}–${hovered.last_year}`} · {hovered.site_type}</span
       >
     {/if}
   </div>
-  <ul class="visually-hidden">
+  <ul class="dl-visually-hidden">
     {#each map.dots as dot (dot.slug)}
       <li><a href={urls.site(dot.slug)}>{dot.name}: {dot.dives} dives</a></li>
     {/each}
@@ -132,7 +132,7 @@
     position: relative;
     padding: 12px;
     overflow: hidden;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .world {
     width: 100%;
@@ -140,12 +140,12 @@
     display: block;
   }
   .sphere {
-    fill: color-mix(in srgb, var(--color-accent) 4%, transparent);
-    stroke: var(--color-border);
+    fill: color-mix(in srgb, var(--dl-color-accent) 4%, transparent);
+    stroke: var(--dl-color-border);
   }
   .land {
-    fill: var(--color-surface-2);
-    stroke: color-mix(in srgb, var(--color-text) 14%, transparent);
+    fill: var(--dl-color-surface-2);
+    stroke: color-mix(in srgb, var(--dl-color-text) 14%, transparent);
     stroke-width: 0.5;
   }
   .site {
@@ -157,7 +157,7 @@
     transition: opacity 0.2s ease;
   }
   .dot {
-    stroke: var(--color-bg);
+    stroke: var(--dl-color-bg);
     stroke-width: 1.2;
     transition: transform 0.2s ease;
   }
@@ -170,7 +170,7 @@
     opacity: 0.25;
   }
   .site.active .dot {
-    stroke: var(--color-warm);
+    stroke: var(--dl-color-warm);
     stroke-width: 2;
   }
   .tooltip {
@@ -178,10 +178,10 @@
     top: 16px;
     left: 16px;
     padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--dl-radius-sm);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    box-shadow: var(--dl-shadow-sm);
     font-size: 13.5px;
     display: flex;
     flex-direction: column;
@@ -193,12 +193,12 @@
   .tooltip.visible {
     opacity: 1;
   }
-  .tooltip .num {
-    color: var(--color-text-muted);
+  .tooltip .dl-num {
+    color: var(--dl-color-text-muted);
     font-size: 12px;
   }
   .tooltip .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .compact {
     padding: 8px;

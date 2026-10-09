@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { toast } from '$lib/stores/toast.svelte';
+  import { toast } from '$lib/divelog/stores/toast.svelte';
 </script>
 
 {#if toast.items.length > 0}
-  <div class="toast-container" aria-live="polite" aria-atomic="false">
+  <div class="toast-container divelog" aria-live="polite" aria-atomic="false">
     {#each toast.items as item (item.id)}
       <div class="toast toast--{item.kind}" role="alert">
         <span class="toast-message">{item.message}</span>
@@ -36,17 +36,17 @@
     align-items: flex-start;
     gap: 0.75rem;
     padding: 0.875rem 1rem;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-md);
+    border-radius: var(--dl-radius);
+    box-shadow: var(--dl-shadow-md);
     color: #06101f;
     font-size: 15px;
     animation: toast-in 0.2s ease;
   }
   .toast--success {
-    background-color: var(--color-success);
+    background-color: var(--dl-color-success);
   }
   .toast--error {
-    background-color: var(--color-error);
+    background-color: var(--dl-color-error);
   }
   .toast-message {
     flex: 1;

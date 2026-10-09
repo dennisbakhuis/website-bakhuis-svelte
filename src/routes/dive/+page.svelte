@@ -17,7 +17,7 @@
     type DiveFilter,
   } from '$lib/dive/filter';
   import { listScale, yearsOf } from '$lib/dive/list-view';
-  import { reveal } from '$lib/anim/reveal';
+  import { reveal } from '$lib/divelog/anim/reveal';
   import type { GlobeView } from '$lib/map/globe';
   import type { Snapshot } from './$types';
   import { getDivelog } from '$lib/dive/context';
@@ -69,8 +69,8 @@
   }
 </script>
 
-<section class="intro container">
-  <p class="kicker">Dive log</p>
+<section class="intro dl-container">
+  <p class="dl-kicker">Dive log</p>
   <h1>Every dive, <span class="accent">on the record</span></h1>
   <p class="lede">
     Cold Dutch quarries, French caves on a scooter, Red Sea wrecks. Logged since the first
@@ -80,9 +80,9 @@
 
 <StatsBand stats={data.stats} />
 
-<section class="container charts-section" use:reveal>
+<section class="dl-container charts-section" use:reveal>
   <div data-reveal>
-    <p class="kicker">Numbers</p>
+    <p class="dl-kicker">Numbers</p>
     <h2>By year, by depth, by type</h2>
   </div>
   <div data-reveal>
@@ -90,9 +90,9 @@
   </div>
 </section>
 
-<section class="container explore-section" use:reveal>
+<section class="dl-container explore-section" use:reveal>
   <div data-reveal>
-    <p class="kicker">Explore</p>
+    <p class="dl-kicker">Explore</p>
     <h2>Where, when and what</h2>
   </div>
   <div data-reveal>
@@ -133,8 +133,8 @@
   </div>
 </section>
 
-<section class="container list-section" id="dives">
-  <p class="kicker">The log</p>
+<section class="dl-container list-section" id="dives">
+  <p class="dl-kicker">The log</p>
   <div class="list-head">
     <h2>
       {#if filtered.length === data.envelope.total}
@@ -153,12 +153,13 @@
   {#if hits && (hits.sites.length || hits.people.length)}
     <div class="hits">
       {#each hits.sites.slice(0, 6) as hit (hit.slug)}
-        <a class="hit" href={urls.site(hit.slug)}>{hit.name} <span class="num">{hit.count}</span></a
+        <a class="hit" href={urls.site(hit.slug)}
+          >{hit.name} <span class="dl-num">{hit.count}</span></a
         >
       {/each}
       {#each hits.people.slice(0, 6) as hit (hit.slug)}
         <a class="hit person" href={urls.person(hit.slug)}
-          >{hit.name} <span class="num">{hit.count}</span></a
+          >{hit.name} <span class="dl-num">{hit.count}</span></a
         >
       {/each}
     </div>
@@ -181,17 +182,17 @@
     max-width: 16ch;
   }
   .accent {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .lede {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 1.15rem;
     max-width: 56ch;
   }
   .explore-section,
   .charts-section,
   .list-section {
-    padding-top: var(--space-section);
+    padding-top: var(--dl-space-section);
   }
   .when {
     margin-top: 28px;
@@ -211,7 +212,7 @@
     margin: 0;
   }
   .list-section {
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   h2 {
     font-size: clamp(26px, 3.5vw, 36px);
@@ -228,20 +229,20 @@
     align-items: baseline;
     padding: 4px 12px;
     border-radius: 999px;
-    border: 1px solid var(--color-border-strong);
-    background: var(--color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    background: var(--dl-color-surface);
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--dl-color-text);
     font-size: 13.5px;
   }
   .hit:hover {
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .hit.person {
     border-style: dashed;
   }
-  .hit .num {
-    color: var(--color-text-faint);
+  .hit .dl-num {
+    color: var(--dl-color-text-faint);
     font-size: 12px;
   }
 </style>

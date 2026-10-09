@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Action } from 'svelte/action';
   import type { DiveSummary } from '$lib/dive/types';
-  import { counter } from '$lib/anim/counter';
-  import { reducedMotion } from '$lib/anim/motion';
+  import { counter } from '$lib/divelog/anim/counter';
+  import { reducedMotion } from '$lib/divelog/anim/motion';
   import { formatDate } from '$lib/dive/format';
   import { latestMatches, sparkline, type DiveTimeline } from '$lib/dive/sparkline';
   import { getDivelog } from '$lib/dive/context';

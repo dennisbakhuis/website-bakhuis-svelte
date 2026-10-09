@@ -31,9 +31,9 @@
 </script>
 
 <div class="head">
-  <h1>Dive sites <span class="muted num">{data.sites.length}</span></h1>
+  <h1>Dive sites <span class="muted dl-num">{data.sites.length}</span></h1>
   <a class="secondary" href={urls.admin.regions()}>Regions</a>
-  <a class="btn btn-solid btn-sm new" href={urls.admin.newSite()}>+ New site</a>
+  <a class="dl-btn dl-btn-solid dl-btn-sm new" href={urls.admin.newSite()}>+ New site</a>
 </div>
 
 <div class="toolbar">
@@ -42,7 +42,7 @@
     <option value="">All countries</option>
     {#each countries as c (c)}<option value={c}>{c}</option>{/each}
   </select>
-  <span class="muted num">{rows.length} shown</span>
+  <span class="muted dl-num">{rows.length} shown</span>
 </div>
 
 <table>
@@ -68,8 +68,8 @@
         <td>{site.country ?? site.country_code}</td>
         <td>{site.site_type}</td>
         <td>{site.region ? (regionNames[site.region] ?? site.region) : '—'}</td>
-        <td class="n num">{site.dives}</td>
-        <td class="n num">{drawnCount(site) || '—'}</td>
+        <td class="n dl-num">{site.dives}</td>
+        <td class="n dl-num">{drawnCount(site) || '—'}</td>
         <td class="row-actions"
           ><a href={urls.site(site.slug)} target="_blank" rel="noopener">view ↗</a></td
         >
@@ -92,10 +92,10 @@
   }
   .secondary {
     font-size: 14px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
   }
   .muted {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 14px;
     font-weight: 400;
   }

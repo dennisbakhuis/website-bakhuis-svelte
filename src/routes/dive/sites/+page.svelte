@@ -1,6 +1,6 @@
 <script lang="ts">
   import { flagEmoji, formatDepth, pluralize } from '$lib/dive/format';
-  import { reveal } from '$lib/anim/reveal';
+  import { reveal } from '$lib/divelog/anim/reveal';
   import { getDivelog } from '$lib/dive/context';
 
   const { urls } = getDivelog();
@@ -36,8 +36,8 @@
   );
 </script>
 
-<section class="page container">
-  <p class="kicker">Dive sites</p>
+<section class="page dl-container">
+  <p class="dl-kicker">Dive sites</p>
   <h1>{data.total} places, <span class="accent">{data.countries.length} countries</span></h1>
   <p class="lede">
     Every site in the log, grouped by country and region. Each has its own page with the story of
@@ -57,14 +57,14 @@
       <option value="">All types</option>
       {#each data.types as t (t)}<option value={t}>{t}</option>{/each}
     </select>
-    <span class="count num">{count} sites</span>
+    <span class="count dl-num">{count} sites</span>
   </div>
 
   {#each shown as group (group.code)}
     <section class="country" use:reveal={{ stagger: 30 }}>
       <h2 data-reveal>
         {flagEmoji(group.code)}
-        {group.name} <span class="num muted">{pluralize(group.dives, 'dive')}</span>
+        {group.name} <span class="dl-num muted">{pluralize(group.dives, 'dive')}</span>
       </h2>
       {#each group.regions as region (region.id ?? 'none')}
         {#if group.regions.length > 1 || region.id}
@@ -76,7 +76,7 @@
         <ul class="sites">
           {#each region.sites as site (site.slug)}
             <li data-reveal>
-              <a class="site card" href={urls.site(site.slug)}>
+              <a class="site dl-card" href={urls.site(site.slug)}>
                 <span class="thumb">
                   <span class="type-mark">{site.site_type}</span>
                 </span>
@@ -85,12 +85,13 @@
                   <span class="site-meta">
                     <span class="type">{site.site_type}</span>
                     {#if site.area}<span>· {site.area}</span>{/if}
-                    {#if site.max_depth_m}<span class="num">· {formatDepth(site.max_depth_m)}</span
+                    {#if site.max_depth_m}<span class="dl-num"
+                        >· {formatDepth(site.max_depth_m)}</span
                       >{/if}
                   </span>
                   <span class="site-foot">
-                    <span class="num">{pluralize(site.dives, 'dive')}</span>
-                    {#if site.last_dive}<span class="num faint"
+                    <span class="dl-num">{pluralize(site.dives, 'dive')}</span>
+                    {#if site.last_dive}<span class="dl-num faint"
                         >last {site.last_dive.slice(0, 4)}</span
                       >{/if}
                     {#if site.drawn}<span class="badge">drawn map</span>{/if}
@@ -108,16 +109,16 @@
 <style>
   .page {
     padding-top: 56px;
-    padding-bottom: var(--space-section);
+    padding-bottom: var(--dl-space-section);
   }
   h1 {
     font-size: clamp(34px, 5vw, 52px);
   }
   .accent {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .lede {
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 1.1rem;
     max-width: 60ch;
     margin-bottom: 28px;
@@ -133,10 +134,10 @@
   .toolbar select {
     font: inherit;
     font-size: 14.5px;
-    color: var(--color-text);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    color: var(--dl-color-text);
+    background: var(--dl-color-surface);
+    border: 1px solid var(--dl-color-border-strong);
+    border-radius: var(--dl-radius-sm);
     padding: 9px 12px;
   }
   .toolbar input {
@@ -147,7 +148,7 @@
   }
   .count {
     margin-left: auto;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-size: 13px;
   }
   .country {
@@ -159,16 +160,16 @@
   }
   .muted {
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     font-weight: 400;
     margin-left: 6px;
   }
   .region {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 11.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     margin: 18px 0 10px;
     font-weight: 500;
   }
@@ -177,7 +178,7 @@
     text-decoration: none;
   }
   .region a:hover {
-    color: var(--color-accent);
+    color: var(--dl-color-accent);
   }
   .sites {
     list-style: none;
@@ -201,24 +202,24 @@
   }
   .site:hover {
     transform: translateY(-2px);
-    border-color: var(--color-accent);
+    border-color: var(--dl-color-accent);
   }
   .thumb {
     width: 84px;
     height: 62px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--dl-radius-sm);
     overflow: hidden;
-    background: var(--color-surface-2);
+    background: var(--dl-color-surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .type-mark {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
     text-align: center;
     padding: 4px;
   }
@@ -229,13 +230,13 @@
     min-width: 0;
   }
   .site-name {
-    font-family: var(--font-display);
+    font-family: var(--dl-font-display);
     font-size: 16px;
     font-weight: 600;
   }
   .site-meta {
     font-size: 13px;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     display: flex;
     gap: 4px;
     flex-wrap: wrap;
@@ -250,20 +251,20 @@
     margin-top: auto;
     padding-top: 6px;
     font-size: 13px;
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .faint {
-    color: var(--color-text-faint);
+    color: var(--dl-color-text-faint);
   }
   .badge {
-    font-family: var(--font-mono);
+    font-family: var(--dl-font-mono);
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 2px 8px;
     border-radius: 999px;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
+    background: var(--dl-color-accent-soft);
+    color: var(--dl-color-accent);
     margin-left: auto;
   }
 </style>

@@ -184,7 +184,7 @@
     min-height: 340px;
     border-radius: inherit;
     overflow: hidden;
-    background: var(--color-bg-elevated);
+    background: var(--dl-color-bg-elevated);
   }
   .canvas,
   .fallback {
@@ -214,23 +214,23 @@
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: var(--color-warm);
-    border: 2px solid var(--color-bg);
-    box-shadow: 0 0 0 6px var(--color-warm-soft);
+    background: var(--dl-color-warm);
+    border: 2px solid var(--dl-color-bg);
+    box-shadow: 0 0 0 6px var(--dl-color-warm-soft);
   }
   .locator :global(.entry-pin) {
     width: 11px;
     height: 11px;
     border-radius: 50%;
-    background: var(--color-accent);
-    border: 2px solid var(--color-bg);
+    background: var(--dl-color-accent);
+    border: 2px solid var(--dl-color-bg);
   }
   .locator :global(.nearby-pin) {
     display: flex;
     align-items: center;
     gap: 5px;
     text-decoration: none;
-    color: var(--color-text-muted);
+    color: var(--dl-color-text-muted);
     font-size: 11px;
     white-space: nowrap;
     transform: translateX(3px);
@@ -239,20 +239,20 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--color-text-muted);
-    border: 1.5px solid var(--color-bg);
+    background: var(--dl-color-text-muted);
+    border: 1.5px solid var(--dl-color-bg);
     flex: none;
   }
   .locator :global(.nearby-pin span) {
     display: none;
     padding: 2px 7px;
     border-radius: 999px;
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-strong);
+    background: var(--dl-color-bg-elevated);
+    border: 1px solid var(--dl-color-border-strong);
   }
   .locator :global(.nearby-pin:hover),
   .locator :global(.nearby-pin:focus-visible) {
-    color: var(--color-text);
+    color: var(--dl-color-text);
     z-index: 2;
   }
   .locator :global(.nearby-pin:hover span),
