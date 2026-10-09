@@ -42,6 +42,7 @@ function dive(number: number, date: string, depth = 20, minutes = 45): DiveListI
     spark: null,
     cover_url: null,
     search_text: '',
+    trip: null,
   };
 }
 

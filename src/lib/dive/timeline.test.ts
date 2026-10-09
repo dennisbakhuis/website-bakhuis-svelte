@@ -38,6 +38,7 @@ function dive(number: number, date: string): DiveListItem {
     spark: null,
     cover_url: null,
     search_text: '',
+    trip: null,
   };
 }
 

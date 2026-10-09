@@ -111,6 +111,7 @@ describe('tallySites', () => {
       spark: null,
       cover_url: null,
       search_text: '',
+      trip: null,
     };
     const tally = tallySites([
       base,
