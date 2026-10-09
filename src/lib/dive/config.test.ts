@@ -32,8 +32,8 @@ describe('createUrls with the default config', () => {
     expect(urls.region('lot-karst')).toBe('/dive/regions/lot-karst');
     expect(urls.gear()).toBe('/dive/gear');
     expect(urls.gear('sidemount')).toBe('/dive/gear#sidemount');
-    expect(urls.og('dive', 409)).toBe('/dive/409/og.png');
-    expect(urls.og('site', 'mex-mayan-blue')).toBe('/dive/sites/mex-mayan-blue/og.png');
+    expect(urls.og('dive', 409)).toBe('/dive/og/dive/409.png');
+    expect(urls.og('site', 'mex-mayan-blue')).toBe('/dive/og/site/mex-mayan-blue.png');
   });
 
   it('builds the editor paths the site has always used', () => {
@@ -87,7 +87,7 @@ describe('createUrls with another mount', () => {
     expect(urls.log()).toBe('/logbook');
     expect(urls.dive(1)).toBe('/logbook/1');
     expect(urls.site('x')).toBe('/logbook/sites/x');
-    expect(urls.og('dive', 1)).toBe('/logbook/1/og.png');
+    expect(urls.og('dive', 1)).toBe('/logbook/og/dive/1.png');
     expect(urls.admin.dive(1)).toBe('/editor/dives/1');
     expect(urls.admin.login('/editor')).toBe('/editor/login?next=%2Feditor');
     expect(urls.api('/dive/stats')).toBe('https://api.example.org/v2/dive/stats');

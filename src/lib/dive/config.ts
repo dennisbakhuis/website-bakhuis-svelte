@@ -101,8 +101,7 @@ export function createUrls(config: DivelogConfig) {
     person: (slug: string): string => `${base}/people/${slug}`,
     region: (id: string): string => `${base}/regions/${id}`,
     gear: (hash?: string): string => withHash(`${base}/gear`, hash),
-    og: (kind: OgKind, id: number | string): string =>
-      kind === 'dive' ? `${base}/${id}/og.png` : `${base}/sites/${id}/og.png`,
+    og: (kind: OgKind, id: number | string): string => `${base}/og/${kind}/${id}.png`,
     admin: {
       base: admin,
       root: (): string => admin || '/',

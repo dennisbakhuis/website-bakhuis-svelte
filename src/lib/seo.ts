@@ -1,39 +1,10 @@
 import { site } from '$lib/site';
-import { escapeRegExp, type DivelogUrls } from '$lib/dive/config';
+import { diveMetaFor, diveOgImageFor, type PageMeta } from '$lib/divelog/server/seo';
 import { urls } from '$lib/divelog-config';
 
 export const SITE_URL = 'https://dennisbakhuis.nl';
 
-export type PageMeta = {
-  title: string;
-  description: string;
-  /** Site-relative or absolute Open Graph image; defaults per route in `ogImageFor`. */
-  image?: string;
-};
-
-/** Static meta for the dive log's index pages, keyed by their paths. */
-export function diveMetaFor(diveUrls: DivelogUrls, name: string): Record<string, PageMeta> {
-  return {
-    [diveUrls.log()]: {
-      title: `Dive log — ${name}`,
-      description:
-        'Every dive, searchable: statistics, a world map of dive sites, cave and scooter dives, gear.',
-    },
-    [diveUrls.gear()]: {
-      title: `Dive gear — ${name}`,
-      description: 'The setups and the gear behind the dive log, with the dives each item did.',
-    },
-    [diveUrls.sites()]: {
-      title: `Dive sites — ${name}`,
-      description: 'Every site in the dive log by country, with maps and cave stick maps.',
-    },
-    [diveUrls.trips()]: {
-      title: `Dive trips — ${name}`,
-      description:
-        'Every dive trip abroad, with a map of the sites, the numbers and who came along.',
-    },
-  };
-}
+export { diveMetaFor, diveOgImageFor, type PageMeta };
 
 export const pageMeta: Record<string, PageMeta> = {
   '/': {
@@ -64,10 +35,6 @@ export function canonicalUrl(pathname: string): string {
   return `${SITE_URL}${pathname === '/' ? '' : pathname.replace(/\/$/, '')}`;
 }
 
-const DIVE_BASE = escapeRegExp(urls.base);
-const DIVE_PAGE = new RegExp(`^${DIVE_BASE}\\/(\\d+)\\/?$`);
-const SITE_PAGE = new RegExp(`^${DIVE_BASE}\\/sites\\/([a-z0-9-]+)\\/?$`);
-
 /**
  * Absolute Open Graph image for a page: an explicit `meta.image` wins, dive
  * and site pages get their generated card, everything else the default.
@@ -75,10 +42,8 @@ const SITE_PAGE = new RegExp(`^${DIVE_BASE}\\/sites\\/([a-z0-9-]+)\\/?$`);
 export function ogImageFor(pathname: string, meta?: PageMeta): string {
   const explicit = meta?.image;
   if (explicit) return explicit.startsWith('http') ? explicit : `${SITE_URL}${explicit}`;
-  const dive = DIVE_PAGE.exec(pathname);
-  if (dive) return `${SITE_URL}${urls.og('dive', dive[1])}`;
-  const site = SITE_PAGE.exec(pathname);
-  if (site) return `${SITE_URL}${urls.og('site', site[1])}`;
+  const card = diveOgImageFor(urls, pathname);
+  if (card) return `${SITE_URL}${card}`;
   return `${SITE_URL}/og-image.png`;
 }
 

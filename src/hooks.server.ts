@@ -1,7 +1,8 @@
 import type { Handle } from '@sveltejs/kit';
-import { redirect } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 import { env } from '$env/dynamic/private';
-import { api, ApiError } from '$lib/server/api';
+import { divelog } from '$lib/divelog.server';
+import { handleDivelog } from '$lib/divelog/server/handle';
 import { trackEvent, referrerHost } from '$lib/server/umami';
 
 // Endpoints that are machinery rather than pages: the container healthcheck,
@@ -19,35 +20,11 @@ function isSkipped(pathname: string): boolean {
   return SKIP_TRACKING_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-async function resolveOwner(cookie: string | null, fetchFn: typeof fetch): Promise<string | null> {
-  if (!cookie) return null;
-  try {
-    const me = await api<{ email: string }>(fetchFn, '/api/v1/auth/me', { cookie });
-    return me.email;
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 401) return null;
-    return null;
-  }
-}
-
-export const handle: Handle = async ({ event, resolve }) => {
+const handleSite: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
 
   if (pathname === '/health') {
     return resolve(event);
-  }
-
-  // Any page may show the owner's private view, so the cookie is resolved
-  // everywhere; a request without one costs nothing.
-  event.locals.owner = await resolveOwner(event.request.headers.get('cookie'), event.fetch);
-  if (pathname.startsWith('/admin')) {
-    const isLogin = pathname.startsWith('/admin/login');
-    if (!event.locals.owner && !isLogin) {
-      redirect(303, `/admin/login?next=${encodeURIComponent(pathname)}`);
-    }
-    if (event.locals.owner && isLogin) {
-      redirect(303, '/admin');
-    }
   }
 
   const response = await resolve(event);
@@ -62,12 +39,6 @@ export const handle: Handle = async ({ event, resolve }) => {
       'Permissions-Policy',
       'camera=(self), microphone=(), geolocation=(), browsing-topics=()',
     );
-    if (pathname.startsWith('/admin')) {
-      response.headers.set('X-Robots-Tag', 'noindex, nofollow');
-    }
-    if (event.locals.owner) {
-      response.headers.set('Cache-Control', 'private, no-store');
-    }
   }
 
   if (env.UMAMI_API_URL && isHtml && !isSkipped(pathname)) {
@@ -92,3 +63,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   return response;
 };
+
+export const handle = sequence(
+  handleDivelog(divelog, { skip: (pathname) => pathname === '/health' }),
+  handleSite,
+);

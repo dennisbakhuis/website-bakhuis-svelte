@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { api } from '$lib/server/api';
+import { divelog } from '$lib/divelog.server';
 import { latestWriting } from '$lib/blog/posts';
 import type { DiveSummary } from '$lib/dive/types';
 import type { DiveTimeline } from '$lib/dive/sparkline';
@@ -7,7 +7,7 @@ import { urls } from '$lib/divelog-config';
 
 async function optional<T>(fetchFn: typeof fetch, path: string): Promise<T | null> {
   try {
-    return await api<T>(fetchFn, path);
+    return await divelog.api<T>(fetchFn, path);
   } catch (err) {
     console.warn(`${path} unavailable`, err);
     return null;

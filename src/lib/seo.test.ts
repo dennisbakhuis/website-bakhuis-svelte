@@ -24,10 +24,10 @@ describe('seo', () => {
 
   it('picks the Open Graph image per route', () => {
     expect(ogImageFor('/')).toBe('https://dennisbakhuis.nl/og-image.png');
-    expect(ogImageFor('/dive/409')).toBe('https://dennisbakhuis.nl/dive/409/og.png');
-    expect(ogImageFor('/dive/409/')).toBe('https://dennisbakhuis.nl/dive/409/og.png');
+    expect(ogImageFor('/dive/409')).toBe('https://dennisbakhuis.nl/dive/og/dive/409.png');
+    expect(ogImageFor('/dive/409/')).toBe('https://dennisbakhuis.nl/dive/og/dive/409.png');
     expect(ogImageFor('/dive/sites/mex-mayan-blue')).toBe(
-      'https://dennisbakhuis.nl/dive/sites/mex-mayan-blue/og.png',
+      'https://dennisbakhuis.nl/dive/og/site/mex-mayan-blue.png',
     );
     expect(ogImageFor('/dive/gear')).toBe('https://dennisbakhuis.nl/og-image.png');
     expect(ogImageFor('/x', { title: 't', description: 'd', image: '/a.png' })).toBe(
