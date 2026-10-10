@@ -5,24 +5,21 @@
  */
 import { error } from '@sveltejs/kit';
 import type {
-  CountryStat,
   Dive,
   DiveEnvelope,
-  DiveListItem,
   DiveStats,
   GearPage,
   MapSite,
-  NearbySite,
   Person,
-  PersonPublic,
+  PersonDetail,
   Region,
   Site,
-  SiteDiveRoute,
+  SiteDetail,
   TripDetail,
   TripSummary,
-  TripTogether,
 } from '$lib/dive/types';
 import { formatDateRange } from '$lib/dive/format';
+import { titleSuffix } from '$lib/dive/config';
 import {
   landPath,
   MAP_HEIGHT,
@@ -53,23 +50,6 @@ export type SiteRow = {
 
 export type RegionGroup = { id: string | null; name: string; sites: SiteRow[] };
 export type CountryGroup = { code: string; name: string; dives: number; regions: RegionGroup[] };
-
-type PersonPayload = {
-  person: Person;
-  countries: CountryStat[];
-  dives: DiveListItem[];
-  map_sites: MapSite[];
-  years: { year: number; dives: number; minutes: number }[];
-  trips: TripTogether[];
-};
-
-type SitePayload = {
-  site: Site;
-  dives: DiveListItem[];
-  people: PersonPublic[];
-  nearby: NearbySite[];
-  routes: SiteDiveRoute[];
-};
 
 function worldDots(sites: MapSite[]): Dot[] {
   return sites
@@ -170,8 +150,8 @@ export const diveRoute = defineRoute({
     const dive = await divelog.apiOrError<Dive>(event, divelog.urls.api(`/dive/dives/${number}`));
     return { dive, editHref: divelog.urls.admin.dive(dive.number) };
   },
-  meta: ({ dive }) => ({
-    title: `Dive #${dive.number}${dive.title ? ` — ${dive.title}` : ''} — Dennis Bakhuis`,
+  meta: ({ dive }, divelog) => ({
+    title: `Dive #${dive.number}${dive.title ? ` — ${dive.title}` : ''} — ${titleSuffix(divelog.config)}`,
     description: `${dive.max_depth_m} m for ${Math.round(dive.duration_min)} minutes${dive.site ? ` at ${dive.site.name}` : ''} on ${dive.date}.`,
   }),
 });
@@ -198,7 +178,7 @@ export const siteRoute = defineRoute({
   page: 'site',
   pattern: /^sites\/([^/]+)$/,
   load: async (divelog, [slug], event) => {
-    const data = await divelog.apiOrError<SitePayload>(
+    const data = await divelog.apiOrError<SiteDetail>(
       event,
       divelog.urls.api(`/dive/sites/${slug}`),
     );
@@ -213,7 +193,7 @@ export const siteRoute = defineRoute({
     };
   },
   meta: ({ site, dives }, divelog) => ({
-    title: `${site.name} — dive site — Dennis Bakhuis`,
+    title: `${site.name} — dive site — ${titleSuffix(divelog.config)}`,
     description: site.summary ?? `${dives.length} dives at ${site.name}, ${site.country_name}.`,
     image: divelog.urls.og('site', site.slug),
   }),
@@ -254,8 +234,8 @@ export const regionRoute = defineRoute({
       editHref: divelog.urls.admin.region(encodeURIComponent(region.id)),
     };
   },
-  meta: ({ region }) => ({
-    title: `${region.name} — dive region — Dennis Bakhuis`,
+  meta: ({ region }, divelog) => ({
+    title: `${region.name} — dive region — ${titleSuffix(divelog.config)}`,
     description: `${region.sites.length} dive sites and ${region.dives} dives in ${region.name}.`,
   }),
 });
@@ -284,8 +264,8 @@ export const tripRoute = defineRoute({
       editHref: divelog.urls.admin.trip(trip.slug),
     };
   },
-  meta: ({ trip }) => ({
-    title: `${trip.name} — dive trip — Dennis Bakhuis`,
+  meta: ({ trip }, divelog) => ({
+    title: `${trip.name} — dive trip — ${titleSuffix(divelog.config)}`,
     description: `${trip.stats.dives} dives at ${trip.stats.sites} sites, ${formatDateRange(trip.start_date, trip.end_date)}.`,
   }),
 });
@@ -297,8 +277,8 @@ export const peopleRoute = defineRoute({
     people: await divelog.apiOrError<Person[]>(event, divelog.urls.api('/dive/people')),
     editHref: divelog.urls.admin.people(),
   }),
-  meta: () => ({
-    title: 'Dive buddies — Dennis Bakhuis',
+  meta: (_data, divelog) => ({
+    title: `Dive buddies — ${titleSuffix(divelog.config)}`,
     description: 'The people I have shared the water with, and how often.',
   }),
 });
@@ -307,7 +287,7 @@ export const personRoute = defineRoute({
   page: 'person',
   pattern: /^people\/([^/]+)$/,
   load: async (divelog, [slug], event) => {
-    const data = await divelog.apiOrError<PersonPayload>(
+    const data = await divelog.apiOrError<PersonDetail>(
       event,
       divelog.urls.api(`/dive/people/${slug}`),
     );
@@ -325,8 +305,8 @@ export const personRoute = defineRoute({
         : divelog.urls.admin.people(),
     };
   },
-  meta: ({ person, dives }) => ({
-    title: `Diving with ${person.name} — Dennis Bakhuis`,
+  meta: ({ person, dives }, divelog) => ({
+    title: `Diving with ${person.name} — ${titleSuffix(divelog.config)}`,
     description: `${dives.length} dives together, ${person.stats.countries} countries.`,
   }),
 });

@@ -353,6 +353,7 @@ commit (author Dennis only, no AI trailers per `~/.claude/CLAUDE.md`).
 ## Risks and notes
 
 - Catch-all routes lose per-page `$types` and need the OG route outside the rest parameter; proven in A7 before packaging so the pattern is validated on the real site first.
-- `svelte-package` constraints for Phase C (`$env` not allowed, no `?inline`, resvg native): A5–A7 already avoid them (`createDivelog({backendUrl})`, fonts via `import.meta.url`).
+- `svelte-package` constraints for Phase C (`$env` not allowed, no `?inline`, resvg native): A5–A9 avoid them (`createDivelog({backendUrl})`; OG fonts from the generated base64 module `og/font-data.ts`, `pnpm og-fonts`, because the SSR build does not rewrite `new URL(…, import.meta.url)` and native resvg 2.x takes font paths only, so they are written to a temp dir once per process).
+- Per-page CSS: the public catch-all's universal load imports every page component dynamically, and SvelteKit links the CSS of every SSR-reachable dynamic import eagerly (FOUC guard), so each log page ships all public-page CSS (A9: 21 stylesheets, ~40 KB gz summed, on `/dive` and `/dive/sites/fra-ressel` alike, ~11 KB of it other pages' own styles). No cheap fix keeps the SSR'd page's CSS in the head; revisit with per-page mounts or shared-style extraction in Phase C.
 - Phase B's editorial pass (42 bodies, 30 stick-map rights decisions) is the real schedule risk; the overlay mechanism lets a site stay personal until its text is clean, so the commons can grow file by file.
 - `docs/SPEC.md` §2, §9, §10 still describe Postgres; update the spec alongside Phase A to describe the layered store so the design contract matches the code.

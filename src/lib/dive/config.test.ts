@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CONFIG, createUrls, escapeRegExp, queryString } from './config';
+import { DEFAULT_CONFIG, createUrls, escapeRegExp, queryString, titleSuffix } from './config';
 
 describe('createUrls with the default config', () => {
   const urls = createUrls(DEFAULT_CONFIG);
@@ -119,5 +119,12 @@ describe('escapeRegExp', () => {
     const pattern = new RegExp(`^${escapeRegExp('/dive.log')}\\/\\d+$`);
     expect(pattern.test('/dive.log/12')).toBe(true);
     expect(pattern.test('/divexlog/12')).toBe(false);
+  });
+});
+
+describe('titleSuffix', () => {
+  it('defaults to the owner name and takes an explicit suffix', () => {
+    expect(titleSuffix(DEFAULT_CONFIG)).toBe(DEFAULT_CONFIG.ownerName);
+    expect(titleSuffix({ ...DEFAULT_CONFIG, titleSuffix: 'Log' })).toBe('Log');
   });
 });

@@ -19,7 +19,9 @@
     "test:coverage": "vitest run --coverage",
     "types": "node scripts/api-types.mjs",
     "types:url": "node scripts/api-types.mjs --url http://localhost:8300/api/openapi.json",
-    "types:check": "node scripts/api-types.mjs --check"
+    "types:check": "node scripts/api-types.mjs --check",
+    "og-fonts": "node scripts/og-fonts.mjs",
+    "og-fonts:check": "node scripts/og-fonts.mjs --check"
   },
   "dependencies": {
     "@cap.js/wasm": "^0.0.7",

@@ -23,14 +23,17 @@ async function cardSvg(
   fetchFn: typeof fetch,
 ): Promise<string> {
   if (kind === 'dive') {
-    return diveCardSvg(await fetchOrError<Dive>(divelog, fetchFn, `/dive/dives/${id}`));
+    return diveCardSvg(
+      await fetchOrError<Dive>(divelog, fetchFn, `/dive/dives/${id}`),
+      divelog.config.siteName,
+    );
   }
   const data = await fetchOrError<{ site: Site; dives: DiveListItem[] }>(
     divelog,
     fetchFn,
     `/dive/sites/${id}`,
   );
-  return siteCardSvg(data.site, data.dives);
+  return siteCardSvg(data.site, data.dives, divelog.config.siteName);
 }
 
 const ID_PATTERN: Record<OgKind, RegExp> = { dive: /^\d+$/, site: /^[a-z0-9-]+$/ };

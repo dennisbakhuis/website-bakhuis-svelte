@@ -29,6 +29,8 @@ export type DivelogConfig = {
   siteName: string;
   ownerName: string;
   siteUrl: string;
+  /** Ends every page title (`… — <suffix>`); defaults to `ownerName`. */
+  titleSuffix?: string;
   presets?: DivelogPresets;
 };
 
@@ -42,6 +44,11 @@ export const DEFAULT_CONFIG: DivelogConfig = {
   ownerName: 'Dennis',
   siteUrl: 'https://dennisbakhuis.nl',
 };
+
+/** The text that ends the log's page titles. */
+export function titleSuffix(config: DivelogConfig): string {
+  return config.titleSuffix ?? config.ownerName;
+}
 
 export type QueryParams =
   string | URLSearchParams | Record<string, string | number | null | undefined>;

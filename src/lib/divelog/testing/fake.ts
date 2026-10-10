@@ -1,14 +1,17 @@
 /** Test doubles for the kit's server helpers: a divelog with a scripted backend. */
 import type { RequestEvent } from '@sveltejs/kit';
 import { vi } from 'vitest';
-import { DEFAULT_CONFIG } from '$lib/dive/config';
+import { DEFAULT_CONFIG, type DivelogConfig } from '$lib/dive/config';
 import { createDivelog, type Divelog } from '../server/divelog';
 
 export type Responses = Record<string, unknown>;
 
 /** A divelog whose `api` and `apiOrError` answer from `responses` by API path. */
-export function fakeDivelog(responses: Responses = {}): Divelog {
-  const divelog = createDivelog({ backendUrl: 'http://backend', config: DEFAULT_CONFIG });
+export function fakeDivelog(
+  responses: Responses = {},
+  config: DivelogConfig = DEFAULT_CONFIG,
+): Divelog {
+  const divelog = createDivelog({ backendUrl: 'http://backend', config });
   const answer = (path: string) => {
     if (!(path in responses)) throw new Error(`unexpected ${path}`);
     const value = responses[path];

@@ -1,37 +1,27 @@
 /**
- * Rasterise the OG card SVGs with resvg. resvg reads fonts from disk only
- * (TTF/OTF, no WOFF2), so the three bundled TTFs are inlined into the server
- * build and written to a temp directory once per process. Inlining keeps the
- * bundled server self-contained: a `new URL('./fonts/…', import.meta.url)`
- * is not rewritten in the SSR build and would point next to the output chunk.
+ * Rasterise the OG card SVGs with resvg. The native resvg 2.x binding reads
+ * fonts from disk only (TTF/OTF, no WOFF2, no buffers), so the three bundled
+ * TTFs come from a generated base64 module (`scripts/og-fonts.mjs`) and are
+ * written to a temp directory once per process. A data module keeps the
+ * server build and a packaged library self-contained: the SSR build does not
+ * rewrite `new URL('./fonts/…', import.meta.url)`, and Vite's inline-asset
+ * query is not portable.
  */
 import { Resvg } from '@resvg/resvg-js';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import groteskBold from './fonts/SpaceGrotesk-Bold.ttf?inline';
-import groteskMedium from './fonts/SpaceGrotesk-Medium.ttf?inline';
-import monoRegular from './fonts/JetBrainsMono-Regular.ttf?inline';
+import { OG_FONTS } from './font-data';
 import { FONT_DISPLAY, FONT_MONO } from './card';
 
-const FONTS: Record<string, string> = {
-  'SpaceGrotesk-Bold.ttf': groteskBold,
-  'SpaceGrotesk-Medium.ttf': groteskMedium,
-  'JetBrainsMono-Regular.ttf': monoRegular,
-};
-
 let fontFiles: Promise<string[]> | null = null;
-
-function decodeDataUrl(url: string): Buffer {
-  return Buffer.from(url.slice(url.indexOf(',') + 1), 'base64');
-}
 
 async function writeFonts(): Promise<string[]> {
   const dir = await mkdtemp(join(tmpdir(), 'og-fonts-'));
   return Promise.all(
-    Object.entries(FONTS).map(async ([name, url]) => {
+    Object.entries(OG_FONTS).map(async ([name, base64]) => {
       const path = join(dir, name);
-      await writeFile(path, decodeDataUrl(url));
+      await writeFile(path, Buffer.from(base64, 'base64'));
       return path;
     }),
   );

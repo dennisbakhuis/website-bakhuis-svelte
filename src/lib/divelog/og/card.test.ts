@@ -85,7 +85,8 @@ describe('og card', () => {
   });
 
   it('renders the dive card with number, site and stats', () => {
-    const svg = diveCardSvg(dive);
+    const svg = diveCardSvg(dive, 'log.example');
+    expect(svg).toContain('>log.example</text>');
     expect(svg).toContain('width="1200" height="630"');
     expect(svg).toContain('DIVE #409');
     expect(svg).toContain('Cenote Mayan Blue');
@@ -97,23 +98,28 @@ describe('og card', () => {
   });
 
   it('skips the profile when there is none and escapes names', () => {
-    const svg = diveCardSvg({
-      ...dive,
-      profile: null,
-      site: { ...site, name: 'A & B', area: null, region_name: null },
-    } as Dive);
+    const svg = diveCardSvg(
+      {
+        ...dive,
+        profile: null,
+        site: { ...site, name: 'A & B', area: null, region_name: null },
+      } as Dive,
+      'a&b.example',
+    );
+    expect(svg).toContain('a&amp;b.example');
     expect(svg).toContain('A &amp; B');
     expect(svg).not.toContain('<circle');
   });
 
   it('renders the site card with a depth bar per dive', () => {
     const dives = [item('2026-02-22', 12), item('2022-02-08', 23.8)];
-    const svg = siteCardSvg(site, dives);
+    const svg = siteCardSvg(site, dives, 'log.example');
+    expect(svg).toContain('>log.example</text>');
     expect(svg).toContain('DIVE SITE · CAVE');
     expect(svg).toContain('The Quintana Roo cenotes, Mexico');
     expect(svg).toContain('2022–2026');
     expect(svg.match(/<rect x=/g)).toHaveLength(2);
-    expect(siteCardSvg(site, [])).toContain('—');
+    expect(siteCardSvg(site, [], 'log.example')).toContain('—');
   });
 
   it('drops a place that repeats the title', () => {

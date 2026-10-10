@@ -4,7 +4,7 @@ COMPOSE ?= docker compose
 
 .PHONY: help install run dev up down logs data-pull data-status shell-backend \
 	build preview lint format format-check check test test-coverage \
-	backend-lint backend-format backend-typecheck backend-test backend-check ci types types-check \
+	backend-lint backend-format backend-typecheck backend-test backend-check ci types types-check og-fonts-check \
 	version version-sync version-check bump release docker-build
 
 help:  ## Show this help.
@@ -85,6 +85,9 @@ test-coverage:  ## Vitest with V8 coverage
 types:  ## Regenerate src/lib/dive/api.d.ts from the backend's OpenAPI schema (offline, via uv)
 	pnpm types
 
+og-fonts-check:  ## Fail if src/lib/divelog/og/font-data.ts is out of date with the TTFs
+	pnpm og-fonts:check
+
 types-check:  ## Fail if src/lib/dive/api.d.ts is out of date with the backend schemas
 	pnpm types:check
 
@@ -104,7 +107,7 @@ backend-test:  ## pytest (unit tests run locally; DB tests need `make up`)
 
 backend-check: backend-lint backend-typecheck backend-test  ## All backend checks
 
-ci: lint format-check check types-check test-coverage backend-check build  ## Everything CI runs
+ci: lint format-check check types-check og-fonts-check test-coverage backend-check build  ## Everything CI runs
 
 ## Versioning
 

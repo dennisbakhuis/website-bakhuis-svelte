@@ -3,7 +3,6 @@
 // hand-written ones say why. Map shapes with behaviour stay hand-written in ./sitemap.ts.
 
 import type { components } from './api';
-import type { DiveMapAnnotation } from './sitemap';
 
 type Schemas = components['schemas'];
 
@@ -50,31 +49,11 @@ export type Region = Narrow<Schemas['RegionOut'], { sites: SiteSummary[] }>;
 
 export type RegionStats = Schemas['RegionStats'];
 
-/**
- * One logged dive's route on one of the site's drawn maps. Hand-written: `GET /sites/{slug}`
- * returns an untyped envelope, so the schema does not reach the OpenAPI document.
- */
-export type SiteDiveRoute = {
-  number: number;
-  date: string;
-  title: string;
-  annotation: DiveMapAnnotation;
-};
+/** One logged dive's route on one of the site's drawn maps. */
+export type SiteDiveRoute = Schemas['SiteDiveRoute'];
 
-/**
- * Another exactly-placed site near the one on the page; never offered for region-only sites.
- * Hand-written for the same reason as `SiteDiveRoute`.
- */
-export type NearbySite = {
-  slug: string;
-  name: string;
-  country_code: string;
-  site_type: string;
-  lat: number;
-  lon: number;
-  distance_km: number;
-  dives: number;
-};
+/** Another exactly-placed site near the one on the page; never offered for region-only sites. */
+export type NearbySite = Schemas['NearbySite'];
 
 /** A trip; on a dive page `day_index` and `days` place the dive within it. */
 export type Trip = Schemas['TripOut'];
@@ -89,17 +68,8 @@ export type TripSummary = Schemas['TripSummary'];
 
 export type TripDetail = Narrow<Schemas['TripDetail'], { dives: DiveListItem[] }>;
 
-/**
- * A trip a buddy was on, with the dives we made together on it. Hand-written:
- * `GET /people/{slug}` returns an untyped envelope.
- */
-export type TripTogether = {
-  slug: string;
-  name: string;
-  start_date: string;
-  end_date: string;
-  dives: number;
-};
+/** A trip a buddy was on, with the dives we made together on it. */
+export type TripTogether = Schemas['TripTogether'];
 
 /**
  * A trip as the editor sees it: the override file's fields when there is one
@@ -155,11 +125,28 @@ export type Dive = Narrow<Schemas['DiveOut'], DiveNarrowing>;
 
 export type DiveAdmin = Narrow<Schemas['DiveAdminOut'], DiveNarrowing>;
 
+/** A row of `GET /admin/dives`: what the editor's list shows; the full record is `DiveAdmin`. */
+export type AdminDiveListItem = Narrow<
+  Schemas['AdminDiveListItem'],
+  { visibility: DiveNarrowing['visibility'] }
+>;
+
 export type CountryStat = Schemas['CountryStat'];
 
 export type DiveEnvelope = Narrow<Schemas['DiveEnvelope'], { dives: DiveListItem[] }>;
 
 export type MapSite = Schemas['MapSite'];
+
+/** `GET /dive/sites/{slug}`: a site, the dives the viewer may see there and its surroundings. */
+export type SiteDetail = Narrow<Schemas['SiteDetail'], { site: Site; dives: DiveListItem[] }>;
+
+/** `GET /dive/people/{slug}`: a buddy and the dives, places, years and trips shared. */
+export type PersonDetail = Narrow<Schemas['PersonDetail'], { dives: DiveListItem[] }>;
+
+/** `GET /dive/timeline`: dives per year, gaps included, and the latest public dive. */
+export type DiveTimeline = Schemas['DiveTimeline'];
+
+export type YearCount = Schemas['TimelineYear'];
 
 export type RecordDive = Schemas['RecordDive'];
 
@@ -174,6 +161,9 @@ export type GearSetup = Schemas['GearSetupOut'];
 export type GearPage = Schemas['GearPage'];
 
 export type RepoStatus = Schemas['RepoStatus'];
+
+/** One past import, newest first in `GET /admin/imports`. */
+export type ImportRecord = Schemas['ImportRecordOut'];
 
 /** Body of `POST /admin/regions` and `PUT /admin/regions/{id}`. */
 export type RegionIn = Schemas['RegionIn'];

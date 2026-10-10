@@ -1,9 +1,6 @@
-export type YearCount = { year: number; dives: number };
+import type { DiveTimeline, YearCount } from './types';
 
-export type DiveTimeline = {
-  years: YearCount[];
-  latest: { number: number; date: string; site: string | null } | null;
-};
+export type { DiveTimeline, YearCount };
 
 export type Sparkline = {
   line: string;

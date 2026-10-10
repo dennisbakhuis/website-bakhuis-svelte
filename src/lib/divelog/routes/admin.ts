@@ -4,9 +4,11 @@
  */
 import { error, type RequestEvent } from '@sveltejs/kit';
 import type {
+  AdminDiveListItem,
   DiveAdmin,
   GearItem,
   GearSetup,
+  ImportRecord,
   PersonPrivate,
   Region,
   Site,
@@ -17,15 +19,8 @@ import { diveTemplate } from '$lib/admin/dive-input';
 import type { Divelog } from '../server/divelog';
 import { defineRoute, type PageOwner } from './table';
 
-export type ImportRow = {
-  id: string;
-  format: string;
-  original_name: string;
-  created_at: string;
-  created: number[];
-  updated: number[];
-  url: string;
-};
+/** One past import on the import page. */
+export type ImportRow = ImportRecord;
 
 /** Reference data every dive form needs: sites, trips, people, gear setups, regions. */
 async function diveFormData(divelog: Divelog, event: RequestEvent) {
@@ -48,7 +43,7 @@ export const divesRoute = defineRoute({
   page: 'dives',
   pattern: /^$/,
   load: async (divelog, _params, event) => ({
-    dives: await divelog.apiOrError<DiveAdmin[]>(event, divelog.urls.api('/admin/dives')),
+    dives: await divelog.apiOrError<AdminDiveListItem[]>(event, divelog.urls.api('/admin/dives')),
   }),
 });
 
@@ -59,12 +54,18 @@ export const diveNewRoute = defineRoute({
     const [form, next, dives] = await Promise.all([
       diveFormData(divelog, event),
       divelog.apiOrError<{ number: number }>(event, divelog.urls.api('/admin/dives/next-number')),
-      divelog.apiOrError<DiveAdmin[]>(event, divelog.urls.api('/admin/dives')),
+      divelog.apiOrError<AdminDiveListItem[]>(event, divelog.urls.api('/admin/dives')),
     ]);
-    const last = dives.reduce<DiveAdmin | null>(
-      (latest, dive) => (!latest || dive.number > latest.number ? dive : latest),
+    const latest = dives.reduce<AdminDiveListItem | null>(
+      (found, dive) => (!found || dive.number > found.number ? dive : found),
       null,
     );
+    const last = latest
+      ? await divelog.apiOrError<DiveAdmin>(
+          event,
+          divelog.urls.api(`/admin/dives/${latest.number}`),
+        )
+      : null;
     return {
       ...form,
       nextNumber: next.number,

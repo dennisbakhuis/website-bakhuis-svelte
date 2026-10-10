@@ -4,13 +4,13 @@
   import { onMount } from 'svelte';
   import { adminJson } from '$lib/admin/client';
   import type { RepoStatus } from '$lib/dive/types';
-  import { escapeRegExp } from '$lib/dive/config';
+  import { escapeRegExp, titleSuffix } from '$lib/dive/config';
   import { getDivelog } from '$lib/dive/context';
   import type { Snippet } from 'svelte';
 
   let { owner, children }: { owner: string | null; children: Snippet } = $props();
 
-  const { urls } = getDivelog();
+  const { config, urls } = getDivelog();
 
   let repo = $state<RepoStatus | null>(null);
   let repoBusy = $state(false);
@@ -62,7 +62,7 @@
 </script>
 
 <svelte:head>
-  <title>Admin — Dennis Bakhuis</title>
+  <title>Admin — {titleSuffix(config)}</title>
   <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 

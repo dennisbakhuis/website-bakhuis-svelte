@@ -26,7 +26,6 @@ export const FONT_DISPLAY = 'Space Grotesk';
 export const FONT_MONO = 'JetBrains Mono';
 
 const PAD = 72;
-const SITE_HOST = 'dennisbakhuis.nl';
 
 export function escapeXml(value: string): string {
   return value
@@ -97,7 +96,7 @@ export function profilePaths(
   return { line, area, deepest: { x: x(deep.t), y: y(deep.d), d: deep.d } };
 }
 
-function frame(inner: string, kicker: string): string {
+function frame(inner: string, kicker: string, host: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${OG_WIDTH}" height="${OG_HEIGHT}" viewBox="0 0 ${OG_WIDTH} ${OG_HEIGHT}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
@@ -112,7 +111,7 @@ function frame(inner: string, kicker: string): string {
   </defs>
   <rect width="${OG_WIDTH}" height="${OG_HEIGHT}" fill="url(#bg)"/>
   <text x="${PAD}" y="${PAD + 14}" font-family="${FONT_MONO}" font-size="24" letter-spacing="4" fill="${C.accent}">${escapeXml(kicker)}</text>
-  <text x="${OG_WIDTH - PAD}" y="${PAD + 14}" text-anchor="end" font-family="${FONT_MONO}" font-size="22" fill="${C.faint}">${SITE_HOST}</text>
+  <text x="${OG_WIDTH - PAD}" y="${PAD + 14}" text-anchor="end" font-family="${FONT_MONO}" font-size="22" fill="${C.faint}">${escapeXml(host)}</text>
 ${inner}
 </svg>`;
 }
@@ -162,7 +161,8 @@ export function withoutPrefix(place: string | null | undefined, title: string): 
   return place.startsWith(`${title}, `) ? place.slice(title.length + 2) : place;
 }
 
-export function diveCardSvg(dive: Dive): string {
+/** The card for one dive; `host` is the site name printed top right. */
+export function diveCardSvg(dive: Dive, host: string): string {
   const site = dive.site;
   const title = site?.name ?? (dive.title || `Dive ${dive.number}`);
   const where = [withoutPrefix(site?.area ?? site?.region_name, title), site?.country_name]
@@ -193,10 +193,11 @@ export function diveCardSvg(dive: Dive): string {
   <path d="${profile.line}" fill="none" stroke="${C.accent}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
   <circle cx="${profile.deepest.x}" cy="${profile.deepest.y}" r="6" fill="${C.warm}"/>`
     : '';
-  return frame(`${head.svg}\n${stats}\n${chart}`, `DIVE #${dive.number}`);
+  return frame(`${head.svg}\n${stats}\n${chart}`, `DIVE #${dive.number}`, host);
 }
 
-export function siteCardSvg(site: Site, dives: DiveListItem[]): string {
+/** The card for one site and its dives; `host` is the site name printed top right. */
+export function siteCardSvg(site: Site, dives: DiveListItem[], host: string): string {
   const where = [site.region_name ?? site.area, site.country_name].filter(Boolean).join(', ');
   const head = titleBlock(site.name, where, 112);
   const statsY = head.bottom + 64;
@@ -223,7 +224,7 @@ export function siteCardSvg(site: Site, dives: DiveListItem[]): string {
   };
   const bars = box.height > 40 ? depthBars(dives, box, deepest ?? 0) : '';
   const type = site.site_type ? ` · ${site.site_type.toUpperCase()}` : '';
-  return frame(`${head.svg}\n${stats}\n${bars}`, `DIVE SITE${type}`);
+  return frame(`${head.svg}\n${stats}\n${bars}`, `DIVE SITE${type}`, host);
 }
 
 /** One vertical stroke per dive, oldest first, as deep as that dive went. */

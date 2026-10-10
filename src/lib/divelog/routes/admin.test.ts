@@ -71,9 +71,10 @@ describe('admin loaders', () => {
       ...FORM,
       '/api/v1/admin/dives/next-number': { number: 12 },
       '/api/v1/admin/dives': [
-        { number: 10, title: '', site: { name: 'Ressel' } },
-        { number: 11, title: '', site: null },
+        { number: 10, title: '', site_name: 'Ressel' },
+        { number: 11, title: '', site_name: null },
       ],
+      '/api/v1/admin/dives/11': { number: 11, title: '', site: null },
     });
     const data = await diveNewRoute.load(divelog, [], fakeEvent());
     expect(data.nextNumber).toBe(12);

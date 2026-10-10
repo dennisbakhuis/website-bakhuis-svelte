@@ -4,6 +4,6 @@
  */
 import { DEFAULT_CONFIG, createUrls, type DivelogConfig } from '$lib/dive/config';
 
-export const divelogConfig: DivelogConfig = DEFAULT_CONFIG;
+export const divelogConfig: DivelogConfig = { ...DEFAULT_CONFIG, titleSuffix: 'Dennis Bakhuis' };
 
 export const urls = createUrls(divelogConfig);

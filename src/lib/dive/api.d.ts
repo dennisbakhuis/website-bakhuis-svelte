@@ -338,7 +338,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Admin List Dives */
+    /**
+     * Admin List Dives
+     * @description Every dive, newest first, as list rows; ``GET /dives/{number}`` has the full record.
+     */
     get: operations['admin_list_dives_api_v1_admin_dives_get'];
     put?: never;
     /** Admin Create Dive */
@@ -968,6 +971,33 @@ export interface components {
       note: string | null;
     } & {
       [key: string]: unknown;
+    };
+    /**
+     * AdminDiveListItem
+     * @description One row of the editor's dive list: what the table shows, filters and sorts on.
+     */
+    AdminDiveListItem: {
+      /** Number */
+      number: number;
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
+      /** Title */
+      title: string;
+      /** Site Name */
+      site_name: string | null;
+      /** Max Depth M */
+      max_depth_m: number;
+      /** Duration Min */
+      duration_min: number;
+      /** Tags */
+      tags: string[];
+      /** Attachments */
+      attachments: number;
+      /** Visibility */
+      visibility: string;
     };
     /** AttachmentOut */
     AttachmentOut: {
@@ -1781,6 +1811,15 @@ export interface components {
       /** Scooter Dives */
       scooter_dives: number;
     };
+    /**
+     * DiveTimeline
+     * @description Front-page timeline: dives per year, gaps included, and the latest public dive.
+     */
+    DiveTimeline: {
+      /** Years */
+      years: components['schemas']['TimelineYear'][];
+      latest: components['schemas']['TimelineDive'] | null;
+    };
     /** GearItemIn */
     GearItemIn: {
       /** Name */
@@ -1923,6 +1962,26 @@ export interface components {
     HTTPValidationError: {
       /** Detail */
       detail?: components['schemas']['ValidationError'][];
+    };
+    /**
+     * ImportRecordOut
+     * @description One past import as the import page lists it; ``created_at`` is ISO 8601 as stored.
+     */
+    ImportRecordOut: {
+      /** Id */
+      id: string;
+      /** Format */
+      format: string;
+      /** Original Name */
+      original_name: string;
+      /** Created At */
+      created_at: string;
+      /** Created */
+      created: number[];
+      /** Updated */
+      updated: number[];
+      /** Url */
+      url: string;
     };
     /** ImportResult */
     ImportResult: {
@@ -2404,6 +2463,50 @@ export interface components {
       /** Expires At */
       expires_at: string;
     };
+    /**
+     * NearbySite
+     * @description Another exactly-placed site within walking-or-short-drive distance of a site.
+     */
+    NearbySite: {
+      /** Slug */
+      slug: string;
+      /** Name */
+      name: string;
+      /** Country Code */
+      country_code: string;
+      /** Site Type */
+      site_type: string;
+      /** Lat */
+      lat: number;
+      /** Lon */
+      lon: number;
+      /** Distance Km */
+      distance_km: number;
+      /** Dives */
+      dives: number;
+    };
+    /** NextDiveNumber */
+    NextDiveNumber: {
+      /** Number */
+      number: number;
+    };
+    /**
+     * PersonDetail
+     * @description A buddy's page: the person and the dives, places, years and trips we shared.
+     */
+    PersonDetail: {
+      person: components['schemas']['PersonOut'];
+      /** Countries */
+      countries: components['schemas']['CountryStat'][];
+      /** Dives */
+      dives: components['schemas']['DiveListItem'][];
+      /** Map Sites */
+      map_sites: components['schemas']['MapSite'][];
+      /** Years */
+      years: components['schemas']['YearStat'][];
+      /** Trips */
+      trips: components['schemas']['TripTogether'][];
+    };
     /** PersonIn */
     PersonIn: {
       /** First Name */
@@ -2758,6 +2861,37 @@ export interface components {
       site_name: string | null;
       /** Time In */
       time_in: string | null;
+    };
+    /**
+     * SiteDetail
+     * @description A site page: the site, the dives the viewer may see there, and what surrounds it.
+     */
+    SiteDetail: {
+      site: components['schemas']['SiteOut'];
+      /** Dives */
+      dives: components['schemas']['DiveListItem'][];
+      /** People */
+      people: components['schemas']['PersonPublic'][];
+      /** Nearby */
+      nearby: components['schemas']['NearbySite'][];
+      /** Routes */
+      routes: components['schemas']['SiteDiveRoute'][];
+    };
+    /**
+     * SiteDiveRoute
+     * @description One logged dive's route on one of the site's drawn maps.
+     */
+    SiteDiveRoute: {
+      /** Number */
+      number: number;
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
+      /** Title */
+      title: string;
+      annotation: components['schemas']['DiveMapAnnotation-Output'];
     };
     /** SiteIn */
     SiteIn: {
@@ -3158,6 +3292,28 @@ export interface components {
        */
       role: 'back' | 'stage' | 'deco' | 'bailout';
     };
+    /**
+     * TimelineDive
+     * @description The latest public dive, for the front-page link.
+     */
+    TimelineDive: {
+      /** Number */
+      number: number;
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
+      /** Site */
+      site: string | null;
+    };
+    /** TimelineYear */
+    TimelineYear: {
+      /** Year */
+      year: number;
+      /** Dives */
+      dives: number;
+    };
     /** TripBuddy */
     TripBuddy: {
       /** Slug */
@@ -3301,6 +3457,28 @@ export interface components {
        */
       readonly description_html: string;
     };
+    /**
+     * TripTogether
+     * @description A trip a buddy was on, with the number of dives we made together on it.
+     */
+    TripTogether: {
+      /** Slug */
+      slug: string;
+      /** Name */
+      name: string;
+      /**
+       * Start Date
+       * Format: date
+       */
+      start_date: string;
+      /**
+       * End Date
+       * Format: date
+       */
+      end_date: string;
+      /** Dives */
+      dives: number;
+    };
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -3409,9 +3587,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            [key: string]: unknown;
-          };
+          'application/json': components['schemas']['DiveTimeline'];
         };
       };
     };
@@ -3504,9 +3680,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            [key: string]: unknown;
-          };
+          'application/json': components['schemas']['SiteDetail'];
         };
       };
       /** @description Validation Error */
@@ -3659,9 +3833,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            [key: string]: unknown;
-          };
+          'application/json': components['schemas']['PersonDetail'];
         };
       };
       /** @description Validation Error */
@@ -3814,7 +3986,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['DiveAdminOut'][];
+          'application/json': components['schemas']['AdminDiveListItem'][];
         };
       };
     };
@@ -3867,9 +4039,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            [key: string]: number;
-          };
+          'application/json': components['schemas']['NextDiveNumber'];
         };
       };
     };
@@ -5337,9 +5507,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            [key: string]: unknown;
-          }[];
+          'application/json': components['schemas']['ImportRecordOut'][];
         };
       };
     };

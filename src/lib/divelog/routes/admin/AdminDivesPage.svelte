@@ -14,7 +14,7 @@
       if (show !== 'all' && d.visibility !== show) return false;
       const q = query.toLowerCase();
       return (
-        !q || `${d.number} ${d.title} ${d.site?.name ?? ''} ${d.date}`.toLowerCase().includes(q)
+        !q || `${d.number} ${d.title} ${d.site_name ?? ''} ${d.date}`.toLowerCase().includes(q)
       );
     }),
   );
@@ -51,13 +51,13 @@
         <td class="dl-num">{dive.number}</td>
         <td class="dl-num">{formatDate(dive.date)}</td>
         <td
-          ><a href={urls.admin.dive(dive.number)}>{dive.title || dive.site?.name || 'Untitled'}</a
-          >{#if dive.title && dive.site}<span class="muted"> · {dive.site.name}</span>{/if}</td
+          ><a href={urls.admin.dive(dive.number)}>{dive.title || dive.site_name || 'Untitled'}</a
+          >{#if dive.title && dive.site_name}<span class="muted"> · {dive.site_name}</span>{/if}</td
         >
         <td class="dl-num">{dive.max_depth_m} m</td>
         <td class="dl-num">{dive.duration_min} min</td>
         <td>{dive.tags.join(', ')}</td>
-        <td class="dl-num">{dive.attachments.length || ''}</td>
+        <td class="dl-num">{dive.attachments || ''}</td>
         <td><span class="status status-{dive.visibility}">{dive.visibility}</span></td>
         <td
           ><a class="view" href={urls.dive(dive.number)} target="_blank" rel="noopener">view ↗</a

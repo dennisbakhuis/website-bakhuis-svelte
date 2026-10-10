@@ -17,6 +17,7 @@ import {
   tripRoute,
   tripsRoute,
 } from './public';
+import { DEFAULT_CONFIG } from '$lib/dive/config';
 import { fakeDivelog, fakeEvent, thrown } from '../testing/fake';
 import type { Region, Site } from '$lib/dive/types';
 
@@ -124,7 +125,7 @@ describe('public loaders', () => {
     const data = await diveRoute.load(divelog, ['7'], fakeEvent());
     expect(data.editHref).toBe('/admin/dives/7');
     expect(data.meta).toEqual({
-      title: 'Dive #7 — Blue — Dennis Bakhuis',
+      title: 'Dive #7 — Blue — Dennis',
       description: '30 m for 42 minutes at Ressel on 2026-01-02.',
     });
   });
@@ -176,7 +177,7 @@ describe('public loaders', () => {
     const data = await siteRoute.load(divelog, ['fra-ressel'], fakeEvent());
     expect(data.map.point).not.toBeNull();
     expect(data.meta).toEqual({
-      title: 'Ressel — dive site — Dennis Bakhuis',
+      title: 'Ressel — dive site — Dennis',
       description: '2 dives at Ressel, France.',
       image: '/dive/og/site/fra-ressel.png',
     });
@@ -210,7 +211,7 @@ describe('public loaders', () => {
     });
     const lot = await regionRoute.load(divelog, ['lot'], fakeEvent());
     expect(lot.map?.dots).toHaveLength(1);
-    expect(lot.meta?.title).toBe('Lot — dive region — Dennis Bakhuis');
+    expect(lot.meta?.title).toBe('Lot — dive region — Dennis');
     const empty = await regionRoute.load(divelog, ['empty'], fakeEvent());
     expect(empty.map).toBeNull();
     expect(empty.editHref).toBe('/admin/regions/empty');
@@ -263,7 +264,7 @@ describe('public loaders', () => {
       },
     });
     expect((await peopleRoute.load(divelog, [], fakeEvent())).meta?.title).toBe(
-      'Dive buddies — Dennis Bakhuis',
+      'Dive buddies — Dennis',
     );
     const kim = await personRoute.load(divelog, ['kim'], fakeEvent());
     expect(kim.editHref).toBe('/admin/people/kim%20one');
@@ -280,5 +281,15 @@ describe('public loaders', () => {
       editHref: '/admin/gear',
       page: 'gear',
     });
+  });
+
+  it('ends page titles with the configured suffix', async () => {
+    const divelog = fakeDivelog(
+      { [`${API}/people`]: [] },
+      { ...DEFAULT_CONFIG, titleSuffix: 'A. Diver' },
+    );
+    expect((await peopleRoute.load(divelog, [], fakeEvent())).meta?.title).toBe(
+      'Dive buddies — A. Diver',
+    );
   });
 });
