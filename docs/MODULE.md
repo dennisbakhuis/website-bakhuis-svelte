@@ -265,8 +265,14 @@ Site tooling becomes CLI subcommands in the server package: `build_tiles.py` →
 
 ## Part 2 — Phases
 
-| Phase | What | Result |
-| **Phase C, done (10 Oct 2026).** The monorepo `../divelog` holds `packages/server`
+| Phase | What                                                                                                                                                                                                                             | Result                                                                                                                     | Status                                                                                                                                                                                                                                                          |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** | Decouple in place in this repo                                                                                                                                                                                                   | Same site, same data, but every seam of 1.4 and 1.5 exists and is tested; a `COMMONS_ROOT` can be pointed at a second repo | Done 9–10 Oct 2026: website `2660c37`..`50bfb7e` (A1–A9)                                                                                                                                                                                                        |
+| **B** | Split the data: `divelog sites split` writes 210 commons cores to `../divelog-sites` and rewrites the log files as overlays; editorial pass on 42+ bodies; map rights pass; manifests; delete duplicated media-store site photos | Public API golden diff identical except additive keys; overlay edits commit to `divelog-data`                              | Done 10 Oct 2026: website `98a8211`, `02e7a0f`, `82d9fb2`; commons `bc93c07`; log `426f0dc`                                                                                                                                                                     |
+| **C** | Extract to the monorepo (`backend/app` → `divelog_server`, `src/lib/divelog` → kit), reference app, CI, images, CLI; personal site consumes `@divelog/kit` + the server image                                                    | Reference app e2e smoke; personal site passes its gates; `publint` clean                                                   | Done 10 Oct 2026: monorepo `e907f47`..`37648aa`; website `547a778`, `14e377c`, `0e68f3a`                                                                                                                                                                        |
+| **D** | Sharing: commons repo + CI, origin/attribution UI, listing filters, adopt-a-site, importer matching, propose/adopt CLI, commons pull + pin                                                                                       | A deliberately bad PR fails CI; adopt → dive → annotation on a commons map round-trips                                     | Done 10 Oct 2026: monorepo merges `14df2c7` (D1), `f983b4e` (D2a), `85835b6` (D2b), D3 up to `cb8d0ea`, D4 `88541c7`, `8f6d35b` (kit and server 0.2.0); website `81eebec`; commons `0203851`, `d67f133` (first revision 2); log `97668e8`, `a587ee3`, `c50f472` |
+
+**Phase C, done (10 Oct 2026).** The monorepo `../divelog` holds `packages/server`
 (`divelog-server`: the former `backend/app` as `divelog_server`, the `divelog` CLI with the site
 tooling as subcommands, generic defaults, `GET /api/v1/version`, a `dev`/`runtime` Dockerfile)
 and `packages/kit` (`@divelog/kit`: the former `src/lib/{dive,map,admin,divelog}`, the dive, map
@@ -283,11 +289,14 @@ The personal scripts run from a root uv project on the server package; those tha
 subcommands were removed. Every page, URL, API response and OG image is unchanged (golden diff
 additive-only, page statuses identical, OG PNGs byte-identical).
 
------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **A** (now) | Decouple in place in this repo | Same site, same data, but every seam of 1.4 and 1.5 exists and is tested; a `COMMONS_ROOT` can be pointed at a second repo |
-| B | Split the data: `divelog sites split` writes 210 commons cores to `../divelog-sites` and rewrites the log files as overlays; editorial pass on 42+ bodies; map rights pass; manifests; delete duplicated media-store site photos | Public API golden diff identical except additive keys; overlay edits commit to `divelog-data` |
-| C (done) | Extract to the monorepo (`backend/app` → `divelog_server`, `src/lib/divelog` → kit), reference app, CI, images, CLI; personal site consumes `@divelog/kit` + the server image | Reference app e2e smoke; personal site passes its gates; `publint` clean |
-| D | Sharing: commons repo + CI, origin/attribution UI, listing filters, adopt-a-site, importer matching, propose/adopt CLI, commons pull + pin | A deliberately bad PR fails CI; adopt → dive → annotation on a commons map round-trips |
+**Phase D, done (10 Oct 2026).** The commons has CI (history-aware validator, map renders), the
+kit shows attribution on site pages and origin badges, the commons status and a pull button in
+the admin, adopt-a-site searches the commons from the new-site page and the dive editor, the
+importer matches sites, and `divelog sites propose` / `adopt` and `divelog commons pull` close the
+loop. Kit and server are at 0.2.0 (unpublished); this site vendors
+`vendor/divelog-kit-0.2.0.tgz`. The first real revision went through the whole path: six commons
+sites to revision 2 ("Neutral wording", one coarse point), pulled into the log, reported stale,
+reviewed and pinned (see RUNBOOK, "Day to day with the commons").
 
 ---
 

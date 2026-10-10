@@ -155,6 +155,55 @@ Outside compose (the CLI), `uv run divelog validate --kind log ../divelog-data` 
 `uv run divelog sites status ../divelog-data` find the commons through that manifest. After
 changing `COMMONS_REPO`, recreate the backend: `docker compose up -d --force-recreate backend`.
 
+### Day to day with the commons
+
+All commands run from this repository (`uv run divelog …`, the server package installed from
+the monorepo) with the sibling checkouts `../divelog-data` and `../divelog-sites`. For the
+CLI's `push` subcommands against the dev stack, set the API first (fish):
+
+```fish
+set -x DIVELOG_API http://127.0.0.1:8300
+```
+
+**Pull.** `uv run divelog commons pull --log ../divelog-data --author "Dennis Bakhuis"` runs
+`git pull --ff-only` in the commons named by `divelog.yaml`, moves the log's `ref` pin to the new
+head, commits `Pin the commons at <sha>` in the log, and lists the sites whose overlay or fork is
+now behind (`site  origin  pinned/current`). A commons checkout without an upstream branch is not
+pulled; its local head is pinned. `--ref <sha>` pins another commit of the commons. In the admin,
+_pull commons_ in the admin bar does the same through `POST /api/v1/admin/commons/pull` (needs
+`COMMONS_GIT_ENABLED=true`; in dev it stays `false` and the CLI does the pull). The backend
+picks up the new pin by itself; otherwise `make data-pull` or _pull_ reloads it.
+
+**Review what went stale.** Stale sites show up three ways: the `N notices` badge in the admin
+bar (`GET /api/v1/admin/repo/status` → `notices`, one line per site: "overlay pinned to commons
+revision 1, commons is at 2"), a _stale_ tag in the origin column of `/admin/sites` (filter
+"All origins"), and the Revision box of the site editor, which shows the commons changelog.
+Read the new revision against your overlay (notes, summary override, personal body) and adjust
+the overlay if the commons now says something it repeated.
+
+**Pin.** In the site editor, _Mark as reviewed against revision N_; or
+`curl -b <cookies> -X POST http://localhost:8300/api/v1/admin/sites/<id>/pin`. Either rewrites
+`base_revision` in `../divelog-data/sites/<id>.md` (and commits it when `GIT_ENABLED=true`; in
+dev commit the checkout yourself). `uv run divelog sites status ../divelog-data` ends with
+`… 0 stale` once every site is reviewed.
+
+**Propose** a personal site (origin `log`) to the commons:
+`uv run divelog sites propose <site-id> --commons ../divelog-sites --log ../divelog-data`
+writes the core record and its drawn maps (minus `--skip-map <map-id>`) to a branch
+`propose/<site-id>` of the commons checkout, validated and signed off; push that branch to your
+fork of the commons and open a PR. `--dry-run` prints the plan.
+
+**Adopt** once the PR is merged and pulled:
+`uv run divelog sites adopt <site-id> --log ../divelog-data` (or `--all`) turns the log's full
+record into an overlay on the merged commons record; copied maps are dropped unless
+`--keep-maps`.
+
+**Change the commons itself** (as a maintainer, in `../divelog-sites`): edit, raise `revision`
+by one with a changelog entry, run
+`uv run divelog validate --kind sites --base HEAD ../divelog-sites` (0 errors; warnings are for
+the reviewer) and `uv run divelog maps changed --base HEAD --root ../divelog-sites`, commit with
+`git commit -s`, then pull into the log as above.
+
 ## One-off scripts and the CLI
 
 The site tooling is the `divelog` CLI of the server package (`uv run divelog --help`):

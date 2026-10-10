@@ -369,10 +369,11 @@ src/                 SvelteKit
   lib/blog/          posts, mdsvex layouts, remark plugins
   lib/server/        email, cap, umami, rate limiter
   lib/styles/        theme.css (the site's tokens; the kit's tokens.css + divelog.css map --dl-* onto them)
-  lib/seo.ts, site.ts, go-targets.ts, format.ts, forms/
+  lib/seo.ts, site.ts, go-targets.ts, format.ts, cap-widget-loader.ts, forms/
   routes/            +layout (kit styles, setMapWorkerUrl), / (DiveTile from @divelog/kit/widgets),
                      dive/[...path] + dive/og (kit routes and diveOg), admin/[...path] + admin/login,
-                     blog/, til/ (redirects), contact, feed.xml, sitemap.xml, go/, health
+                     blog/, til/ (redirects), contact, privacy, api/cap/ (challenge, redeem),
+                     feed.xml, sitemap.xml, robots.txt, go/, health
 vendor/              divelog-kit-<version>.tgz — the kit, packed from the monorepo (make kit-vendor)
 scripts/             personal workbook one-offs (uv project in pyproject.toml, imports divelog_server)
 static/              favicons, og default
@@ -380,7 +381,8 @@ static/              favicons, og default
                      divelog-server tag), pr-source-gate.yml, prune-images.yml
 Dockerfile           frontend image only
 docker-compose.yml   dev: divelog-server built from ../divelog/packages/server + mailpit
-Makefile, VERSION, pyproject.toml + uv.lock (site tools)
+Makefile, VERSION, pyproject.toml + uv.lock (site tools), svelte.config.js, vite.config.ts
+data/                raw dive-log sources (git-ignored; the curated set lives in ../divelog-data)
 ```
 
 Elsewhere: `../divelog/packages/kit` (components, page routes, server helpers, OG cards, styles;
