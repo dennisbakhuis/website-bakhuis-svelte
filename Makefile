@@ -2,9 +2,8 @@
 
 COMPOSE ?= docker compose
 
-.PHONY: help install run dev up down logs data-pull data-status shell-backend \
-	build preview lint format format-check check test test-coverage \
-	backend-lint backend-format backend-typecheck backend-test backend-check ci kit-vendor kit-check \
+.PHONY: help install run dev up down logs data-pull data-status shell-backend tiles tiles-upload \
+	build preview lint format format-check check test test-coverage ci kit-vendor kit-check \
 	version version-sync version-check bump release docker-build
 
 help:  ## Show this help.
@@ -14,9 +13,9 @@ help:  ## Show this help.
 
 ## Dev
 
-install:  ## Install frontend (pnpm) and backend (uv) dependencies
+install:  ## Install frontend (pnpm) and the site tools (uv, divelog-server from $(DIVELOG_DIR))
 	pnpm install
-	cd backend && uv sync
+	uv sync
 
 run: up  ## Start backend + Mailpit in Docker, then the SvelteKit dev server (http://localhost:5373)
 	@echo ""
@@ -46,10 +45,10 @@ data-status:  ## Show the divelog-data checkout status
 	git -C $${DATA_REPO:-../divelog-data} status --short --branch
 
 tiles:  ## Cut the locator-map basemap tiles into $(MEDIA_DIR)/tiles (needs `brew install pmtiles`)
-	uv run --project backend python scripts/build_tiles.py --data $${DATA_REPO:-../divelog-data} --media $${MEDIA_DIR:-../divelog-media}
+	uv run divelog tiles --log $${DATA_REPO:-../divelog-data} --media $${MEDIA_DIR:-../divelog-media}
 
-tiles-upload:  ## Cut the tiles and push tiles/ to the S3 bucket from backend/.env
-	uv run --project backend python scripts/build_tiles.py --data $${DATA_REPO:-../divelog-data} --media $${MEDIA_DIR:-../divelog-media} --upload
+tiles-upload:  ## Cut the tiles and push tiles/ to the S3 bucket (S3_* from .env)
+	uv run divelog tiles --log $${DATA_REPO:-../divelog-data} --media $${MEDIA_DIR:-../divelog-media} --upload
 
 shell-backend:  ## Shell in the backend container
 	$(COMPOSE) exec backend bash
@@ -85,7 +84,7 @@ build:  ## Production build of the frontend
 preview:  ## Build then serve the production bundle (http://localhost:4373)
 	pnpm build && pnpm preview
 
-## Quality (frontend)
+## Quality
 
 lint:  ## ESLint — zero warnings allowed
 	pnpm lint
@@ -105,23 +104,7 @@ test:  ## Vitest unit suite
 test-coverage:  ## Vitest with V8 coverage
 	pnpm test:coverage
 
-## Quality (backend)
-
-backend-lint:  ## ruff check + format check
-	cd backend && uv run ruff check app tests && uv run ruff format --check app tests
-
-backend-format:  ## ruff format
-	cd backend && uv run ruff format app tests && uv run ruff check --fix app tests
-
-backend-typecheck:  ## mypy strict
-	cd backend && uv run mypy app
-
-backend-test:  ## pytest (unit tests run locally; DB tests need `make up`)
-	cd backend && uv run pytest -q
-
-backend-check: backend-lint backend-typecheck backend-test  ## All backend checks
-
-ci: lint format-check check test-coverage backend-check build  ## Everything CI runs
+ci: lint format-check check test-coverage build  ## Everything CI runs
 
 ## Versioning
 
@@ -154,7 +137,6 @@ release:  ## Bump version, commit, tag (usage: make release VERSION=0.2.0)
 
 ## Docker
 
-docker-build:  ## Build both production images (tags :VERSION and :latest)
+docker-build:  ## Build the frontend production image (tags :VERSION and :latest); the backend is ghcr.io/<owner>/divelog-server
 	@v=$$(cat VERSION); \
-	docker build -t bakhuis-frontend:$$v -t bakhuis-frontend:latest . ; \
-	docker build -t bakhuis-backend:$$v -t bakhuis-backend:latest backend
+	docker build -t bakhuis-frontend:$$v -t bakhuis-frontend:latest .

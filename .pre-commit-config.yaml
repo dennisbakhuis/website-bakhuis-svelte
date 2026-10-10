@@ -20,7 +20,6 @@ repos:
         entry: pnpm exec eslint --max-warnings 0
         types_or: [javascript, ts, file]
         files: \.(js|ts|svelte)$
-        exclude: ^backend/
         pass_filenames: true
         additional_dependencies: []
 
@@ -30,7 +29,7 @@ repos:
         entry: pnpm exec prettier --check
         types_or: [javascript, ts, file]
         files: \.(js|ts|svelte|css|json|html|md)$
-        exclude: ^(pnpm-lock\.yaml|backend/)
+        exclude: ^pnpm-lock\.yaml$
         pass_filenames: true
 
       - id: svelte-check
@@ -48,13 +47,6 @@ repos:
         pass_filenames: false
         types_or: [file]
         files: ^src/.*\.(ts|js|svelte)$
-
-      - id: ruff
-        name: ruff (backend)
-        language: system
-        entry: bash -c 'cd backend && uv run ruff check app tests && uv run ruff format --check app tests'
-        pass_filenames: false
-        files: ^backend/.*\.py$
 
       - id: version-check
         name: VERSION ↔ package.json consistency

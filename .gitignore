@@ -9,11 +9,9 @@ node_modules
 .claude/
 /local/
 /coverage/
-/backend/.venv/
-/backend/.media/
-/backend/.mypy_cache/
-/backend/.ruff_cache/
-/backend/.pytest_cache/
+/.venv/
+/.mypy_cache/
+/.ruff_cache/
 __pycache__/
 *.pyc
 

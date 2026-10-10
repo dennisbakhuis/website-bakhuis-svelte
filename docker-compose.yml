@@ -1,34 +1,52 @@
 # Local development stack. The SvelteKit dev server runs on the host
-# (`pnpm dev`, port 5373) and proxies /api and /media here. The dive log is
-# read from a checkout of the private divelog-data repository, a sibling of
-# this one by default (DATA_REPO). Production runs the frontend image too —
-# see infra/ for the compose file operator-infra deploys.
+# (`pnpm dev`, port 5373) and proxies /api and /media here. The backend is the
+# divelog-server package from the divelog monorepo (DIVELOG_SERVER_DIR, a
+# sibling checkout by default), built from source and mounted for --reload.
+# The dive log is read from a checkout of the private divelog-data repository
+# (DATA_REPO) and the shared sites from divelog-sites (COMMONS_REPO), both
+# siblings of this one by default. Production runs the published
+# ghcr.io/<owner>/divelog-server image next to the frontend image.
 
 services:
   backend:
     build:
-      context: ./backend
+      context: ${DIVELOG_SERVER_DIR:-../divelog/packages/server}
       dockerfile: Dockerfile
       target: dev
     command: >
-      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app
+      uvicorn divelog_server.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir divelog_server
     ports:
       - '127.0.0.1:8300:8000'
     env_file:
       - .env
-    # Branding (SITE_NAME, OWNER_NAME, HOME_COUNTRIES, MAIL_SUBJECT, MAIL_GREETING) and
-    # COMMONS_GIT_ENABLED come from .env; see .env.example. The sites commons checkout
-    # (COMMONS_REPO on the host) is mounted read-only at COMMONS_ROOT.
+    # The package's defaults are generic ("divelog", "Diver", no home countries), so
+    # everything that makes it this site's log is set here; .env can override each.
+    # The sites commons checkout (COMMONS_REPO on the host) is mounted read-only at
+    # COMMONS_ROOT.
     environment:
       DEBUG: 'true'
       DATA_ROOT: /data/repo
       COMMONS_ROOT: /data/commons
       STATE_DIR: /data/state
+      MEDIA_ROOT: /data/media
       GIT_ENABLED: 'false'
       APP_VERSION: ${APP_VERSION:-0.0.0-dev}
       TRUSTED_PROXY_IPS: '0.0.0.0/0'
+      SITE_NAME: ${SITE_NAME:-dennisbakhuis.nl}
+      OWNER_NAME: ${OWNER_NAME:-Dennis}
+      OWNER_EMAIL: ${OWNER_EMAIL:-owner@example.org}
+      HOME_COUNTRIES: ${HOME_COUNTRIES:-NLD,DEU,BEL}
+      MAIL_SUBJECT: ${MAIL_SUBJECT:-Sign in to {site_name}}
+      MAIL_GREETING: ${MAIL_GREETING:-Hi {owner_name},}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-bakhuis_session}
+      SITE_URL: ${SITE_URL:-http://localhost:5373}
+      GIT_AUTHOR_NAME: ${GIT_AUTHOR_NAME:-Dennis Bakhuis}
+      BACKEND_SMTP_HOST: ${BACKEND_SMTP_HOST:-mailpit}
+      BACKEND_SMTP_PORT: ${BACKEND_SMTP_PORT:-1025}
+      BACKEND_SMTP_FROM: ${BACKEND_SMTP_FROM:-login@example.org}
+      S3_REGION: ${S3_REGION:-fsn1}
     volumes:
-      - ./backend:/app
+      - ${DIVELOG_SERVER_DIR:-../divelog/packages/server}:/app
       - ${DATA_REPO:-../divelog-data}:/data/repo
       - ${COMMONS_REPO:-../divelog-sites}:/data/commons:ro
       - state:/data/state

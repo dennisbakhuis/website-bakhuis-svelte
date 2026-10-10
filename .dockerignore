@@ -14,8 +14,11 @@ build
 .svelte-kit
 coverage
 
-# The backend has its own Dockerfile and build context
-backend
+# Python site tools (scripts/ and the uv project) are not part of the frontend
+.venv
+pyproject.toml
+uv.lock
+scripts/*.py
 
 # Editor / OS
 .vscode
