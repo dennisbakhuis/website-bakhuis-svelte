@@ -4,8 +4,8 @@
   import type { Price, Region, Site } from '$lib/dive/types';
   import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
-  import { formatDate } from '$lib/dive/format';
   import { pinMessage } from '$lib/dive/revision';
+  import ChangeList from '$lib/divelog/components/ChangeList.svelte';
 
   const { urls } = getDivelog();
 
@@ -376,20 +376,7 @@
           {/if}
         </div>
       {/if}
-      {#if site.changelog.length}
-        <ol class="changelog">
-          {#each site.changelog as entry (entry.revision)}
-            <li>
-              <span class="dl-num">r{entry.revision}</span>
-              <span class="dl-num faint">{formatDate(entry.date)}</span>
-              {entry.note}
-              {#if entry.author}<span class="faint">· {entry.author}</span>{/if}
-            </li>
-          {/each}
-        </ol>
-      {:else}
-        <p class="faint">No changes recorded yet.</p>
-      {/if}
+      <ChangeList entries={site.changelog} />
       <p class="hint">Revisions move on the server when an objective field changes.</p>
     </fieldset>
   {/if}
@@ -465,9 +452,6 @@
     margin: 0;
     font-size: 14px;
   }
-  .faint {
-    color: var(--dl-color-text-faint);
-  }
   .pin {
     display: flex;
     flex-wrap: wrap;
@@ -478,14 +462,6 @@
   }
   .pin.stale {
     color: var(--dl-color-warm);
-  }
-  .changelog {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 4px;
-    font-size: 13.5px;
   }
   .actions {
     display: flex;

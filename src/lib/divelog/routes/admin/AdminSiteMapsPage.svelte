@@ -14,6 +14,7 @@
   } from '$lib/dive/sitemap';
   import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
+  import ChangeList from '$lib/divelog/components/ChangeList.svelte';
 
   const { urls } = getDivelog();
 
@@ -42,14 +43,23 @@
   let dirty = $state(false);
   let saving = $state(false);
   let editorKey = $state(0);
+  let note = $state('');
+  let lastSaved = $state<SiteMapOut | null>(null);
 
   const openMap = $derived(drawn.find((m) => m.id === openId));
+  const shownMap = $derived(
+    lastSaved && openMap && lastSaved.id === openMap.id && lastSaved.revision > openMap.revision
+      ? lastSaved
+      : openMap,
+  );
 
   function open(map: SiteMapOut) {
     if (dirty && !confirm('Discard unsaved changes to the open map?')) return;
     openId = map.id;
     draft = map;
     dirty = false;
+    note = '';
+    lastSaved = null;
     editorKey += 1;
   }
 
@@ -58,6 +68,8 @@
     openId = null;
     draft = null;
     dirty = false;
+    note = '';
+    lastSaved = null;
   }
 
   async function create(kind: MapKind) {
@@ -79,12 +91,15 @@
     try {
       const saved = await adminJson<SiteMapOut>(`/admin/maps/${openMap.id}`, 'PUT', {
         data: draft,
+        note: note.trim(),
       });
       toast.show({
         kind: 'success',
         message: saved.revision === openMap.revision ? 'Nothing changed' : 'Map saved',
       });
+      lastSaved = saved;
       dirty = false;
+      note = '';
       await invalidateAll();
     } catch (err) {
       toast.show({
@@ -125,6 +140,12 @@
     await adminJson(`/admin/sites/${site.id}`, 'PATCH', { default_map: `drawn:${map.id}` });
     toast.show({ kind: 'success', message: 'Shown first on the site page' });
     await invalidateAll();
+  }
+
+  function noteKeydown(e: KeyboardEvent) {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    if (dirty && !saving) save();
   }
 
   function beforeUnload(e: BeforeUnloadEvent) {
@@ -171,7 +192,7 @@
         <li class="map-row" class:open={openId === m.id}>
           <span class="badge">{defaultTitle(m.kind)}</span>
           <span class="map-title">{m.title || defaultTitle(m.kind)}</span>
-          <span class="muted dl-num">{mapSummary(m)} · saved {m.revision}×</span>
+          <span class="muted dl-num">{mapSummary(m)} · revision {m.revision}</span>
           {#if site.default_map === `drawn:${m.id}`}<span class="star">★ first</span>{/if}
           <span class="row-actions">
             <button
@@ -230,13 +251,30 @@
         <span class="muted"
           >{dirty ? 'Unsaved changes' : 'Saved'} · every save is one git commit</span
         >
-        <button
-          type="button"
-          class="dl-btn dl-btn-solid dl-btn-sm"
-          disabled={!dirty || saving}
-          onclick={save}>{saving ? 'Saving…' : 'Save map'}</button
-        >
+        <span class="save-controls">
+          <input
+            type="text"
+            class="note"
+            aria-label="What changed"
+            placeholder="What changed, e.g. Added the second sump"
+            maxlength="200"
+            bind:value={note}
+            onkeydown={noteKeydown}
+          />
+          <button
+            type="button"
+            class="dl-btn dl-btn-solid dl-btn-sm"
+            disabled={!dirty || saving}
+            onclick={save}>{saving ? 'Saving…' : 'Save map'}</button
+          >
+        </span>
       </div>
+      {#if shownMap}
+        <div class="history">
+          <p class="dl-num">Revision {shownMap.revision}</p>
+          <ChangeList entries={shownMap.changelog} />
+        </div>
+      {/if}
     </div>
   {/if}
 </section>
@@ -333,6 +371,27 @@
     flex-wrap: wrap;
     border-top: 1px solid var(--dl-color-border);
     padding-top: 10px;
+  }
+  .save-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 320px;
+    justify-content: flex-end;
+  }
+  .note {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 420px;
+  }
+  .history {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .history p {
+    margin: 0;
+    font-size: 14px;
   }
   .danger:hover {
     border-color: var(--dl-color-error);
