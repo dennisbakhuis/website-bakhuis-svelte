@@ -82,7 +82,7 @@ Media: bucket versioning in prod; in dev it is just a directory.
 ```fish
 make run                              # backend + Mailpit in Docker, SvelteKit on :5373
 make data-status                      # git status of the data checkout
-cd backend; uv run pytest             # 188 tests on tests/fixtures/{data,commons}
+cd backend; uv run pytest             # ~330 tests on tests/fixtures/{data,commons}
 pnpm check; pnpm lint; pnpm test      # frontend gates
 ```
 
