@@ -5,7 +5,7 @@
   let { children } = $props();
 </script>
 
-<DivelogProvider config={divelogConfig}>
+<DivelogProvider config={divelogConfig} skipLink={false}>
   <DiveNav />
   {@render children()}
 </DivelogProvider>

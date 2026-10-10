@@ -99,7 +99,7 @@
     <h2 data-reveal>The bit that isn't on LinkedIn</h2>
     <div class="bento">
       <div class="bento-item bento-dive" data-reveal>
-        <DivelogProvider config={divelogConfig}>
+        <DivelogProvider config={divelogConfig} skipLink={false}>
           <DiveTile
             summary={data.summary}
             timeline={data.timeline}

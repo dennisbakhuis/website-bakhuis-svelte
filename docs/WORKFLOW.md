@@ -68,20 +68,50 @@ their `+page.server.ts`; the global header pill and footer link use the same val
 
 ## 4. Dive editor
 
-One form, saved as one record, with:
+The editors come from `@divelog/kit` 0.3.0 (the UX rework; walkthroughs in the monorepo's
+`docs/KIT.md`, "Logging a dive", "Creating a site" and "Map editor"). In short:
 
-- a **sticky save bar** (Save · unsaved marker · View ↗ · Delete) so saving never needs a scroll;
-- an **unsaved-changes guard**: `beforeNavigate` and `beforeunload` while dirty;
-- **inline creation**: "+ New site" opens a small dialog (name, country, type, region) that
-  POSTs the site and selects it; "+ New trip" likewise (name, start, end); "New person" as before;
-- **On the map** stays inside the form because the route belongs to the dive and is saved with
-  it. When the site has no drawn map the section offers "Draw a map for {site} ↗" (opens
-  `/admin/sites/[id]/maps` in a new tab) and a **↻ refresh** that re-fetches the site's maps
-  without leaving the form;
-- **Copy last dive** on `/admin/dives/new` pre-fills site, trip, people, gear, gas, mode, suit and
-  weights from the most recent dive;
-- photos, scans and computer exports are added after the first save (the record needs a number);
-  the new-dive page says so.
+**Logging a dive** (`/admin/dives/new`, or "+ New dive" in the admin bar and on every public page
+for the owner; "Log a dive here / with X / on this trip" on site, person and trip pages prefill
+the form through `?site=`, `?person=`, `?trip=`, `?date=`):
+
+- the page loads one template (`GET /admin/dives/template`): the previous dive, the last dive at
+  the site, recent sites and frequent buddies;
+- the form opens with **Essentials** (number, date, times, depths, site, section, buddies, trip)
+  and **Gas & kit**; Conditions, On the map, Story (with the paper-log Transcription), Private
+  and Publishing are folded and remember their state. Site, buddies and trip are searchable
+  pickers, recent choices first; "+ New site" opens the same site form as `/admin/sites/new`
+  (map pick included) in a dialog, "+ New trip" and "Add person" work inline;
+- duration (from time in and out), surface interval, water temperature (last dive at the site)
+  and trip (from the date) fill themselves and say where they came from; **Same as previous
+  dive** fills the blanks (all, or site & buddies / tanks & kit / trip). A repeat dive at the
+  same site with the same buddies is six actions: open, Same as previous dive, depth, duration,
+  time in, Save;
+- no fake defaults: depth and duration start empty and Save marks the missing fields, opens
+  their section and focuses the first; a dive without tanks has no gas;
+- the **save bar** stays in view: Save, Save & new, Save & next draft (drafts), View ↗, Delete
+  (asks in a dialog); Ctrl/⌘-S saves; leaving with unsaved changes asks; the form is backed up in
+  the tab and restored after a reload;
+- **On the map** picks the site's only drawn map by itself; the route tools (Route, Turn point,
+  Note pin) work with the arrow keys;
+- photos chosen before the first save are uploaded right after it.
+
+**The dive list** (`/admin`) pages through the server, keeps search, status and sort in the URL,
+and publishes selected drafts at once. An import shows a dry run first and lists the new drafts.
+
+**Creating a site** (`/admin/sites/new` or the dive form's "+ New site"): type the name, tap the
+map (or paste coordinates). Country, region and id follow the pin; "Already known?" lists sites
+with the same name or within 300 m, in the log and in the commons, with "Use this site" /
+"Adopt". Then Create, Create & log a dive here, or Create & draw a map (opens the Maps tab with
+a blank map). The site editor is one page with tabs: Details · Location · Maps · Photos · Dives.
+
+**Drawing a map** (Maps tab): "Start from OpenStreetMap" builds a starter site map around the
+site (Overpass, via the server), or start a blank site or stick map; nothing is stored until
+"Save map" (one commit). Single-key shortcuts only work with the drawing focused and can be
+switched off under "?"; on a phone the tools sit in a strip at the bottom.
+
+Every admin page works at 390 px: the admin bar folds into a Menu, tables scroll inside their
+box, forms are one column.
 
 ## 5. Site editor
 

@@ -39,6 +39,18 @@
     { href: '/contact', label: 'Contact' },
   ];
 
+  /**
+   * One skip link for the whole site, the first stop on every page: it lands on the dive log's
+   * own content (`#dl-main`, past the log's navigation) where there is one, else on <main>.
+   */
+  function skipToContent(e: MouseEvent) {
+    const target = document.getElementById('dl-main') ?? document.getElementById('main');
+    if (!target) return;
+    e.preventDefault();
+    target.focus();
+    target.scrollIntoView({ block: 'start' });
+  }
+
   function isActive(href: string): boolean {
     return page.url.pathname === href || page.url.pathname.startsWith(`${href}/`);
   }
@@ -78,6 +90,8 @@
 
 <svelte:window bind:scrollY />
 
+<a class="skip-link" href="#main" onclick={skipToContent}>Skip to content</a>
+
 {#if !isAdmin}
   <header class="site-header" class:on-hero={overHero} class:descending={isHome && !overHero}>
     <div class="header-inner container">
@@ -85,15 +99,18 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">{site.name}</span>
       </a>
-      <nav class="primary-nav" aria-label="Main">
+      <nav class="primary-nav" aria-label="Site">
         {#each nav as item (item.href)}
           <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}
             >{item.label}</a
           >
         {/each}
         {#if data.owner}
-          <a class="owner-pill" href={editHref} title="Signed in as the owner — open the editor"
-            >owner</a
+          <a
+            class="owner-pill"
+            href={editHref}
+            title="Signed in as the owner — open the editor"
+            aria-label="Owner: open the editor">owner</a
           >
         {/if}
       </nav>
@@ -101,7 +118,7 @@
   </header>
 {/if}
 
-<main class:below-header={!isHome && !isAdmin}>
+<main id="main" tabindex="-1" class:below-header={!isHome && !isAdmin}>
   {@render children()}
 </main>
 
@@ -144,6 +161,27 @@
 <Toast />
 
 <style>
+  .skip-link {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    z-index: 10000;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--color-button-bg);
+    color: var(--color-button-text);
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-decoration: none;
+    transform: translateY(-200%);
+  }
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    transform: none;
+  }
+  main:focus {
+    outline: none;
+  }
   .site-header {
     position: fixed;
     inset: 0 0 auto;

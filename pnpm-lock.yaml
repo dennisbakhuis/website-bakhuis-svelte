@@ -12,8 +12,8 @@ importers:
         specifier: ^0.0.7
         version: 0.0.7
       '@divelog/kit':
-        specifier: file:vendor/divelog-kit-0.2.0.tgz
-        version: file:vendor/divelog-kit-0.2.0.tgz(@resvg/resvg-js@2.6.2)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(maplibre-gl@6.11.2)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
+        specifier: file:vendor/divelog-kit-0.3.0.tgz
+        version: file:vendor/divelog-kit-0.3.0.tgz(@resvg/resvg-js@2.6.2)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(maplibre-gl@6.11.2)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       '@fontsource-variable/inter':
         specifier: ^5.3.0
         version: 5.3.0
@@ -218,9 +218,9 @@ packages:
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
 
-  '@divelog/kit@file:vendor/divelog-kit-0.2.0.tgz':
-    resolution: {integrity: sha512-B98NMkv3sLe6WAgtUinYhxGIViDo+xG72JCVbCp3jJJ87rsK8b9dWZtcRryvUYw7aNBfvHfo70xd1rlufMjWCQ==, tarball: file:vendor/divelog-kit-0.2.0.tgz}
-    version: 0.2.0
+  '@divelog/kit@file:vendor/divelog-kit-0.3.0.tgz':
+    resolution: {integrity: sha512-wkgm0U3i92YBcVmLSzxaQeMLUAvuW+fcPUHf/BvBV7yafVMTWiI1ZCXI8mQZ3jIylBN6k1fQXp7x5nYEb+QDVA==, tarball: file:vendor/divelog-kit-0.3.0.tgz}
+    version: 0.3.0
     engines: {node: '>=22'}
     peerDependencies:
       '@resvg/resvg-js': ^2.6.2
@@ -2855,7 +2855,7 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
-  '@divelog/kit@file:vendor/divelog-kit-0.2.0.tgz(@resvg/resvg-js@2.6.2)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(maplibre-gl@6.11.2)(svelte@5.57.0(@typescript-eslint/types@8.70.0))':
+  '@divelog/kit@file:vendor/divelog-kit-0.3.0.tgz(@resvg/resvg-js@2.6.2)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(maplibre-gl@6.11.2)(svelte@5.57.0(@typescript-eslint/types@8.70.0))':
     dependencies:
       '@protomaps/basemaps': 5.7.2
       '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2))

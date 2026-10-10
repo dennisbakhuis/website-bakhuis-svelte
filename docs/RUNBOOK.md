@@ -28,12 +28,15 @@ The rule (see `docs/WORKFLOW.md`): every thing in the log has one public page an
 page. Signed in, every public page shows a dashed owner bar with **Edit …**; every editor has
 **View ↗** back. The admin nav is Dives · Sites · People · Trips · Gear · Import.
 
-**Add a dive.** _+ New dive_ (top right of every admin page), or drop the Perdix XML on
-`/admin/import` and finish the draft. _Copy last dive_ pre-fills site, trip, people and kit.
-Site, trip and person can be created from inside the form (_+ New site_, _+ New trip_,
-_New person_). The sticky bar at the bottom saves; leaving with unsaved changes asks first.
-Photos, scans and exports are added after the first save. One file appears under `dives/`
-and one commit lands in the data repo.
+**Add a dive.** _+ New dive_ (admin bar, or the owner bar of any public page; _Log a dive
+here_ on a site page prefills the site), or drop the Perdix XML on `/admin/import` (a dry run
+shows what will happen) and finish the draft. On the form: _Same as previous dive_ fills site,
+buddies, tanks and trip from the previous dive; type depth, duration and time in (time out fills
+the duration); Ctrl/⌘-S or _Save_ in the bar at the bottom. Missing depth or duration is marked
+on the field, nothing is sent. Water temperature, surface interval and trip fill themselves and
+say so. A new site is made from the site picker's _+ New site_ (name and a tap on the map), a
+trip from _+ New trip_, a buddy with _Add person_. Photos picked before the first save upload
+right after it. One file appears under `dives/` and one commit lands in the data repo.
 
 **Sites, people, trips, regions.** Lists under `/admin/sites`, `/admin/people`,
 `/admin/trips`, `/admin/regions`; each record has its own editor page. A person can be deleted
@@ -41,11 +44,12 @@ once no dive names them; a trip editor creates or removes the override file
 (`trips/<slug>.md`) over the trip derived from the dive dates. A person's file is
 `first_last.md`; the public URL uses only the first name (or alias), never the surname.
 
-**Draw a map.** Site editor → _Open map editor_ (`/admin/sites/<id>/maps`), or _Maps_ in the
-owner bar of the site page. Stick maps take survey shots (distance / bearing / depth); site maps
+**Draw a map.** Site editor → _Maps_ tab (`/admin/sites/<id>/maps`), or _Create & draw a map_
+when creating the site. _Start from OpenStreetMap_ gives a starter site map to correct;
+nothing is stored until _Save map_. Stick maps take survey shots (distance / bearing / depth); site maps
 take shorelines, depth contours, dive paths and objects. Trace over a reference map or an
-uploaded map — the underlay is never published. The star on this page is the only place the
-map _shown first_ is set.
+uploaded map, or over the locator map itself — the underlay is never published. The _shown
+first_ radio on this page is the only place the map shown first is set.
 
 **Mark what a dive did on a map.** In the dive editor, _On the map_ (or _Mark route_ in the
 owner bar of the dive page) picks one of the site's drawn maps. Click the stations you reached

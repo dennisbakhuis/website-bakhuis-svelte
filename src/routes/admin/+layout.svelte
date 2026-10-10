@@ -6,7 +6,7 @@
   let { children, data } = $props();
 </script>
 
-<DivelogProvider config={divelogConfig}>
+<DivelogProvider config={divelogConfig} skipLink={false}>
   <AdminShell owner={data.owner}>
     {@render children()}
   </AdminShell>
