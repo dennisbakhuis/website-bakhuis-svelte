@@ -82,9 +82,45 @@ Media: bucket versioning in prod; in dev it is just a directory.
 ```fish
 make run                              # backend + Mailpit in Docker, SvelteKit on :5373
 make data-status                      # git status of the data checkout
-cd backend; uv run pytest             # ~330 tests on tests/fixtures/{data,commons}
-pnpm check; pnpm lint; pnpm test      # frontend gates
+make ci                               # lint, format, svelte-check, vitest + coverage, build
 ```
+
+### Four checkouts
+
+This repository is the personal site only. The dive log itself is two packages in the divelog
+monorepo, and the data is two git repositories; all four are sibling checkouts:
+
+| Checkout                 | What                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| `website-bakhuis-svelte` | this site: home, blog, contact, the personal config of the log                  |
+| `../divelog`             | monorepo: `packages/kit` (`@divelog/kit`), `packages/server` (`divelog-server`) |
+| `../divelog-data`        | the log (`DATA_REPO`), mounted at `/data/repo`                                  |
+| `../divelog-sites`       | the sites commons (`COMMONS_REPO`), mounted read-only at `/data/commons`        |
+
+**The kit** is consumed as a packed tarball, `vendor/divelog-kit-<version>.tgz`, referenced from
+`package.json` as `file:vendor/…`. The committed tarball _is_ the pin until the kit is published
+on npm. After changing the kit in the monorepo, `make kit-vendor` builds and packs it from
+`$DIVELOG_DIR/packages/kit` (default `../divelog`), replaces the tarball and reinstalls;
+`make kit-check` (local only, not in CI) fails when the tarball's version differs from the
+monorepo's. Bump the kit's version when its contents change, or `kit-check` cannot tell. The
+site sets everything personal in `src/lib/divelog-config.ts` (names, URL, title suffix, page
+copy, the home tile's text); the kit's defaults are neutral.
+
+**The server** is the `divelog-server` package. In dev, `docker-compose.yml` builds its `dev`
+image from `${DIVELOG_SERVER_DIR:-../divelog/packages/server}` and mounts that source for
+`--reload`; recreate after pulling the monorepo: `docker compose up -d --build backend`. The
+package's defaults are generic, so compose sets this site's `SITE_NAME`, `OWNER_NAME`,
+`OWNER_EMAIL`, `HOME_COUNTRIES`, mail templates, `SESSION_COOKIE_NAME`, sender, git author and
+S3 region explicitly (each overridable from `.env`). Its tests run in the monorepo
+(`cd ../divelog; uv run pytest packages/server`). Production runs the published image
+`ghcr.io/<owner>/divelog-server:<tag>`; the deploy passes `DIVELOG_SERVER_TAG` (default `latest`)
+next to the frontend tag.
+
+**The tools** (`divelog` CLI and the scripts below) run from this repository's small uv project
+(`pyproject.toml`, `bakhuis-site-tools`), which installs the server package editable from the
+monorepo: `uv sync`, then `uv run divelog …` or `uv run python scripts/<name>.py`. The CLI's
+`push` subcommands talk to `DIVELOG_API` (default `http://localhost:8000`); for the dev stack,
+`set -x DIVELOG_API http://127.0.0.1:8300`.
 
 Production mounts a clone of divelog-data at `DATA_ROOT`, a deploy key at `GIT_SSH_KEY_PATH`,
 `STATE_DIR` for sessions, and sets `GIT_ENABLED=true`. Run one uvicorn worker: the store is
@@ -108,7 +144,8 @@ back to the commons record. New maps on commons or forked sites get personal ids
 commons maps cannot be edited. Commons photos (`commons:` keys) are served from
 `/media/commons/…`, their WebP variants rendered once into `STATE_DIR/variants/`. Pull and
 reload in the admin cover both repositories (`COMMONS_GIT_ENABLED=true` lets pull fetch the
-commons; it is never committed to). Tests: `backend/tests/fixtures/commons`.
+commons; it is never committed to). Tests: `packages/server/tests/fixtures/commons` in the
+monorepo.
 
 In dev, `docker-compose.yml` mounts `${COMMONS_REPO:-../divelog-sites}` read-only at
 `/data/commons` and sets `COMMONS_ROOT=/data/commons`, next to `divelog-data` at `/data/repo`.
@@ -118,13 +155,20 @@ Outside compose (the CLI), `uv run divelog validate --kind log ../divelog-data` 
 `uv run divelog sites status ../divelog-data` find the commons through that manifest. After
 changing `COMMONS_REPO`, recreate the backend: `docker compose up -d --force-recreate backend`.
 
-## One-off scripts
+## One-off scripts and the CLI
 
-- `scripts/export_divelog.py` — the original workbook → files export (kept for reference).
-- `scripts/upload_media.py` — push scans and site images into the media store and record them.
-- `scripts/build_tiles.py` — cut the basemap tiles behind every site's locator map (below).
-- `scripts/trace_stickmap.py` — turn a scanned cave map into a drawn stick map (below).
-- `scripts/osm_sitemap.py` — starter site map from OpenStreetMap, check, render, merge, recentre, push (below).
+The site tooling is the `divelog` CLI of the server package (`uv run divelog --help`):
+
+- `divelog media upload` — push scans and site images into the media store and record them.
+- `divelog media fetch` — free Wikimedia Commons photos per site.
+- `divelog tiles` — cut the basemap tiles behind every site's locator map (below; `make tiles`).
+- `divelog stickmap` — turn a scanned cave map into a drawn stick map (below).
+- `divelog sitemap-osm` — starter site map from OpenStreetMap, check, render, merge, recentre, push (below).
+- `divelog sites access` — add access points to sites; `divelog import shearwater-pnf` — decode
+  Shearwater Cloud profiles.
+
+The workbook one-offs stay in `scripts/` (`export_divelog.py`, the original workbook → files
+export, kept for reference; `fill_*`, `fix_*`, `link_*`, `rebuild_split_profiles.py`, …).
 
 ## Locator maps
 
@@ -148,13 +192,13 @@ Pass `--build YYYYMMDD` when the latest-build probe fails. Data © OpenStreetMap
 ## Cave stick maps from scanned maps
 
 A cave site's drawn map is traced from a survey or line map (the cave-ha.com "cave lines"
-maps, a QRSS survey, a hand sketch) with `scripts/trace_stickmap.py`. The trace file records
+maps, a QRSS survey, a hand sketch) with `divelog stickmap`. The trace file records
 every station, T, jump and line end in _image pixels_, plus the scale bar and the entrance;
 the tool converts that into the site-map JSON (metres, entrance at the origin, north up) and
 draws it back over the source so a misplaced point is obvious.
 
 ```fish
-set tool "uv run --project backend python scripts/trace_stickmap.py"
+set tool uv run divelog stickmap
 $tool grid map.webp grid.png --zoom 2            # labelled pixel grid to read coordinates off
 $tool grid map.webp detail.png --crop 560,180,660,260 --zoom 4
 $tool build trace.json map.json                  # warns about loose nodes, odd Ts and ends
@@ -172,10 +216,10 @@ The map's `notes` credit the source map; the scan itself stays private in `maps/
 A lake, shore or wreck site starts from what OpenStreetMap knows: `fetch` writes `osm.json` and a
 starter `map.json` (shoreline, piers, buoys, wrecks, slipways, in metres around the site's
 coordinates); the objects, entries, depths and routes are then added by hand or traced from the
-site's own dive map with `trace_stickmap.py` and merged in.
+site's own dive map with `divelog stickmap` and merged in.
 
 ```fish
-set tool "uv run --project backend python scripts/osm_sitemap.py"
+set tool uv run divelog sitemap-osm
 $tool fetch nld-bussloo --out work/nld-bussloo --radius 500   # starter map + raw OSM extract (cached)
 $tool check work/nld-bussloo/map.json                          # schema + loose ends
 $tool render work/nld-bussloo/map.json work/bussloo.png        # look at it

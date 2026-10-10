@@ -4,41 +4,15 @@ name: CI
 # regressions surface before merge. The post-merge push to main/dev is
 # already validated by the PR run and would just re-run the same trees,
 # so the `push` trigger is intentionally omitted. Release artefacts on
-# merge are produced by docker-publish.yml.
+# merge are produced by docker-publish.yml. The backend and the dive-log
+# kit (with its API types) are built and tested in the divelog monorepo;
+# the kit arrives here as the vendored tarball in vendor/.
 on:
   pull_request:
     branches: [main, dev]
   workflow_dispatch:
 
 jobs:
-  backend:
-    name: Backend — ruff, mypy, pytest
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: backend/uv.lock
-
-      - name: Install dependencies
-        run: uv sync --frozen
-
-      - name: Lint
-        run: uv run ruff check app tests && uv run ruff format --check app tests
-
-      - name: Type check
-        run: uv run mypy app
-
-      - name: Unit tests
-        run: uv run pytest -q
-
   ci:
     name: Frontend — lint, test & build
     runs-on: ubuntu-latest
@@ -71,12 +45,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: backend/uv.lock
-
       - name: Version consistency — VERSION file is the source of truth
         run: pnpm run version:check
 
@@ -88,9 +56,6 @@ jobs:
 
       - name: Type check
         run: pnpm check
-
-      - name: API types match the backend schemas
-        run: pnpm types:check
 
       - name: Unit tests with coverage
         run: pnpm test:coverage

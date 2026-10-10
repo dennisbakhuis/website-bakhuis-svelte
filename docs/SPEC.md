@@ -35,26 +35,26 @@ content, blog editing in the browser (blog stays in git).
 
 ## 2. Locked decisions
 
-| Decision        | Value                                                                                                      |
-| --------------- | ---------------------------------------------------------------------------------------------------------- |
-| Frontend        | SvelteKit 2 + Svelte 5 (runes) + TypeScript strict, `@sveltejs/adapter-node`, port 3000                    |
-| Package manager | pnpm, Node 22 (`.nvmrc`), `VERSION` file + `scripts/sync-version.mjs`                                      |
-| Backend         | Python 3.13 + FastAPI + Pydantic v2, uv, port 8000, `/api/*` and `/media/*`                                |
-| Data            | Files in the private `divelog-data` git repo (Markdown + JSON), loaded into memory; git is the history     |
-| Media           | Hetzner Object Storage (S3) buckets `bakhuis-{prod,dev}-media`; served via the backend under `/media/*`    |
-| Auth            | Single owner. Passkey (WebAuthn) login + magic-link e-mail fallback, session cookie, rate-limited          |
-| Content         | Blog/TIL as Markdown via mdsvex in `src/content/{blog,til}/` — git is the CMS for writing                  |
-| Animation       | anime.js v4 (front page + a few tasteful touches elsewhere), `prefers-reduced-motion` honoured             |
-| Public maps     | MapLibre globe + site locators from self-hosted PMTiles under `/media/tiles`; SVG (Natural Earth) fallback |
-| Admin maps      | MapLibre GL + vector tiles from a single allow-listed origin, only under `/admin` (route-scoped CSP)       |
-| Styling         | Plain CSS custom properties (`src/lib/styles/tokens.css`), self-hosted fonts via `@fontsource`             |
-| Analytics       | Umami, server-side relay as in the other sites; no cookies for visitors, no consent banner                 |
-| Site language   | English UI and content (**TBD** — see §11)                                                                 |
-| Domain          | `dennisbakhuis.nl` (prod, from `main`), `dev.dennisbakhuis.nl` (from `dev`)                                |
-| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend, no database)     |
-| Backups         | The data repo is the backup (git, pushed after every edit), S3 versioning on media buckets                 |
-| Quality gates   | eslint `--max-warnings 0`, prettier, svelte-check, vitest ≥70 %; backend ruff + mypy strict + pytest       |
-| Commits         | No AI co-author trailers or footers, authored solely by Dennis                                             |
+| Decision        | Value                                                                                                             |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Frontend        | SvelteKit 2 + Svelte 5 (runes) + TypeScript strict, `@sveltejs/adapter-node`, port 3000                           |
+| Package manager | pnpm, Node 22 (`.nvmrc`), `VERSION` file + `scripts/sync-version.mjs`                                             |
+| Backend         | `divelog-server` (Python 3.13 + FastAPI + Pydantic v2) from the divelog monorepo, port 8000, `/api/*`, `/media/*` |
+| Data            | Files in the private `divelog-data` git repo (Markdown + JSON), loaded into memory; git is the history            |
+| Media           | Hetzner Object Storage (S3) buckets `bakhuis-{prod,dev}-media`; served via the backend under `/media/*`           |
+| Auth            | Single owner. Passkey (WebAuthn) login + magic-link e-mail fallback, session cookie, rate-limited                 |
+| Content         | Blog/TIL as Markdown via mdsvex in `src/content/{blog,til}/` — git is the CMS for writing                         |
+| Animation       | anime.js v4 (front page + a few tasteful touches elsewhere), `prefers-reduced-motion` honoured                    |
+| Public maps     | MapLibre globe + site locators from self-hosted PMTiles under `/media/tiles`; SVG (Natural Earth) fallback        |
+| Admin maps      | MapLibre GL + vector tiles from a single allow-listed origin, only under `/admin` (route-scoped CSP)              |
+| Styling         | Plain CSS custom properties (`src/lib/styles/tokens.css`), self-hosted fonts via `@fontsource`                    |
+| Analytics       | Umami, server-side relay as in the other sites; no cookies for visitors, no consent banner                        |
+| Site language   | English UI and content (**TBD** — see §11)                                                                        |
+| Domain          | `dennisbakhuis.nl` (prod, from `main`), `dev.dennisbakhuis.nl` (from `dev`)                                       |
+| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend, no database)            |
+| Backups         | The data repo is the backup (git, pushed after every edit), S3 versioning on media buckets                        |
+| Quality gates   | eslint `--max-warnings 0`, prettier, svelte-check, vitest with coverage; server gates run in the monorepo         |
+| Commits         | No AI co-author trailers or footers, authored solely by Dennis                                                    |
 
 Why files and not Postgres (decided 2026-09-27, replacing the earlier
 Postgres design): the log is ~700 records that change a few times a week, the
@@ -80,10 +80,10 @@ the owner marks them reviewed. Personal maps on a commons site get ids
 `<site>-p<n>`. Provenance (`verified`, `geo_source`) is public. Markdown
 bodies are rendered by the backend into `*_html` fields. The frontend reaches
 every page, API, media and tile path through one config and URL builder
-(`src/lib/dive/config.ts`), styles the log through a `--dl-*` token contract
-and `.dl-*` classes, and mounts the public and admin pages through two
-catch-all routes backed by route tables under `src/lib/divelog/`, so the same
-code can later be published as a package. The full plan, with the data split, the
+(`createUrls` in `@divelog/kit/core`, configured in `src/lib/divelog-config.ts`),
+styles the log through a `--dl-*` token contract and `.dl-*` classes, and mounts
+the public and admin pages through two catch-all routes backed by the kit's
+route tables (`@divelog/kit/routes`); kit and server live in the divelog monorepo. The full plan, with the data split, the
 commons repository and the later phases, is `docs/MODULE.md`.
 
 ---
@@ -175,7 +175,7 @@ and can be layered on top of the Descent hero if desired.
 
 ## 5. Dive log — `/dive`
 
-### 5.1 Data model (files in `divelog-data`; the Pydantic records in `backend/app/store/models.py` are the schema)
+### 5.1 Data model (files in `divelog-data`; the Pydantic records in `divelog_server/store/models.py` of the divelog monorepo are the schema)
 
 ```
 dive          id, number, date, time_in, duration_min, max_depth_m, avg_depth_m,
@@ -351,32 +351,42 @@ cover`), mdsvex with a `BlogPostLayout.svelte` as in voorvoet. TIL uses a
 
 ---
 
-## 10. Repository layout (target)
+## 10. Repository layout
+
+The site is a consumer of the divelog module (see `docs/MODULE.md`): the dive log's frontend is
+the `@divelog/kit` package and the backend is the `divelog-server` package, both from the
+divelog monorepo (`../divelog` in dev). The data lives in two more repositories.
 
 ```
-docs/                SPEC.md (this), DEPLOY.md, RUNBOOK.md (add a post, add dives, restore)
-backend/             FastAPI app (uv): app/{api,core,schemas,services,importers,store}, tests/
-  app/store/         loader, sources (log + commons), overlay merge, log repo, the merged Store, git
-  Dockerfile
+docs/                SPEC.md (this), RUNBOOK.md (kit, server, data, scripts), WORKFLOW.md, MODULE.md
 src/                 SvelteKit
   content/blog/      *.md
   content/til/       *.md
-  lib/dive/          config + URL builder, context, types (generated from the OpenAPI schema), sitemap model,
-                     filter, stats/charts/list/timeline/profile view logic, format
-  lib/divelog/       the future kit: anim helpers, OwnerBar/Toast, route tables + page components, server
-                     helpers (createDivelog, loaders, handleDivelog, seo, sitemap entries), og
-  lib/components/    dive/, map/, admin/ (the log's components), home/ (site only), shared
+  lib/divelog-config.ts   the log's personal config: names, site URL, title suffix, page copy, home tile
+  lib/divelog.server.ts   createDivelog bound to BACKEND_URL
+  lib/components/    home/ (Hero, Bubbles, Fish, DepthGauge, WritingTile), ContactForm, PostList, PostPage
   lib/anim/          site-only anime.js helpers: descent scroll, fish
-  lib/blog/          mdsvex layouts, remark plugins
-  lib/map/           TopoJSON projection, globe/locator helpers, viewport maths
+  lib/blog/          posts, mdsvex layouts, remark plugins
   lib/server/        email, cap, umami, rate limiter
-  lib/styles/        theme.css (site), divelog-tokens.css + divelog.css (the --dl-* contract), maplibre.css
-  routes/            +layout, /, dive/[...path] + dive/og, blog/, til/ (redirects), admin/[...path] + admin/login,
-                     contact, feed.xml, go/, health
+  lib/styles/        theme.css (the site's tokens; the kit's tokens.css + divelog.css map --dl-* onto them)
+  lib/seo.ts, site.ts, go-targets.ts, format.ts, forms/
+  routes/            +layout (kit styles, setMapWorkerUrl), / (DiveTile from @divelog/kit/widgets),
+                     dive/[...path] + dive/og (kit routes and diveOg), admin/[...path] + admin/login,
+                     blog/, til/ (redirects), contact, feed.xml, sitemap.xml, go/, health
+vendor/              divelog-kit-<version>.tgz — the kit, packed from the monorepo (make kit-vendor)
+scripts/             personal workbook one-offs (uv project in pyproject.toml, imports divelog_server)
 static/              favicons, og default
-.github/workflows/   ci.yml (frontend + backend), docker-publish.yml (two images), pr-source-gate.yml, prune-images.yml
-Dockerfile, docker-compose.yml (backend + mailpit for local dev), Makefile, VERSION
+.github/workflows/   ci.yml (frontend gates), docker-publish.yml (frontend image; deploy names the
+                     divelog-server tag), pr-source-gate.yml, prune-images.yml
+Dockerfile           frontend image only
+docker-compose.yml   dev: divelog-server built from ../divelog/packages/server + mailpit
+Makefile, VERSION, pyproject.toml + uv.lock (site tools)
 ```
+
+Elsewhere: `../divelog/packages/kit` (components, page routes, server helpers, OG cards, styles;
+its tests and the API-type drift check), `../divelog/packages/server` (FastAPI app, store, CLI,
+tests, `Dockerfile`, published as `ghcr.io/<owner>/divelog-server`), `../divelog-data` (the log),
+`../divelog-sites` (the sites commons).
 
 ---
 

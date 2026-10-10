@@ -2,12 +2,14 @@ name: Publish Docker image to GHCR
 
 # Builds the SvelteKit app image and pushes it to GitHub Container Registry.
 # TLS termination and request routing happen at the host's reverse proxy —
-# this image is the app only.
+# this image is the app only. The backend is not built here: it is the
+# divelog-server image published from the divelog monorepo
+# (ghcr.io/<owner>/divelog-server), and the deploy step names the tag to run
+# next to this frontend (DIVELOG_SERVER_TAG, default `latest`).
 #
 # Tagging by branch:
-#   Two images: website-bakhuis-svelte-frontend and -backend, same tags.
-#   main → ghcr.io/<owner>/website-bakhuis-svelte-{frontend,backend}:<VERSION>
-#         ghcr.io/<owner>/website-bakhuis-svelte-{frontend,backend}:latest
+#   main → ghcr.io/<owner>/website-bakhuis-svelte-frontend:<VERSION>
+#         ghcr.io/<owner>/website-bakhuis-svelte-frontend:latest
 #         (build fails if <VERSION> already exists — bump VERSION per release)
 #   dev  → …:dev          (rolling)
 #         …:dev-<sha7>   (immutable)
@@ -23,9 +25,10 @@ on:
     # still triggers, since nothing matches the ignore list.
     paths-ignore:
       - '**/*.md'
-      - 'backend/tests/**'
       - 'docs/**'
       - 'scripts/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
       - '.vscode/**'
       - '.editorconfig'
       - '.prettier*'
@@ -52,6 +55,11 @@ on:
         required: false
         type: string
         default: ''
+      divelog_server_tag:
+        description: 'Tag of ghcr.io/<owner>/divelog-server to run as the backend.'
+        required: false
+        type: string
+        default: 'latest'
 
 permissions:
   contents: read
@@ -74,8 +82,7 @@ jobs:
     # Skip entirely in deploy-only workflow_dispatch mode. The deploy
     # job runs the explicit (existing) image tag from the inputs.
     if: github.event_name == 'push' || inputs.deploy_service == ''
-    # One job per image; both are tagged identically so the server-side
-    # deploy script can roll them together.
+    # One image, the frontend; the backend image comes from the divelog repo.
     strategy:
       fail-fast: true
       matrix:
@@ -85,11 +92,6 @@ jobs:
             file: ./Dockerfile
             target: runtime
             title: dennisbakhuis.nl frontend (SvelteKit)
-          - name: backend
-            context: ./backend
-            file: ./backend/Dockerfile
-            target: runtime
-            title: dennisbakhuis.nl backend (FastAPI)
     outputs:
       # Exposed for the `deploy` job: the *immutable* tag we just pushed
       # (VERSION on main, dev-<sha7> on dev) and the matching service name
@@ -219,6 +221,9 @@ jobs:
       # so the || falls back to the build-job outputs.
       SERVICE: ${{ inputs.deploy_service || needs.build-and-push.outputs.deploy_service }}
       TAG: ${{ inputs.deploy_tag || needs.build-and-push.outputs.deploy_tag }}
+      # The backend image: an explicit dispatch input, else the repo variable,
+      # else `latest`.
+      DIVELOG_SERVER_TAG: ${{ inputs.divelog_server_tag || vars.DIVELOG_SERVER_TAG || 'latest' }}
     steps:
       - name: Join NetBird mesh
         env:
@@ -283,18 +288,20 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
 
           # The server's authorized_keys forces the deploy script
-          # regardless of what we send. The args below land in the script's
-          # $SSH_ORIGINAL_COMMAND for validation + execution. The script is
+          # regardless of what we send. The args below (service, frontend
+          # tag, backend image) land in the script's $SSH_ORIGINAL_COMMAND
+          # for validation + execution. The script is
           # itself idempotent — if `$TAG` matches the value already in the
           # server-side .env and the image hasn't changed, `docker
           # compose up -d` is a no-op and no container restart happens.
           # UserKnownHostsFile=/dev/null because GHA runners are ephemeral;
           # accept-new pins host key for this run only.
-          echo "::notice::deploying $SERVICE -> $TAG"
+          SERVER_IMAGE="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/divelog-server:${DIVELOG_SERVER_TAG}"
+          echo "::notice::deploying $SERVICE -> frontend $TAG, backend $SERVER_IMAGE"
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=accept-new \
               -o UserKnownHostsFile=/dev/null \
               -o ConnectTimeout=10 \
               -o ServerAliveInterval=30 \
               "$DEPLOY_USER@$DEPLOY_HOST" \
-              "$SERVICE $TAG"
+              "$SERVICE $TAG $SERVER_IMAGE"

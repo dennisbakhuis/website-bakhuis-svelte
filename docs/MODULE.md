@@ -265,12 +265,29 @@ Site tooling becomes CLI subcommands in the server package: `build_tiles.py` →
 
 ## Part 2 — Phases
 
-| Phase       | What                                                                                                                                                                                                                             | Result                                                                                                                     |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **A** (now) | Decouple in place in this repo                                                                                                                                                                                                   | Same site, same data, but every seam of 1.4 and 1.5 exists and is tested; a `COMMONS_ROOT` can be pointed at a second repo |
-| B           | Split the data: `divelog sites split` writes 210 commons cores to `../divelog-sites` and rewrites the log files as overlays; editorial pass on 42+ bodies; map rights pass; manifests; delete duplicated media-store site photos | Public API golden diff identical except additive keys; overlay edits commit to `divelog-data`                              |
-| C           | Extract to the monorepo (`backend/app` → `divelog_server`, `src/lib/divelog` → kit), reference app, CI, images, CLI; personal site consumes `@divelog/kit` + the server image                                                    | Reference app e2e smoke; personal site passes its gates; `publint` clean                                                   |
-| D           | Sharing: commons repo + CI, origin/attribution UI, listing filters, adopt-a-site, importer matching, propose/adopt CLI, commons pull + pin                                                                                       | A deliberately bad PR fails CI; adopt → dive → annotation on a commons map round-trips                                     |
+| Phase | What | Result |
+| **Phase C, done (10 Oct 2026).** The monorepo `../divelog` holds `packages/server`
+(`divelog-server`: the former `backend/app` as `divelog_server`, the `divelog` CLI with the site
+tooling as subcommands, generic defaults, `GET /api/v1/version`, a `dev`/`runtime` Dockerfile)
+and `packages/kit` (`@divelog/kit`: the former `src/lib/{dive,map,admin,divelog}`, the dive, map
+and admin components, `styles/{tokens,divelog,maplibre}.css`, the home `DiveTile` as a widget,
+OG cards with their fonts, the API types and their drift test), plus `apps/reference`. This site
+now consumes both: `backend/` is gone and compose builds the server's `dev` image from the
+monorepo with this site's settings set explicitly; the kit comes from the committed tarball
+`vendor/divelog-kit-0.1.0.tgz` (`make kit-vendor` / `make kit-check`); `src/lib` keeps only the
+site (home, blog, contact, Cap, Umami, CSP hooks, SEO, theme) and the personal config
+(`divelog-config.ts`: names, URL, title suffix, page copy, home tile text). The root layout
+hands the kit MapLibre's worker URL. CI runs the frontend gates only; `docker-publish.yml`
+builds the frontend image and the deploy names `ghcr.io/<owner>/divelog-server:<DIVELOG_SERVER_TAG>`.
+The personal scripts run from a root uv project on the server package; those that became CLI
+subcommands were removed. Every page, URL, API response and OG image is unchanged (golden diff
+additive-only, page statuses identical, OG PNGs byte-identical).
+
+----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **A** (now) | Decouple in place in this repo | Same site, same data, but every seam of 1.4 and 1.5 exists and is tested; a `COMMONS_ROOT` can be pointed at a second repo |
+| B | Split the data: `divelog sites split` writes 210 commons cores to `../divelog-sites` and rewrites the log files as overlays; editorial pass on 42+ bodies; map rights pass; manifests; delete duplicated media-store site photos | Public API golden diff identical except additive keys; overlay edits commit to `divelog-data` |
+| C (done) | Extract to the monorepo (`backend/app` → `divelog_server`, `src/lib/divelog` → kit), reference app, CI, images, CLI; personal site consumes `@divelog/kit` + the server image | Reference app e2e smoke; personal site passes its gates; `publint` clean |
+| D | Sharing: commons repo + CI, origin/attribution UI, listing filters, adopt-a-site, importer matching, propose/adopt CLI, commons pull + pin | A deliberately bad PR fails CI; adopt → dive → annotation on a commons map round-trips |
 
 ---
 
