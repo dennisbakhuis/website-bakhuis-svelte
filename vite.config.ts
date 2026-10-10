@@ -27,9 +27,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],
-    // The kit ships Svelte components and JSON imports that Node cannot load
-    // on its own; let Vite transform it like the app's own code.
-    server: { deps: { inline: ['@divelog/kit', 'world-atlas'] } },
+    // Vite's SSR transform of the kit drops the JSON import attribute, so
+    // world-atlas must go through Vite too instead of Node's own loader.
+    server: { deps: { inline: ['world-atlas'] } },
     passWithNoTests: false,
     coverage: {
       provider: 'v8',

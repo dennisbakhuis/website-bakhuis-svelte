@@ -30,7 +30,7 @@ services:
       STATE_DIR: /data/state
       MEDIA_ROOT: /data/media
       GIT_ENABLED: 'false'
-      APP_VERSION: ${APP_VERSION:-0.0.0-dev}
+      APP_VERSION: ${APP_VERSION:-}
       TRUSTED_PROXY_IPS: '0.0.0.0/0'
       SITE_NAME: ${SITE_NAME:-dennisbakhuis.nl}
       OWNER_NAME: ${OWNER_NAME:-Dennis}
