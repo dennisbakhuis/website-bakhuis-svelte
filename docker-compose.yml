@@ -16,11 +16,13 @@ services:
       - '127.0.0.1:8300:8000'
     env_file:
       - .env
-    # Branding (SITE_NAME, OWNER_NAME, HOME_COUNTRIES, MAIL_SUBJECT, MAIL_GREETING) and the
-    # optional commons (COMMONS_ROOT, COMMONS_GIT_ENABLED) come from .env; see .env.example.
+    # Branding (SITE_NAME, OWNER_NAME, HOME_COUNTRIES, MAIL_SUBJECT, MAIL_GREETING) and
+    # COMMONS_GIT_ENABLED come from .env; see .env.example. The sites commons checkout
+    # (COMMONS_REPO on the host) is mounted read-only at COMMONS_ROOT.
     environment:
       DEBUG: 'true'
       DATA_ROOT: /data/repo
+      COMMONS_ROOT: /data/commons
       STATE_DIR: /data/state
       GIT_ENABLED: 'false'
       APP_VERSION: ${APP_VERSION:-0.0.0-dev}
@@ -28,6 +30,7 @@ services:
     volumes:
       - ./backend:/app
       - ${DATA_REPO:-../divelog-data}:/data/repo
+      - ${COMMONS_REPO:-../divelog-sites}:/data/commons:ro
       - state:/data/state
       - ${MEDIA_DIR:-../divelog-media}:/data/media
     healthcheck:

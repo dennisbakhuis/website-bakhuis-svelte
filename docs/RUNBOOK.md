@@ -110,6 +110,14 @@ commons maps cannot be edited. Commons photos (`commons:` keys) are served from
 reload in the admin cover both repositories (`COMMONS_GIT_ENABLED=true` lets pull fetch the
 commons; it is never committed to). Tests: `backend/tests/fixtures/commons`.
 
+In dev, `docker-compose.yml` mounts `${COMMONS_REPO:-../divelog-sites}` read-only at
+`/data/commons` and sets `COMMONS_ROOT=/data/commons`, next to `divelog-data` at `/data/repo`.
+Both repositories sit side by side as sibling checkouts; the log's `divelog.yaml` names the
+commons (`path: ../divelog-sites`) and pins the commons commit it was validated against (`ref`).
+Outside compose (the CLI), `uv run divelog validate --kind log ../divelog-data` and
+`uv run divelog sites status ../divelog-data` find the commons through that manifest. After
+changing `COMMONS_REPO`, recreate the backend: `docker compose up -d --force-recreate backend`.
+
 ## One-off scripts
 
 - `scripts/export_divelog.py` — the original workbook → files export (kept for reference).
