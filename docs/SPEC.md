@@ -71,9 +71,12 @@ layers a read-only commons checkout (`COMMONS_ROOT`) under the personal log
 and resolves every site to one of three origins: `log` (a full personal
 record), `commons` (the commons record merged with an optional overlay file
 `sites/<id>.md` carrying `extends: commons`) or `fork` (a personal copy that
-shadows a commons id, `forked_from: commons@<sha>`). Objective fields of a
+shadows a commons id, `forked_from: commons@<revision>`). Objective fields of a
 commons site cannot be edited in place: the editor writes an overlay for
-personal material or a fork. Personal maps on a commons site get ids
+personal material or a fork. Site files and drawn maps carry their own
+`revision` and newest-first `changelog` in the file; overlays (`base_revision`)
+and forks stay pinned to the commons revision they were written against until
+the owner marks them reviewed. Personal maps on a commons site get ids
 `<site>-p<n>`. Provenance (`verified`, `geo_source`) is public. Markdown
 bodies are rendered by the backend into `*_html` fields. The frontend reaches
 every page, API, media and tile path through one config and URL builder

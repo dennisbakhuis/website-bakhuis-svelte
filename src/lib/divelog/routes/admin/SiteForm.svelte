@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { adminJson, AdminApiError } from '$lib/admin/client';
+  import { adminApi, adminJson, AdminApiError } from '$lib/admin/client';
   import { siteIdFor } from '$lib/admin/slug';
   import type { Price, Region, Site } from '$lib/dive/types';
   import { toast } from '$lib/divelog/stores/toast.svelte';
   import { getDivelog } from '$lib/dive/context';
+  import { formatDate } from '$lib/dive/format';
+  import { pinMessage } from '$lib/dive/revision';
 
   const { urls } = getDivelog();
 
@@ -162,6 +164,29 @@
       error = err instanceof AdminApiError ? err.message : 'Save failed';
     } finally {
       saving = false;
+    }
+  }
+
+  let pinning = $state(false);
+  const pin = $derived(site?.private?.pin ?? null);
+
+  async function markReviewed() {
+    if (!site || !pin) return;
+    pinning = true;
+    try {
+      const pinned = await adminJson<Site>(adminApi('sites', site.id, 'pin'), 'POST');
+      toast.show({
+        kind: 'success',
+        message: `${site.name} reviewed against commons revision ${pin.current_revision}`,
+      });
+      await onSaved(pinned);
+    } catch (err) {
+      toast.show({
+        kind: 'error',
+        message: err instanceof AdminApiError ? err.message : 'Could not mark as reviewed',
+      });
+    } finally {
+      pinning = false;
     }
   }
 
@@ -329,6 +354,44 @@
       <label>Geo source<input type="text" bind:value={form.geo_source} /></label>
     </div>
     <label>Provenance notes (private)<textarea rows="2" bind:value={form.notes}></textarea></label>
+
+    <fieldset class="sub versioning">
+      <legend>Revision</legend>
+      <p class="dl-num">
+        Revision {site.revision}{site.forked_from ? ` · forked from ${site.forked_from}` : ''}
+      </p>
+      {#if pin}
+        <div class="pin" class:stale={pin.stale}>
+          <span>{pinMessage(pin)}</span>
+          {#if pin.stale}
+            <button
+              type="button"
+              class="dl-btn dl-btn-ghost dl-btn-sm"
+              disabled={pinning}
+              onclick={markReviewed}
+              >{pinning
+                ? 'Marking…'
+                : `Mark as reviewed against revision ${pin.current_revision}`}</button
+            >
+          {/if}
+        </div>
+      {/if}
+      {#if site.changelog.length}
+        <ol class="changelog">
+          {#each site.changelog as entry (entry.revision)}
+            <li>
+              <span class="dl-num">r{entry.revision}</span>
+              <span class="dl-num faint">{formatDate(entry.date)}</span>
+              {entry.note}
+              {#if entry.author}<span class="faint">· {entry.author}</span>{/if}
+            </li>
+          {/each}
+        </ol>
+      {:else}
+        <p class="faint">No changes recorded yet.</p>
+      {/if}
+      <p class="hint">Revisions move on the server when an objective field changes.</p>
+    </fieldset>
   {/if}
 
   {#if error}<p class="error">{error}</p>{/if}
@@ -397,6 +460,32 @@
   .danger:hover {
     border-color: var(--dl-color-error);
     color: var(--dl-color-error);
+  }
+  .versioning p {
+    margin: 0;
+    font-size: 14px;
+  }
+  .faint {
+    color: var(--dl-color-text-faint);
+  }
+  .pin {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--dl-color-text-muted);
+  }
+  .pin.stale {
+    color: var(--dl-color-warm);
+  }
+  .changelog {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+    font-size: 13.5px;
   }
   .actions {
     display: flex;

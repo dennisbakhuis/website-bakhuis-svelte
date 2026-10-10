@@ -8,6 +8,7 @@
   import { flagEmoji, formatDate, formatDepth, pluralize } from '$lib/dive/format';
   import { barHeights, waterTempByMonth } from '$lib/dive/stats-view';
   import { getDivelog } from '$lib/dive/context';
+  import { forkedFromRevision, revisionLine } from '$lib/dive/revision';
 
   const { urls } = getDivelog();
 
@@ -34,6 +35,8 @@
   const latestPrice = $derived(
     [...site.prices].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null,
   );
+  const historyLine = $derived(revisionLine(site));
+  const forkRevision = $derived(forkedFromRevision(site.forked_from));
   const provenance = $derived(
     site.private
       ? `${site.verified ? `verified: ${site.verified}` : 'not verified'}${
@@ -154,6 +157,33 @@
           </div>
         {/if}
       </dl>
+      {#if historyLine || site.origin === 'fork'}
+        <div class="versioning">
+          {#if historyLine}<p class="revision dl-num">{historyLine}</p>{/if}
+          {#if site.origin === 'fork'}
+            <p class="revision">
+              {forkRevision !== null
+                ? `Forked from commons revision ${forkRevision}`
+                : 'Forked from the commons'}
+            </p>
+          {/if}
+          {#if site.changelog.length}
+            <details class="dl-detail history">
+              <summary>History</summary>
+              <ol>
+                {#each site.changelog as entry (entry.revision)}
+                  <li>
+                    <span class="dl-num rev">r{entry.revision}</span>
+                    <span class="dl-num faint">{formatDate(entry.date)}</span>
+                    <span class="note">{entry.note}</span>
+                    {#if entry.author}<span class="faint">· {entry.author}</span>{/if}
+                  </li>
+                {/each}
+              </ol>
+            </details>
+          {/if}
+        </div>
+      {/if}
     </div>
     <div class="map dl-card">
       {#snippet globe()}
@@ -437,6 +467,38 @@
   }
   .faint {
     color: var(--dl-color-text-faint);
+  }
+  .versioning {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--dl-color-text-muted);
+  }
+  .revision {
+    margin: 0 0 4px;
+  }
+  .history summary {
+    cursor: pointer;
+    font-family: var(--dl-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .history summary:hover {
+    color: var(--dl-color-text);
+  }
+  .history ol {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0 0 0 12px;
+    border-left: 1px solid var(--dl-color-border);
+    display: grid;
+    gap: 6px;
+  }
+  .history .rev {
+    color: var(--dl-color-accent);
+  }
+  .history .note {
+    color: var(--dl-color-text);
   }
   .map {
     padding: 0;

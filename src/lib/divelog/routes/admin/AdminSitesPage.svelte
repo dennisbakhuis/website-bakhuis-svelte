@@ -2,6 +2,7 @@
   import type { AdminDataFor } from '../admin';
   import type { Site } from '$lib/dive/types';
   import { getDivelog } from '$lib/dive/context';
+  import { pinMessage } from '$lib/dive/revision';
 
   const { urls } = getDivelog();
 
@@ -64,7 +65,8 @@
         <td
           ><a href={urls.admin.site(site.id)}>{site.name}</a>{#if site.area}<span class="muted">
               · {site.area}</span
-            >{/if}</td
+            >{/if}{#if site.private?.pin?.stale}
+            <span class="dl-tag stale" title={pinMessage(site.private.pin)}>stale</span>{/if}</td
         >
         <td>{site.country ?? site.country_code}</td>
         <td>{site.site_type}</td>
@@ -115,6 +117,11 @@
   }
   .n {
     text-align: right;
+  }
+  .stale {
+    --dl-tag-color: var(--dl-color-warm);
+    margin-left: 6px;
+    font-size: 10px;
   }
   .row-actions {
     white-space: nowrap;

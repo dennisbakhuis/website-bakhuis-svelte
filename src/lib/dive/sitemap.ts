@@ -12,6 +12,11 @@
  * azimuths, a geographic origin and a tracing underlay.
  */
 
+import type { components } from './api';
+
+/** One line of a drawn map's changelog: the revision it produced, when, by whom and why. */
+export type ChangeEntry = components['schemas']['ChangeEntry'];
+
 export type MapKind = 'stickmap' | 'sitemap';
 
 export type NodeType =
@@ -158,6 +163,7 @@ export type SiteMapOut = SiteMap & {
   site_id: string;
   sort: number;
   revision: number;
+  changelog: ChangeEntry[];
   updated_at: string | null;
 };
 

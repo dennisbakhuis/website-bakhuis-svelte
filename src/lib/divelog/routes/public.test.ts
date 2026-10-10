@@ -38,6 +38,9 @@ function site(over: Partial<Site>): Site {
     max_depth_m: null,
     maps: [],
     summary: null,
+    revision: 1,
+    changelog: [],
+    forked_from: null,
     ...over,
   } as Site;
 }

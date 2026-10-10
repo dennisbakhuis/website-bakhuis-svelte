@@ -323,6 +323,7 @@ describe('dive annotations', () => {
     ...map,
     id: 'm1',
     revision: 2,
+    changelog: [],
     site_id: 'ressel',
     sort: 0,
     updated_at: '2026-09-12T10:00:00Z',
@@ -522,7 +523,15 @@ describe('route highlights', () => {
     map = updateNode(map, b.id, { label: '', depth: 12 });
     map = updateNode(map, c.id, { label: 'Pit', depth: 18 });
     map = updateNode(map, d.id, { label: 'Sump', depth: 9 });
-    const out = { ...map, id: 'm1', revision: 1, site_id: 's', sort: 0, updated_at: null };
+    const out = {
+      ...map,
+      id: 'm1',
+      revision: 1,
+      changelog: [],
+      site_id: 's',
+      sort: 0,
+      updated_at: null,
+    };
     return { map: out, ids: [a.id, b.id, c.id, d.id] };
   }
 

@@ -78,9 +78,9 @@ sources: # log only
 
 **Site record split** (`SiteRecord` → `SiteCore` + overlay fields):
 
-| Commons (`SiteCore`, public)                                                                                                                                                                                                                          | Personal overlay (log repo)                                                                                                                                                      |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `site_id, name, full_name, short_name, aliases, region, country, area, system, type, water, halocline, halocline_m, lat, lon, access, section_vocabulary, summary, sources, default_map, maps, media (CC), geo_source, verified, location_visibility` | `notes, prices, reference_maps, subsurface_uuid, default_map` (preference), `summary_override`, extra `maps` (personal `-p` ids), extra `media` (own photos), personal body text |
+| Commons (`SiteCore`, public)                                                                                                                                                                                                                                               | Personal overlay (log repo)                                                                                                                                                                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `site_id, name, full_name, short_name, aliases, region, country, area, system, type, water, halocline, halocline_m, lat, lon, access, section_vocabulary, summary, sources, default_map, maps, media (CC), geo_source, verified, location_visibility, revision, changelog` | `base_revision` (pin), `notes, prices, reference_maps, subsurface_uuid, default_map` (preference), `summary_override`, extra `maps` (personal `-p` ids), extra `media` (own photos), personal body text |
 
 Corrections to the first instinct: `verified` and `geo_source` are **provenance**, which ODbL
 attribution and commons CI depend on, so they become public (today `site_out` in
@@ -91,9 +91,25 @@ property of the commons record; a sensitive site is either hidden there or not s
 
 1. `log` — full personal record in `log/sites/<id>.md` (today's file, no `extends`). Personal-only site.
 2. `commons` — commons record merged with an optional overlay `log/sites/<id>.md` carrying `extends: commons`.
-3. `fork` — full personal record that shadows a commons id, with `forked_from: commons@<sha>`. Reported as status, not error.
+3. `fork` — full personal record that shadows a commons id, with `forked_from: commons@<revision>` (older files: `commons@<sha>`, read as unpinned). Reported as status, not error.
 
 Overlay files keep today's path and filename so `git log sites/fra-ressel.md` stays continuous.
+
+**Versioning**: every site file carries `revision` (int ≥ 1, default 1 when absent) and a
+newest-first `changelog` of `{revision, date, author?, note}`, written after `geo_source`;
+drawn maps carry the same `changelog` after `revision` (a map PUT prepends an entry with the edit
+note). Only the server moves a revision: a save
+of a `log` site or a fork that changes an objective field bumps it and prepends an entry with the
+commit message as note (preference and overlay saves do not; new and imported sites start at 1;
+incoming `revision`/`changelog` on PUT are ignored). An overlay records `base_revision`, the
+commons revision it was first written against; a fork starts from the commons revision and
+changelog, bumps once ("Forked from commons revision N") and records `forked_from:
+commons@<N>`. When the commons moves past the pin (a missing pin counts once the commons is past
+revision 1) the store reports the site as stale (`SitePrivate.pin`, a notice in repo status);
+`POST /admin/sites/{id}/pin` moves the pin deliberately (a fork gets a "Reviewed against commons
+revision N" entry). `SiteOut` exposes `revision`, `changelog` and `forked_from` publicly, as
+attribution material. Validation (instance load and commons CI alike): `revision ≥ 1`, changelog
+revisions unique and strictly descending, the first equal to `revision`.
 
 **Merge rules** (`merge_site(base, overlay)`): overlay fields replace; `maps`, `media`,
 `aliases` concatenate; body = overlay body if non-empty, and the commons body is kept

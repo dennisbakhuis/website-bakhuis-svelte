@@ -35,6 +35,12 @@ export type SiteOrigin = Schemas['SiteOut']['origin'];
 /** Licence and source of a site record taken from a shared commons. */
 export type Attribution = Schemas['Attribution'];
 
+/** One line of a site's or drawn map's changelog, newest first. */
+export type { ChangeEntry } from './sitemap';
+
+/** How an overlay or fork stands against the current commons revision of its site. */
+export type PinState = Schemas['PinState'];
+
 export type Site = Narrow<
   Schemas['SiteOut'],
   { water: Water; location_visibility: LocationVisibility; attachments: Attachment[] }

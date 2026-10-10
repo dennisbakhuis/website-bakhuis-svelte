@@ -503,7 +503,9 @@ export interface paths {
      * @description Replace a site.
      *
      *     On a commons site only overlay material is accepted (422 otherwise); ``fork=true`` writes
-     *     a personal copy that shadows the commons record instead.
+     *     a personal copy that shadows the commons record instead. ``revision`` and ``changelog`` in
+     *     the body are ignored and the stored ones kept, so a stale editor form cannot rewind a
+     *     revision; the server moves to the next revision when an objective field changes.
      */
     put: operations['admin_update_site_api_v1_admin_sites__site_id__put'];
     post?: never;
@@ -519,6 +521,29 @@ export interface paths {
      * @description Change the default map, prices or location visibility; the latter is objective.
      */
     patch: operations['admin_patch_site_api_v1_admin_sites__site_id__patch'];
+    trace?: never;
+  };
+  '/api/v1/admin/sites/{site_id}/pin': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Admin Pin Site
+     * @description Mark an overlay or fork as reviewed against the current commons revision.
+     *
+     *     404 for a personal site, a site without a commons record, or a commons site without an
+     *     overlay: there is nothing pinned.
+     */
+    post: operations['admin_pin_site_api_v1_admin_sites__site_id__pin_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   '/api/v1/admin/sites/{site_id}/maps': {
@@ -1060,6 +1085,25 @@ export interface components {
        * @default false
        */
       first_together: boolean;
+    };
+    /**
+     * ChangeEntry
+     * @description One line of a record's changelog: the revision it produced, when, by whom and why.
+     */
+    ChangeEntry: {
+      /** Revision */
+      revision: number;
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
+      /** Author */
+      author: string | null;
+      /** Note */
+      note: string;
+    } & {
+      [key: string]: unknown;
     };
     /** CountryStat */
     CountryStat: {
@@ -2466,6 +2510,18 @@ export interface components {
       /** Sites */
       sites: number;
     };
+    /**
+     * PinState
+     * @description How a personal overlay or fork relates to the current commons revision of its site.
+     */
+    PinState: {
+      /** Pinned Revision */
+      pinned_revision: number | null;
+      /** Current Revision */
+      current_revision: number;
+      /** Stale */
+      stale: boolean;
+    };
     /** Price */
     'Price-Input': {
       /**
@@ -2828,7 +2884,7 @@ export interface components {
     };
     /**
      * SiteMapOut
-     * @description A drawn map as stored; ``revision`` counts saves, git holds the history.
+     * @description A drawn map as stored; ``revision`` counts saves, ``changelog`` says why, newest first.
      */
     SiteMapOut: {
       /**
@@ -2880,6 +2936,8 @@ export interface components {
       sort: number;
       /** Revision */
       revision: number;
+      /** Changelog */
+      changelog: components['schemas']['ChangeEntry'][];
       /** Updated At */
       updated_at: string | null;
     };
@@ -2961,6 +3019,15 @@ export interface components {
        */
       origin: 'log' | 'commons' | 'fork';
       attribution: components['schemas']['Attribution'] | null;
+      /**
+       * Revision
+       * @default 1
+       */
+      revision: number;
+      /** Changelog */
+      changelog: components['schemas']['ChangeEntry'][];
+      /** Forked From */
+      forked_from: string | null;
       private: components['schemas']['SitePrivate'] | null;
       /**
        * Description Html
@@ -2977,12 +3044,16 @@ export interface components {
       /** Location Visibility */
       location_visibility?: ('exact' | 'region_only') | null;
     };
-    /** SitePrivate */
+    /**
+     * SitePrivate
+     * @description Owner-only part of a site; ``pin`` is None for a personal site.
+     */
     SitePrivate: {
       /** Notes */
       notes: string | null;
       /** Reference Maps */
       reference_maps: components['schemas']['MapRef'][];
+      pin: components['schemas']['PinState'] | null;
     };
     /** SiteRef */
     SiteRef: {
@@ -4272,6 +4343,37 @@ export interface operations {
         'application/json': components['schemas']['SitePatch'];
       };
     };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SiteOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  admin_pin_site_api_v1_admin_sites__site_id__pin_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        site_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
     responses: {
       /** @description Successful Response */
       200: {

@@ -9,6 +9,7 @@ const drawn: SiteMapOut = {
   site_id: 's',
   sort: 0,
   revision: 1,
+  changelog: [],
   updated_at: null,
   version: 3,
   kind: 'stickmap',
