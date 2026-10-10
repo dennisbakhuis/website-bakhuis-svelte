@@ -1,4 +1,4 @@
 import type { PageLoad } from './$types';
-import { withAdminPage } from '$lib/divelog/routes/admin-pages';
+import { withAdminPage } from '@divelog/kit/routes';
 
 export const load: PageLoad = ({ data }) => withAdminPage(data);

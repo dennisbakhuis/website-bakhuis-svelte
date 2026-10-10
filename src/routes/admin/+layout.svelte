@@ -1,6 +1,6 @@
 <script lang="ts">
-  import DivelogProvider from '$lib/components/dive/DivelogProvider.svelte';
-  import AdminShell from '$lib/divelog/routes/admin/AdminShell.svelte';
+  import { DivelogProvider } from '@divelog/kit';
+  import { AdminShell } from '@divelog/kit/routes';
   import { divelogConfig } from '$lib/divelog-config';
 
   let { children, data } = $props();

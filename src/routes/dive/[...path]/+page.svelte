@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Snapshot } from './$types';
-  import DivePage from '$lib/divelog/routes/DivePage.svelte';
-  import type { PageSnapshot } from '$lib/divelog/routes/snapshot';
+  import { DivePage, type PageSnapshot } from '@divelog/kit/routes';
 
   let { data } = $props();
 

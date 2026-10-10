@@ -1,4 +1,4 @@
 import type { PageLoad } from './$types';
-import { withPublicPage } from '$lib/divelog/routes/public-pages';
+import { withPublicPage } from '@divelog/kit/routes';
 
 export const load: PageLoad = ({ data }) => withPublicPage(data);

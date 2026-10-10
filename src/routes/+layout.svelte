@@ -1,18 +1,20 @@
 <script lang="ts">
   import '$lib/styles/theme.css';
-  import '$lib/styles/divelog-tokens.css';
-  import '$lib/styles/divelog.css';
+  import '@divelog/kit/styles/tokens.css';
+  import '@divelog/kit/styles/divelog.css';
   import { page } from '$app/state';
   import { site } from '$lib/site';
   import { metaFor, canonicalUrl, personLD, jsonLdScript, ogImageFor } from '$lib/seo';
   import { urls } from '$lib/divelog-config';
   import { goHref } from '$lib/go-targets';
-  import Toast from '$lib/divelog/components/Toast.svelte';
   import { version } from '$app/environment';
   import { onMount } from 'svelte';
-  import { reducedMotion } from '$lib/divelog/anim/motion';
+  import { Toast, reducedMotion, setMapWorkerUrl } from '@divelog/kit';
+  import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 
   let { children, data } = $props();
+
+  setMapWorkerUrl(mapWorkerUrl);
 
   // Warm the anime.js chunk once so the first scroll reveal is not delayed by
   // a network round trip; the reveal/counter actions import it lazily.

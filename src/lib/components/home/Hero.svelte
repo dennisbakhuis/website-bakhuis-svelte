@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { site } from '$lib/site';
-  import { reducedMotion } from '$lib/divelog/anim/motion';
+  import { reducedMotion } from '@divelog/kit';
   import { urls } from '$lib/divelog-config';
 
   const words = site.name.split(' ').map((word) => word.split(''));

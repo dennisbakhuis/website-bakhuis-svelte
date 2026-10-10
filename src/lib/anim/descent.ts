@@ -1,4 +1,4 @@
-import { gradientAt, reducedMotion } from '$lib/divelog/anim/motion';
+import { gradientAt, reducedMotion } from '@divelog/kit';
 
 export const DESCENT_STOPS = [
   { at: 0, color: '#eaf4fb' },

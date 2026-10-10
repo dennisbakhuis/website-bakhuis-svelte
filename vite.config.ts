@@ -27,6 +27,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],
+    // The kit ships Svelte components and JSON imports that Node cannot load
+    // on its own; let Vite transform it like the app's own code.
+    server: { deps: { inline: ['@divelog/kit', 'world-atlas'] } },
     passWithNoTests: false,
     coverage: {
       provider: 'v8',
@@ -40,15 +43,14 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/lib/paraglide/**',
         'src/lib/anim/**',
-        'src/lib/divelog/anim/**',
         'src/lib/cap-widget-loader.ts',
       ],
       thresholds: {
         'src/lib/**': {
-          lines: 70,
-          functions: 70,
-          branches: 70,
-          statements: 70,
+          lines: 85,
+          functions: 90,
+          branches: 80,
+          statements: 85,
         },
       },
     },

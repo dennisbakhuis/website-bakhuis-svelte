@@ -4,7 +4,7 @@ COMPOSE ?= docker compose
 
 .PHONY: help install run dev up down logs data-pull data-status shell-backend \
 	build preview lint format format-check check test test-coverage \
-	backend-lint backend-format backend-typecheck backend-test backend-check ci types types-check og-fonts-check \
+	backend-lint backend-format backend-typecheck backend-test backend-check ci kit-vendor kit-check \
 	version version-sync version-check bump release docker-build
 
 help:  ## Show this help.
@@ -54,6 +54,29 @@ tiles-upload:  ## Cut the tiles and push tiles/ to the S3 bucket from backend/.e
 shell-backend:  ## Shell in the backend container
 	$(COMPOSE) exec backend bash
 
+## Divelog kit
+
+DIVELOG_DIR ?= ../divelog
+KIT_DIR := $(DIVELOG_DIR)/packages/kit
+
+kit-vendor:  ## Build and pack @divelog/kit from $(DIVELOG_DIR) into vendor/ and pin it in package.json
+	cd $(KIT_DIR) && pnpm --filter @divelog/kit build && pnpm pack --pack-destination $(CURDIR)/vendor
+	@v=$$(node -p "require('$(KIT_DIR)/package.json').version"); \
+	f=vendor/divelog-kit-$$v.tgz; \
+	test -f $$f || { echo "missing $$f" >&2; exit 1; }; \
+	for old in vendor/divelog-kit-*.tgz; do [ "$$old" = "$$f" ] || rm -f "$$old"; done; \
+	node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.dependencies['@divelog/kit']='file:$$f';const d=p.dependencies;p.dependencies=Object.fromEntries(Object.keys(d).sort().map(k=>[k,d[k]]));fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"; \
+	pnpm install; \
+	echo "Vendored $$f"
+
+kit-check:  ## Fail if vendor/'s kit tarball is not the version in $(DIVELOG_DIR) (local only)
+	@want=$$(node -p "require('$(KIT_DIR)/package.json').version"); \
+	f=$$(ls vendor/divelog-kit-*.tgz 2>/dev/null | head -n1); \
+	test -n "$$f" || { echo "no kit tarball in vendor/ (run make kit-vendor)" >&2; exit 1; }; \
+	have=$$(tar -xOzf $$f package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version"); \
+	if [ "$$have" != "$$want" ]; then echo "vendored kit $$have != $(KIT_DIR) $$want (run make kit-vendor)" >&2; exit 1; fi; \
+	echo "kit $$have matches $(KIT_DIR)"
+
 ## Build
 
 build:  ## Production build of the frontend
@@ -82,15 +105,6 @@ test:  ## Vitest unit suite
 test-coverage:  ## Vitest with V8 coverage
 	pnpm test:coverage
 
-types:  ## Regenerate src/lib/dive/api.d.ts from the backend's OpenAPI schema (offline, via uv)
-	pnpm types
-
-og-fonts-check:  ## Fail if src/lib/divelog/og/font-data.ts is out of date with the TTFs
-	pnpm og-fonts:check
-
-types-check:  ## Fail if src/lib/dive/api.d.ts is out of date with the backend schemas
-	pnpm types:check
-
 ## Quality (backend)
 
 backend-lint:  ## ruff check + format check
@@ -107,7 +121,7 @@ backend-test:  ## pytest (unit tests run locally; DB tests need `make up`)
 
 backend-check: backend-lint backend-typecheck backend-test  ## All backend checks
 
-ci: lint format-check check types-check og-fonts-check test-coverage backend-check build  ## Everything CI runs
+ci: lint format-check check test-coverage backend-check build  ## Everything CI runs
 
 ## Versioning
 

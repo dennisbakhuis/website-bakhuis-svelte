@@ -1,5 +1,5 @@
 <script lang="ts">
-  import LoginPage from '$lib/divelog/routes/admin/LoginPage.svelte';
+  import { LoginPage } from '@divelog/kit/routes';
 </script>
 
 <LoginPage />

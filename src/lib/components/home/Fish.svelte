@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { reducedMotion } from '$lib/divelog/anim/motion';
+  import { reducedMotion } from '@divelog/kit';
   import { createSchool, headingDeg, stepSchool, type Predator } from '$lib/anim/fish';
 
   let { progress }: { progress: number } = $props();

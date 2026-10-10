@@ -1,5 +1,5 @@
-# Frontend image (SvelteKit, adapter-node). The backend has its own
-# Dockerfile under backend/.
+# Frontend image (SvelteKit, adapter-node). The backend is the divelog-server
+# image, built from the divelog monorepo.
 
 # Stage 1: Builder
 FROM node:22-slim AS builder
@@ -9,6 +9,7 @@ WORKDIR /app
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml ./
+COPY vendor ./vendor
 RUN pnpm install --frozen-lockfile
 
 COPY . .

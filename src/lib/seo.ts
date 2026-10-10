@@ -1,5 +1,5 @@
 import { site } from '$lib/site';
-import { diveMetaFor, diveOgImageFor, type PageMeta } from '$lib/divelog/server/seo';
+import { diveMetaFor, diveOgImageFor, type PageMeta } from '@divelog/kit/server';
 import { urls } from '$lib/divelog-config';
 
 export const SITE_URL = 'https://dennisbakhuis.nl';

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AdminPage from '$lib/divelog/routes/AdminPage.svelte';
+  import { AdminPage } from '@divelog/kit/routes';
 
   let { data } = $props();
 </script>

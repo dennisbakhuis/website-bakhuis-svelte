@@ -1,7 +1,7 @@
 import { SITE_URL, pageMeta } from '$lib/seo';
 import { allPosts } from '$lib/blog/posts';
 import { divelog } from '$lib/divelog.server';
-import { diveSitemapEntries } from '$lib/divelog/server/sitemap';
+import { diveSitemapEntries } from '@divelog/kit/server';
 
 export const prerender = false;
 

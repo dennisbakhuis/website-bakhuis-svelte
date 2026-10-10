@@ -3,17 +3,16 @@
   import { site, skills, work, likes } from '$lib/site';
   import { goHref } from '$lib/go-targets';
   import { startDescent, type DescentState } from '$lib/anim/descent';
-  import { reveal } from '$lib/divelog/anim/reveal';
+  import { DivelogProvider, reveal } from '@divelog/kit';
+  import { latestMatches } from '@divelog/kit/core';
+  import { DiveTile } from '@divelog/kit/widgets';
   import Hero from '$lib/components/home/Hero.svelte';
   import DepthGauge from '$lib/components/home/DepthGauge.svelte';
   import Bubbles from '$lib/components/home/Bubbles.svelte';
   import Fish from '$lib/components/home/Fish.svelte';
-  import DiveTile from '$lib/components/home/DiveTile.svelte';
-  import DivelogProvider from '$lib/components/dive/DivelogProvider.svelte';
-  import { divelogConfig, urls } from '$lib/divelog-config';
+  import { divelogConfig, diveTile, urls } from '$lib/divelog-config';
   import WritingTile from '$lib/components/home/WritingTile.svelte';
   import { formatDate } from '$lib/format';
-  import { latestMatches } from '$lib/dive/sparkline';
 
   let { data } = $props();
 
@@ -101,7 +100,12 @@
     <div class="bento">
       <div class="bento-item bento-dive" data-reveal>
         <DivelogProvider config={divelogConfig}>
-          <DiveTile summary={data.summary} timeline={data.timeline} />
+          <DiveTile
+            summary={data.summary}
+            timeline={data.timeline}
+            title={diveTile.title}
+            blurb={diveTile.blurb}
+          />
         </DivelogProvider>
       </div>
       <div class="bento-item" data-reveal>

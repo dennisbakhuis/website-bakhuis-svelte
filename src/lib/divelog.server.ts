@@ -1,6 +1,6 @@
 /** This site's dive log bound to its backend; server only. */
 import { env } from '$env/dynamic/private';
-import { createDivelog } from '$lib/divelog/server/divelog';
+import { createDivelog } from '@divelog/kit/server';
 import { divelogConfig } from '$lib/divelog-config';
 
 export const divelog = createDivelog({

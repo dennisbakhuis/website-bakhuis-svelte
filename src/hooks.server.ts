@@ -2,7 +2,7 @@ import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { env } from '$env/dynamic/private';
 import { divelog } from '$lib/divelog.server';
-import { handleDivelog } from '$lib/divelog/server/handle';
+import { handleDivelog } from '@divelog/kit/server';
 import { trackEvent, referrerHost } from '$lib/server/umami';
 
 // Endpoints that are machinery rather than pages: the container healthcheck,

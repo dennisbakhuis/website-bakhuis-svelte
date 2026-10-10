@@ -9,7 +9,7 @@ import {
   pageMeta,
   personLD,
 } from './seo';
-import { DEFAULT_CONFIG, createUrls } from '$lib/dive/config';
+import { DEFAULT_CONFIG, createUrls } from '@divelog/kit/core';
 
 describe('seo', () => {
   it('builds canonical urls without trailing slashes', () => {

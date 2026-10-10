@@ -10,7 +10,7 @@
     type FormFailureCode,
   } from '$lib/forms/contact-schema';
   import { capWidgetI18nProps } from '$lib/forms/cap-widget-i18n';
-  import { toast } from '$lib/divelog/stores/toast.svelte';
+  import { toast } from '@divelog/kit';
 
   type Props = { data: SuperValidated<ContactFormData> };
 
