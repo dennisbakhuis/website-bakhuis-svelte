@@ -17,7 +17,7 @@ export async function GET({ fetch }): Promise<Response> {
 
   const entries = [
     ...staticPaths,
-    ...blogSitemapEntries(blog),
+    ...(await blogSitemapEntries(blog)),
     ...(await diveSitemapEntries(divelog, fetch)),
   ]
     .map(

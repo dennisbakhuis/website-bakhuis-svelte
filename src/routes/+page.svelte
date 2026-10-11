@@ -4,7 +4,7 @@
   import { goHref } from '$lib/go-targets';
   import { startDescent, type DescentState } from '$lib/anim/descent';
   import { DivelogProvider, reveal } from '@divelog/kit';
-  import { latestMatches } from '@divelog/kit/core';
+  import { formatDate, latestMatches } from '@divelog/kit/core';
   import { DiveTile } from '@divelog/kit/widgets';
   import Hero from '$lib/components/home/Hero.svelte';
   import DepthGauge from '$lib/components/home/DepthGauge.svelte';
@@ -12,8 +12,7 @@
   import Fish from '$lib/components/home/Fish.svelte';
   import { divelogConfig, diveTile, urls } from '$lib/divelog-config';
   import { WritingTile } from '@blog/kit/widgets';
-  import { formatDate } from '@blog/kit/core';
-  import { blogUrls, kindLabel } from '$lib/blog-config';
+  import { blogConfig } from '$lib/blog-config';
 
   let { data } = $props();
 
@@ -110,7 +109,7 @@
         </DivelogProvider>
       </div>
       <div class="bento-item" data-reveal>
-        <WritingTile posts={data.writing} href={blogUrls.list()} {kindLabel} />
+        <WritingTile posts={data.writing} config={blogConfig} />
       </div>
       {#each likes.filter((l) => l.id !== 'diving' && l.id !== 'writing') as like (like.id)}
         <a class="bento-item bento-link" href={like.href ?? '#'} data-reveal>

@@ -11,7 +11,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_VERSION = readFileSync(join(__dirname, 'VERSION'), 'utf8').trim();
 
 // `[[dive:409]]` and `[[site:mex-mayan-blue]]` in posts link into the dive log,
-// mounted at the kit's default base like src/lib/divelog-config.ts.
+// mounted at the kit's default base like src/lib/divelog-config.ts (a TypeScript
+// module this file cannot import); src/lib/crosslinks.test.ts fails if they part.
 const dive = createUrls(DEFAULT_CONFIG);
 
 /** @type {import('@blog/kit/config').CrosslinkResolvers} */

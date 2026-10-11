@@ -15,7 +15,7 @@ export const blogConfig = resolveConfig({
     kicker: 'Blog',
     title: 'Writing',
     kindTitles: { til: 'Today I learned' },
-    lede: 'Longer articles on Python, machine learning, data engineering and diving, mixed with short <abbr title="Today I learned">TIL</abbr> notes: one command, one gotcha, one thing that cost an hour.',
+    lede: 'Longer articles on Python, machine learning, data engineering and diving, mixed with short TIL notes: one command, one gotcha, one thing that cost an hour.',
     pageTitle: 'Blog',
     description:
       'Articles on Python, machine learning, data engineering and diving, plus short TIL notes.',
@@ -27,8 +27,3 @@ export const blogConfig = resolveConfig({
 });
 
 export const blogUrls = createUrls(blogConfig);
-
-/** A kind's singular label (`Article`, `TIL`) for the home tile. */
-export function kindLabel(kind: string): string {
-  return blogConfig.kinds.find((k) => k.kind === kind)?.label ?? kind;
-}

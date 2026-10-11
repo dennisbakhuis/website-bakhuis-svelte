@@ -1,24 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { articleLd, postMeta } from '@blog/kit/core';
+import { articleLd, kindLabel, postMeta } from '@blog/kit/core';
 import { blog } from './blog';
-import { blogConfig, blogUrls, kindLabel } from './blog-config';
+import { blogConfig, blogUrls } from './blog-config';
 
 describe('blog', () => {
-  it('collects the articles and TIL notes newest first', () => {
-    const { all } = blog.posts;
-    expect(blog.posts.ofKind('blog').length).toBeGreaterThan(0);
-    expect(blog.posts.ofKind('til').length).toBeGreaterThan(0);
-    expect(all.length).toBe(blog.posts.ofKind('blog').length + blog.posts.ofKind('til').length);
-    const dates = all.map((p) => p.date);
+  it('collects the articles and TIL notes newest first', async () => {
+    const posts = await blog.posts();
+    expect(posts.ofKind('blog').length).toBeGreaterThan(0);
+    expect(posts.ofKind('til').length).toBeGreaterThan(0);
+    expect(posts.all.length).toBe(posts.ofKind('blog').length + posts.ofKind('til').length);
+    const dates = posts.all.map((p) => p.date);
     expect(dates).toEqual([...dates].sort().reverse());
   });
 
-  it('serves posts under /blog', () => {
-    const post = blog.posts.find('why-i-log-every-dive');
+  it('serves posts under /blog, loading one at a time', async () => {
+    const post = await blog.post('why-i-log-every-dive');
     expect(post?.kind).toBe('blog');
     expect(post?.path).toBe('/blog/why-i-log-every-dive');
     expect(post?.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(blog.posts.find('postgres-jsonb-containment')?.kind).toBe('til');
+    expect((await blog.post('postgres-jsonb-containment'))?.kind).toBe('til');
+    expect(await blog.post('no-such-post')).toBeUndefined();
   });
 
   it('keeps the list, feed and redirect URLs', () => {
@@ -47,8 +48,7 @@ describe('blog', () => {
   });
 
   it('labels the kinds on the home tile', () => {
-    expect(kindLabel('blog')).toBe('Article');
-    expect(kindLabel('til')).toBe('TIL');
-    expect(kindLabel('other')).toBe('other');
+    expect(kindLabel(blogConfig, 'blog')).toBe('Article');
+    expect(kindLabel(blogConfig, 'til')).toBe('TIL');
   });
 });

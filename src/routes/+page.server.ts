@@ -6,5 +6,5 @@ import { blog } from '$lib/blog';
 
 export const load: PageServerLoad = async ({ fetch }) => ({
   ...(await loadDiveSummary(divelog, fetch)),
-  writing: loadLatestWriting(blog, 3),
+  writing: await loadLatestWriting(blog),
 });

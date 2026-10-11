@@ -5,9 +5,4 @@
   let { data } = $props();
 </script>
 
-<BlogPostPage
-  post={data.post}
-  config={blogConfig}
-  urls={blogUrls}
-  tagHref={(tag, backHref) => `${backHref}?tag=${tag}`}
-/>
+<BlogPostPage post={data.post} config={blogConfig} urls={blogUrls} />

@@ -43,7 +43,7 @@ content, blog editing in the browser (blog stays in git).
 | Data            | Files in the private `divelog-data` git repo (Markdown + JSON), loaded into memory; git is the history            |
 | Media           | Hetzner Object Storage (S3) buckets `bakhuis-{prod,dev}-media`; served via the backend under `/media/*`           |
 | Auth            | Single owner. Passkey (WebAuthn) login + magic-link e-mail fallback, session cookie, rate-limited                 |
-| Content         | Blog/TIL as Markdown via mdsvex in `src/content/{blog,til}/` — git is the CMS for writing                         |
+| Content         | Blog/TIL as Markdown in `src/content/{blog,til}/`, compiled by `@blog/kit` — git is the CMS for writing           |
 | Animation       | anime.js v4 (front page + a few tasteful touches elsewhere), `prefers-reduced-motion` honoured                    |
 | Public maps     | MapLibre globe + site locators from self-hosted PMTiles under `/media/tiles`; SVG (Natural Earth) fallback        |
 | Admin maps      | MapLibre GL + vector tiles from a single allow-listed origin, only under `/admin` (route-scoped CSP)              |
@@ -313,9 +313,9 @@ Wi-Fi is the primary use case.
 
 - Served by the blog module `@blog/kit` (repo `../blog`, vendored in `vendor/`); the markdown
   and the personal config (`src/lib/blog-config.ts`) stay in this site.
-- Markdown with frontmatter (`title, date, updated, tags, summary, draft,
-cover`), mdsvex with a `BlogPostLayout.svelte` as in voorvoet. TIL uses a
-  lighter layout: title, date, tags, body — no cover, no summary required.
+- Markdown with frontmatter (`title, date, updated, tags, summary, words, draft,
+external`; dates `YYYY-MM-DD`), compiled by the kit's `blogPreprocess` (mdsvex). TIL notes
+  use the compact list layout: title, date, tags — no summary or reading time.
 - Syntax highlighting at build time (Shiki), copy button, dark/light themes
   from tokens. Math via KaTeX. Footnotes, callouts, image captions.
 - Index pages: reverse-chronological, tag filter, year grouping, reading time.
@@ -366,17 +366,18 @@ src/                 SvelteKit
   content/til/       *.md
   lib/divelog-config.ts   the log's personal config: names, site URL, title suffix, page copy, home tile
   lib/divelog.server.ts   createDivelog bound to BACKEND_URL
-  lib/components/    home/ (Hero, Bubbles, Fish, DepthGauge, WritingTile), ContactForm, PostList, PostPage
+  lib/blog-config.ts      the blog's personal config: names, site URL, copy, kinds
+  lib/blog.ts        createBlog over the lazily globbed src/content (@blog/kit)
+  lib/components/    home/ (Hero, Bubbles, Fish, DepthGauge), ContactForm
   lib/anim/          site-only anime.js helpers: descent scroll, fish
-  lib/blog/          posts, mdsvex layouts, remark plugins
   lib/server/        email, cap, umami, rate limiter
   lib/styles/        theme.css (the site's tokens; the kit's tokens.css + divelog.css map --dl-* onto them)
-  lib/seo.ts, site.ts, go-targets.ts, format.ts, cap-widget-loader.ts, forms/
-  routes/            +layout (kit styles, setMapWorkerUrl), / (DiveTile from @divelog/kit/widgets),
+  lib/seo.ts, site.ts, go-targets.ts, cap-widget-loader.ts, forms/
+  routes/            +layout (kit styles, setMapWorkerUrl), / (DiveTile and WritingTile from the kits' widgets),
                      dive/[...path] + dive/og (kit routes and diveOg), admin/[...path] + admin/login,
-                     blog/, til/ (redirects), contact, privacy, api/cap/ (challenge, redeem),
+                     blog/ (thin @blog/kit wrappers), til/ (redirects), contact, privacy, api/cap/,
                      feed.xml, sitemap.xml, robots.txt, go/, health
-vendor/              divelog-kit-<version>.tgz — the kit, packed from the monorepo (make kit-vendor)
+vendor/              divelog-kit-<version>.tgz (make kit-vendor) and blog-kit-<version>.tgz (make blog-vendor)
 scripts/             personal workbook one-offs (uv project in pyproject.toml, imports divelog_server)
 static/              favicons, og default
 .github/workflows/   ci.yml (frontend gates), docker-publish.yml (frontend image; deploy names the
@@ -390,7 +391,7 @@ data/                raw dive-log sources (git-ignored; the curated set lives in
 Elsewhere: `../divelog/packages/kit` (components, page routes, server helpers, OG cards, styles;
 its tests and the API-type drift check), `../divelog/packages/server` (FastAPI app, store, CLI,
 tests, `Dockerfile`, published as `ghcr.io/<owner>/divelog-server`), `../divelog-data` (the log),
-`../divelog-sites` (the sites commons).
+`../divelog-sites` (the sites commons), `../blog` (`@blog/kit` and its reference app).
 
 ---
 
