@@ -1,5 +1,7 @@
 import { urls } from '$lib/divelog-config';
 
+export const SITE_URL = 'https://dennisbakhuis.nl';
+
 export const site = {
   name: 'Dennis Bakhuis',
   role: 'Data scientist & engineer',

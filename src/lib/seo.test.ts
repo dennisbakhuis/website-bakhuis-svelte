@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  articleLD,
   canonicalUrl,
   diveMetaFor,
   jsonLdScript,
@@ -44,16 +43,17 @@ describe('seo', () => {
     expect(html.startsWith('<script type="application/ld+json">')).toBe(true);
   });
 
-  it('describes the person and articles', () => {
+  it('describes the person', () => {
     expect(personLD()['@type']).toBe('Person');
-    const article = articleLD({
-      title: 'A',
-      description: 'B',
-      path: '/blog/a',
-      date: '2024-01-01',
+    expect(personLD().url).toBe('https://dennisbakhuis.nl/');
+  });
+
+  it('keeps the blog list meta', () => {
+    expect(pageMeta['/blog']).toEqual({
+      title: 'Blog — Dennis Bakhuis',
+      description:
+        'Articles on Python, machine learning, data engineering and diving, plus short TIL notes.',
     });
-    expect(article.dateModified).toBe('2024-01-01');
-    expect(article.url).toBe('https://dennisbakhuis.nl/blog/a');
   });
 });
 

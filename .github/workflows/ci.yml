@@ -5,8 +5,9 @@ name: CI
 # already validated by the PR run and would just re-run the same trees,
 # so the `push` trigger is intentionally omitted. Release artefacts on
 # merge are produced by docker-publish.yml. The backend and the dive-log
-# kit (with its API types) are built and tested in the divelog monorepo;
-# the kit arrives here as the vendored tarball in vendor/.
+# kit (with its API types) are built and tested in the divelog monorepo,
+# the blog kit in the blog repo; both arrive here as vendored tarballs in
+# vendor/.
 on:
   pull_request:
     branches: [main, dev]

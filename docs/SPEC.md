@@ -311,6 +311,8 @@ Wi-Fi is the primary use case.
 
 ## 8. Blog and TIL
 
+- Served by the blog module `@blog/kit` (repo `../blog`, vendored in `vendor/`); the markdown
+  and the personal config (`src/lib/blog-config.ts`) stay in this site.
 - Markdown with frontmatter (`title, date, updated, tags, summary, draft,
 cover`), mdsvex with a `BlogPostLayout.svelte` as in voorvoet. TIL uses a
   lighter layout: title, date, tags, body — no cover, no summary required.

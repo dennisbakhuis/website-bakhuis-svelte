@@ -4,7 +4,8 @@ Personal website of Dennis Bakhuis: profile, online dive log, blog and TIL.
 SvelteKit frontend, same conventions as the other Dinkellabs sites. The dive
 log is the divelog module: `@divelog/kit` (vendored in `vendor/`) for the pages
 and `divelog-server` for the backend, both from the divelog monorepo checked out
-next to this one (`../divelog`). The design contract lives in
+next to this one (`../divelog`). The blog is the blog module: `@blog/kit`
+(vendored in `vendor/`) from the blog repo in `../blog`; the posts stay here. The design contract lives in
 [docs/SPEC.md](docs/SPEC.md); how the pieces fit in [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ```fish
@@ -33,7 +34,8 @@ The dive log is a directory of Markdown and JSON files — the private
 | Data      | Files in the private `divelog-data` git repo, loaded into memory               |
 | Media     | Local files in dev (`MEDIA_ROOT`), S3 (Hetzner Object Storage) in prod         |
 | Auth      | Owner-only magic link → session cookie                                         |
-| Content   | Markdown via mdsvex (`src/content/{blog,til}`), Shiki highlighting             |
+| Blog      | `@blog/kit` (packed tarball in `vendor/`, `make blog-vendor`) from `../blog`   |
+| Content   | Markdown in `src/content/{blog,til}`, compiled by the kit (mdsvex, Shiki)      |
 | Animation | anime.js v4 (front page "Descent", reveals, counters, profile)                 |
 | Map       | MapLibre on self-hosted PMTiles (in the kit)                                   |
 | Tests     | Vitest here; the kit and the server are tested in the monorepo                 |
@@ -41,20 +43,22 @@ The dive log is a directory of Markdown and JSON files — the private
 
 ## Common commands
 
-| Command                 | Purpose                         |
-| ----------------------- | ------------------------------- |
-| `make run`              | Everything for local dev        |
-| `make up` / `make down` | Just the Docker services        |
-| `make data-pull`        | Pull divelog-data and reload    |
-| `make data-status`      | Status of the data checkout     |
-| `make check`            | svelte-check                    |
-| `make lint`             | ESLint (zero warnings)          |
-| `make test`             | Vitest                          |
-| `make kit-vendor`       | Re-pack the kit from ../divelog |
-| `make kit-check`        | Vendored kit = monorepo kit     |
-| `make ci`               | Everything CI runs              |
-| `make build`            | Production frontend build       |
-| `make docker-build`     | Frontend production image       |
+| Command                 | Purpose                           |
+| ----------------------- | --------------------------------- |
+| `make run`              | Everything for local dev          |
+| `make up` / `make down` | Just the Docker services          |
+| `make data-pull`        | Pull divelog-data and reload      |
+| `make data-status`      | Status of the data checkout       |
+| `make check`            | svelte-check                      |
+| `make lint`             | ESLint (zero warnings)            |
+| `make test`             | Vitest                            |
+| `make kit-vendor`       | Re-pack the kit from ../divelog   |
+| `make kit-check`        | Vendored kit = monorepo kit       |
+| `make blog-vendor`      | Re-pack the blog kit from ../blog |
+| `make blog-check`       | Vendored blog kit = repo kit      |
+| `make ci`               | Everything CI runs                |
+| `make build`            | Production frontend build         |
+| `make docker-build`     | Frontend production image         |
 
 ## Project structure
 
@@ -62,11 +66,13 @@ The dive log is a directory of Markdown and JSON files — the private
 src/
   content/          blog + TIL markdown
   lib/divelog-config.ts  the dive log's personal config (names, URL, copy)
+  lib/blog-config.ts     the blog's personal config (names, URL, copy, kinds)
+  lib/blog.ts       the posts: src/content globbed and handed to @blog/kit
   lib/anim/         anime.js helpers (descent, fish)
-  lib/components/   home/, contact form, post list/page
+  lib/components/   home/ (hero, gauge, fish, bubbles), contact form
   lib/server/       cap, e-mail, rate limiter, umami
-  routes/           /, dive/ + admin/ (kit catch-alls), blog/, til/ (redirects), contact, feed.xml, …
-vendor/             @divelog/kit tarball
+  routes/           /, dive/ + admin/ (kit catch-alls), blog/ + feed.xml (thin kit wrappers), til/ (redirects), contact, …
+vendor/             @divelog/kit and @blog/kit tarballs
 scripts/            personal data one-offs (uv project, imports divelog_server)
 docs/SPEC.md        the spec
 ```
@@ -75,6 +81,9 @@ docs/SPEC.md        the spec
 
 - **Blog post**: `src/content/blog/<slug>.md` with frontmatter
   `title, date, tags, summary, words` (optional `updated`, `draft`, `external`).
+  `[[dive:409]]` and `[[site:mex-mayan-blue|text]]` link into the dive log (resolvers in
+  `svelte.config.js`). Pages, feed and markdown pipeline come from `@blog/kit`; the copy and
+  kinds are in `src/lib/blog-config.ts`. Drafts show in `pnpm dev` only.
 - **TIL**: same in `src/content/til/`. TIL notes show up in `/blog` as a filter (`?kind=til`); `/til` redirects there.
 - **Dives**: through `/admin` — form, photos, logbook scans, or a Subsurface
   import that creates drafts.

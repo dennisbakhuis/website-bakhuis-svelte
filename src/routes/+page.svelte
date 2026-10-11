@@ -11,8 +11,9 @@
   import Bubbles from '$lib/components/home/Bubbles.svelte';
   import Fish from '$lib/components/home/Fish.svelte';
   import { divelogConfig, diveTile, urls } from '$lib/divelog-config';
-  import WritingTile from '$lib/components/home/WritingTile.svelte';
-  import { formatDate } from '$lib/format';
+  import { WritingTile } from '@blog/kit/widgets';
+  import { formatDate } from '@blog/kit/core';
+  import { blogUrls, kindLabel } from '$lib/blog-config';
 
   let { data } = $props();
 
@@ -109,7 +110,7 @@
         </DivelogProvider>
       </div>
       <div class="bento-item" data-reveal>
-        <WritingTile posts={data.writing} />
+        <WritingTile posts={data.writing} href={blogUrls.list()} {kindLabel} />
       </div>
       {#each likes.filter((l) => l.id !== 'diving' && l.id !== 'writing') as like (like.id)}
         <a class="bento-item bento-link" href={like.href ?? '#'} data-reveal>

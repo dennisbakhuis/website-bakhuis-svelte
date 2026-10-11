@@ -1,11 +1,13 @@
 <script lang="ts">
-  import PostPage from '$lib/components/PostPage.svelte';
+  import { BlogPostPage } from '@blog/kit';
+  import { blogConfig, blogUrls } from '$lib/blog-config';
 
   let { data } = $props();
 </script>
 
-<PostPage
+<BlogPostPage
   post={data.post}
-  backHref={data.post.kind === 'til' ? '/blog?kind=til' : '/blog'}
-  backLabel={data.post.kind === 'til' ? 'All TIL notes' : 'All writing'}
+  config={blogConfig}
+  urls={blogUrls}
+  tagHref={(tag, backHref) => `${backHref}?tag=${tag}`}
 />

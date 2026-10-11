@@ -89,10 +89,11 @@ make data-status                      # git status of the data checkout
 make ci                               # lint, format, svelte-check, vitest + coverage, build
 ```
 
-### Four checkouts
+### Five checkouts
 
 This repository is the personal site only. The dive log itself is two packages in the divelog
-monorepo, and the data is two git repositories; all four are sibling checkouts:
+monorepo, the data is two git repositories and the blog's code is the blog repository; all five
+are sibling checkouts:
 
 | Checkout                 | What                                                                            |
 | ------------------------ | ------------------------------------------------------------------------------- |
@@ -100,6 +101,7 @@ monorepo, and the data is two git repositories; all four are sibling checkouts:
 | `../divelog`             | monorepo: `packages/kit` (`@divelog/kit`), `packages/server` (`divelog-server`) |
 | `../divelog-data`        | the log (`DATA_REPO`), mounted at `/data/repo`                                  |
 | `../divelog-sites`       | the sites commons (`COMMONS_REPO`), mounted read-only at `/data/commons`        |
+| `../blog`                | `packages/kit` (`@blog/kit`): blog pages, feed, markdown pipeline; no server    |
 
 **The kit** is consumed as a packed tarball, `vendor/divelog-kit-<version>.tgz`, referenced from
 `package.json` as `file:vendor/…`. The committed tarball _is_ the pin until the kit is published
@@ -109,6 +111,13 @@ on npm. After changing the kit in the monorepo, `make kit-vendor` builds and pac
 monorepo's. Bump the kit's version when its contents change, or `kit-check` cannot tell. The
 site sets everything personal in `src/lib/divelog-config.ts` (names, URL, title suffix, page
 copy, the home tile's text); the kit's defaults are neutral.
+
+**The blog kit** works the same way: `vendor/blog-kit-<version>.tgz`, `make blog-vendor` builds
+and packs it from `$BLOG_DIR/packages/kit` (default `../blog`) and `make blog-check` compares the
+versions. The posts stay in `src/content/{blog,til}`; `src/lib/blog.ts` globs them and hands them
+to `createBlog`, `src/lib/blog-config.ts` holds the personal config (names, URL, copy, kinds),
+and `svelte.config.js` passes the `[[dive:…]]` / `[[site:…]]` resolvers to `blogPreprocess`.
+The `blog/`, `feed.xml` and `til/` routes are a few lines each around the kit's helpers.
 
 **The server** is the `divelog-server` package. In dev, `docker-compose.yml` builds its `dev`
 image from `${DIVELOG_SERVER_DIR:-../divelog/packages/server}` and mounts that source for

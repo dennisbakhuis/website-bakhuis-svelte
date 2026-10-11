@@ -4,6 +4,7 @@ COMPOSE ?= docker compose
 
 .PHONY: help install run dev up down logs data-pull data-status shell-backend tiles tiles-upload \
 	build preview lint format format-check check test test-coverage ci kit-vendor kit-check \
+	blog-vendor blog-check \
 	version version-sync version-check bump release docker-build
 
 help:  ## Show this help.
@@ -75,6 +76,29 @@ kit-check:  ## Fail if vendor/'s kit tarball is not the version in $(DIVELOG_DIR
 	have=$$(tar -xOzf $$f package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version"); \
 	if [ "$$have" != "$$want" ]; then echo "vendored kit $$have != $(KIT_DIR) $$want (run make kit-vendor)" >&2; exit 1; fi; \
 	echo "kit $$have matches $(KIT_DIR)"
+
+## Blog kit
+
+BLOG_DIR ?= ../blog
+BLOG_KIT_DIR := $(BLOG_DIR)/packages/kit
+
+blog-vendor:  ## Build and pack @blog/kit from $(BLOG_DIR) into vendor/ and pin it in package.json
+	cd $(BLOG_KIT_DIR) && pnpm --filter @blog/kit build && pnpm pack --pack-destination $(CURDIR)/vendor
+	@v=$$(node -p "require('$(BLOG_KIT_DIR)/package.json').version"); \
+	f=vendor/blog-kit-$$v.tgz; \
+	test -f $$f || { echo "missing $$f" >&2; exit 1; }; \
+	for old in vendor/blog-kit-*.tgz; do [ "$$old" = "$$f" ] || rm -f "$$old"; done; \
+	node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.dependencies['@blog/kit']='file:$$f';const d=p.dependencies;p.dependencies=Object.fromEntries(Object.keys(d).sort().map(k=>[k,d[k]]));fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"; \
+	pnpm install; \
+	echo "Vendored $$f"
+
+blog-check:  ## Fail if vendor/'s blog kit tarball is not the version in $(BLOG_DIR) (local only)
+	@want=$$(node -p "require('$(BLOG_KIT_DIR)/package.json').version"); \
+	f=$$(ls vendor/blog-kit-*.tgz 2>/dev/null | head -n1); \
+	test -n "$$f" || { echo "no blog kit tarball in vendor/ (run make blog-vendor)" >&2; exit 1; }; \
+	have=$$(tar -xOzf $$f package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version"); \
+	if [ "$$have" != "$$want" ]; then echo "vendored blog kit $$have != $(BLOG_KIT_DIR) $$want (run make blog-vendor)" >&2; exit 1; fi; \
+	echo "blog kit $$have matches $(BLOG_KIT_DIR)"
 
 ## Build
 

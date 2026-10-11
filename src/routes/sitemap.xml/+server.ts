@@ -1,7 +1,8 @@
 import { SITE_URL, pageMeta } from '$lib/seo';
-import { allPosts } from '$lib/blog/posts';
+import { blog } from '$lib/blog';
 import { divelog } from '$lib/divelog.server';
 import { diveSitemapEntries } from '@divelog/kit/server';
+import { blogSitemapEntries } from '@blog/kit/server';
 
 export const prerender = false;
 
@@ -10,14 +11,15 @@ function priorityOf(path: string): string {
 }
 
 export async function GET({ fetch }): Promise<Response> {
-  const staticPaths = Object.keys(pageMeta).filter((p) => p !== '/privacy');
-  const postPaths = allPosts.filter((p) => !p.external).map((p) => p.path);
-  const sitePaths = [...staticPaths, ...postPaths].map((path) => ({
-    path,
-    priority: priorityOf(path),
-  }));
+  const staticPaths = Object.keys(pageMeta)
+    .filter((p) => p !== '/privacy')
+    .map((path) => ({ path, priority: priorityOf(path) }));
 
-  const entries = [...sitePaths, ...(await diveSitemapEntries(divelog, fetch))]
+  const entries = [
+    ...staticPaths,
+    ...blogSitemapEntries(blog),
+    ...(await diveSitemapEntries(divelog, fetch)),
+  ]
     .map(
       ({ path, priority }) =>
         `  <url>\n    <loc>${SITE_URL}${path === '/' ? '' : path}</loc>\n    <priority>${priority}</priority>\n  </url>`,

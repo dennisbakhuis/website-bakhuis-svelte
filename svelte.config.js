@@ -1,27 +1,33 @@
 import adapter from '@sveltejs/adapter-node';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-import { mdsvex } from 'mdsvex';
+import { BLOG_EXTENSIONS, blogPreprocess } from '@blog/kit/config';
+import { DEFAULT_CONFIG, createUrls } from '@divelog/kit/core';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { highlighter } from './src/lib/blog/highlight.js';
-import { remarkCrosslinks } from './src/lib/blog/crosslinks.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const APP_VERSION = readFileSync(join(__dirname, 'VERSION'), 'utf8').trim();
 
-/** @type {import('mdsvex').MdsvexOptions} */
-const mdsvexOptions = {
-  extensions: ['.md'],
-  highlight: { highlighter },
-  remarkPlugins: [remarkCrosslinks],
+// `[[dive:409]]` and `[[site:mex-mayan-blue]]` in posts link into the dive log,
+// mounted at the kit's default base like src/lib/divelog-config.ts.
+const dive = createUrls(DEFAULT_CONFIG);
+
+/** @type {import('@blog/kit/config').CrosslinkResolvers} */
+const crosslinks = {
+  dive: (ref) => {
+    if (!/^\d+$/.test(ref)) return null;
+    const number = String(Number(ref));
+    return { href: dive.dive(number), text: `dive #${number}` };
+  },
+  site: (ref) => ({ href: dive.site(ref.toLowerCase()) }),
 };
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-  extensions: ['.svelte', '.md'],
-  preprocess: [vitePreprocess(), mdsvex(mdsvexOptions)],
+  extensions: ['.svelte', ...BLOG_EXTENSIONS],
+  preprocess: [vitePreprocess(), blogPreprocess({ crosslinks })],
   kit: {
     adapter: adapter(),
     version: { name: APP_VERSION },

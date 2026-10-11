@@ -2,10 +2,13 @@
   import '$lib/styles/theme.css';
   import '@divelog/kit/styles/tokens.css';
   import '@divelog/kit/styles/divelog.css';
+  import '@blog/kit/styles/tokens.css';
+  import '@blog/kit/styles/blog.css';
   import { page } from '$app/state';
   import { site } from '$lib/site';
   import { metaFor, canonicalUrl, personLD, jsonLdScript, ogImageFor } from '$lib/seo';
   import { urls } from '$lib/divelog-config';
+  import { blogConfig, blogUrls } from '$lib/blog-config';
   import { goHref } from '$lib/go-targets';
   import { version } from '$app/environment';
   import { onMount } from 'svelte';
@@ -35,7 +38,7 @@
 
   const nav = [
     { href: urls.log(), label: 'Dive log' },
-    { href: '/blog', label: 'Blog' },
+    { href: blogUrls.list(), label: 'Blog' },
     { href: '/contact', label: 'Contact' },
   ];
 
@@ -78,8 +81,8 @@
     <link
       rel="alternate"
       type="application/rss+xml"
-      title="{site.name} — writing"
-      href="/feed.xml"
+      title={blogConfig.copy.feedTitle}
+      href={blogUrls.feed()}
     />
     {#if isHome}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON.stringify output with `<` escaped -->
@@ -139,9 +142,9 @@
         <h3>Site</h3>
         <a href={urls.log()}>Dive log</a>
         <a href={urls.gear()}>Dive gear</a>
-        <a href="/blog">Blog</a>
-        <a href="/blog?kind=til">Today I learned</a>
-        <a href="/feed.xml">RSS</a>
+        <a href={blogUrls.list()}>Blog</a>
+        <a href={blogUrls.list({ kind: 'til' })}>Today I learned</a>
+        <a href={blogUrls.feed()}>RSS</a>
       </div>
       <div class="footer-col">
         <h3>Elsewhere</h3>

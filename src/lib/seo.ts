@@ -1,10 +1,12 @@
-import { site } from '$lib/site';
+import { SITE_URL, site } from '$lib/site';
 import { diveMetaFor, diveOgImageFor, type PageMeta } from '@divelog/kit/server';
+import { blogPageMeta, jsonLdScript } from '@blog/kit/core';
 import { urls } from '$lib/divelog-config';
+import { blogConfig, blogUrls } from '$lib/blog-config';
 
-export const SITE_URL = 'https://dennisbakhuis.nl';
+export { SITE_URL };
 
-export { diveMetaFor, diveOgImageFor, type PageMeta };
+export { diveMetaFor, diveOgImageFor, jsonLdScript, type PageMeta };
 
 export const pageMeta: Record<string, PageMeta> = {
   '/': {
@@ -12,11 +14,7 @@ export const pageMeta: Record<string, PageMeta> = {
     description: `${site.name}: data scientist and engineer with a physics PhD, based in the Netherlands. Machine learning, data engineering, diving and writing.`,
   },
   ...diveMetaFor(urls, site.name),
-  '/blog': {
-    title: `Blog — ${site.name}`,
-    description:
-      'Articles on Python, machine learning, data engineering and diving, plus short TIL notes.',
-  },
+  [blogUrls.base]: blogPageMeta(blogConfig),
   '/contact': {
     title: `Contact — ${site.name}`,
     description: 'Get in touch about projects, talks, or diving.',
@@ -58,28 +56,4 @@ export function personLD(): Record<string, unknown> {
     address: { '@type': 'PostalAddress', addressLocality: 'Enschede', addressCountry: 'NL' },
     sameAs: Object.values(site.social).filter(Boolean),
   };
-}
-
-export function articleLD(input: {
-  title: string;
-  description: string;
-  path: string;
-  date: string;
-  updated?: string;
-}): Record<string, unknown> {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: input.title,
-    description: input.description,
-    url: canonicalUrl(input.path),
-    datePublished: input.date,
-    dateModified: input.updated ?? input.date,
-    author: { '@type': 'Person', name: site.name, url: `${SITE_URL}/` },
-  };
-}
-
-export function jsonLdScript(data: Record<string, unknown>): string {
-  const json = JSON.stringify(data).replace(/</g, '\\u003c');
-  return `<script type="application/ld+json">${json}</script>`;
 }
