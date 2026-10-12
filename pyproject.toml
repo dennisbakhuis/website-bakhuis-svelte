@@ -1,11 +1,10 @@
 [project]
 name = "bakhuis-site-tools"
 version = "0.0.0"
-description = "One-off data scripts of dennisbakhuis.nl, run with `uv run python scripts/<name>.py`"
+description = "Installs divelog-server so the `divelog` CLI runs from this checkout (`uv run divelog …`, `make tiles`)"
 requires-python = ">=3.13"
 dependencies = [
   "divelog-server",
-  "openpyxl>=3.1",
 ]
 
 [tool.uv]
@@ -13,9 +12,3 @@ package = false
 
 [tool.uv.sources]
 divelog-server = { path = "../divelog/packages/server", editable = true }
-
-[tool.pyright]
-include = ["scripts"]
-venvPath = "."
-venv = ".venv"
-pythonVersion = "3.13"
