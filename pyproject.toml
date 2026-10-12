@@ -13,3 +13,9 @@ package = false
 
 [tool.uv.sources]
 divelog-server = { path = "../divelog/packages/server", editable = true }
+
+[tool.pyright]
+include = ["scripts"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.13"
