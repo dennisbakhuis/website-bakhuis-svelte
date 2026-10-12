@@ -1,19 +1,23 @@
 # Runbook — the dive log
 
 The dive log is a directory of files: the private **divelog-data** repository. The backend loads
-it into memory, serves it, and writes every admin edit back as one git commit. Postgres is gone.
+it into memory, serves it, and writes every admin edit back as one git commit. The file format is
+[FORMAT.md](../../divelog/docs/FORMAT.md) in the divelog repo; this checkout holds:
 
 ```
 divelog-data/
+  divelog.yaml              manifest: format, kind, the commons it layers on
   dives/00457.md            one dive: YAML frontmatter + the story as Markdown
   sites/<site_id>.md        one site: frontmatter (coordinates, type, prices, maps…) + prose
   regions/<region>.md       shared context for a group of sites
   people/<first_last>.md    one buddy; surname, e-mail and notes are owner-only
+  gear/{items,setups}.json  equipment and named setups
   profiles/*.json           dive-computer samples (columnar)
   computer/records.json     computer dives without a matching profile
   maps/seed/*.{json,svg}    hand-drawn schematics — ours, publishable
   maps/drawn/<id>.json      maps made in the site editor — ours, publishable
   maps/reference/           third-party maps — NEVER public, served only to the owner
+  maps/traces/              work files behind the drawn maps
   media/sites/*.jpg         CC-licensed site photos (credits in media/manifest.json)
   imports/*.json            what each dive-computer import did
   archive/divelog_index.xlsx the retired workbook
@@ -24,7 +28,7 @@ Binary media (photos, logbook scans, avatars) is **not** in git: it lives in the
 
 ## Everyday
 
-The rule (see `docs/WORKFLOW.md`): every thing in the log has one public page and one editor
+The rule: every thing in the log has one public page and one editor
 page. Signed in, every public page shows a dashed owner bar with **Edit …**; every editor has
 **View ↗** back. The admin nav is Dives · Sites · People · Trips · Gear · Import.
 
@@ -129,95 +133,64 @@ S3 region explicitly (each overridable from `.env`). Its tests run in the monore
 `ghcr.io/<owner>/divelog-server:<tag>`; the deploy passes `DIVELOG_SERVER_TAG` (default `latest`)
 next to the frontend tag.
 
-**The tools** (`divelog` CLI and the scripts below) run from this repository's small uv project
-(`pyproject.toml`, `bakhuis-site-tools`), which installs the server package editable from the
-monorepo: `uv sync`, then `uv run divelog …` or `uv run python scripts/<name>.py`. The CLI's
-`push` subcommands talk to `DIVELOG_API` (default `http://localhost:8000`); for the dev stack,
-`set -x DIVELOG_API http://127.0.0.1:8300`.
+**The `divelog` CLI** runs from this repository's uv project (`pyproject.toml`, `uv.lock`),
+which installs the server package editable from the monorepo: `uv sync`, then
+`uv run divelog …`. The CLI's `push` subcommands talk to `DIVELOG_API` (default
+`http://localhost:8000`); for the dev stack, `set -x DIVELOG_API http://127.0.0.1:8300`.
 
 Production mounts a clone of divelog-data at `DATA_ROOT`, a deploy key at `GIT_SSH_KEY_PATH`,
 `STATE_DIR` for sessions, and sets `GIT_ENABLED=true`. Run one uvicorn worker: the store is
 in-process.
 
-### Two repositories
+### The commons
 
-`COMMONS_ROOT` (optional) points at a read-only checkout of a shared site repository
-(`divelog-sites`: `sites/`, `regions/`, `maps/drawn/`, `maps/seed/`, `media/`, a `divelog.yaml`
-with `kind: sites`). Unset, the log is the only source and nothing changes. Set, every site id
-resolves to one **origin**: `log` (a full record in `divelog-data/sites/<id>.md`, personal only),
-`commons` (the commons record with an optional **overlay**), or `fork` (a full log record that
-shadows a commons id, reported under `notices` in `/api/v1/admin/repo/status`, not as an error).
-An overlay keeps the usual path `sites/<id>.md` but starts with `extends: commons` and carries
-only personal material: `notes`, `prices`, `reference_maps`, `subsurface_uuid`,
-`summary_override`, a preferred `default_map`, extra `aliases`/`maps`/`media`, and the personal
-body (the commons body stays available as `body_md_commons`). Editing an objective field of a
-commons site answers 422 "commons site; fork to edit"; `PUT …?fork=true` writes a fork with
-`forked_from: commons@<sha>`. Deleting a commons site removes its overlay; deleting a fork falls
-back to the commons record. New maps on commons or forked sites get personal ids `<site>-p<n>`;
-commons maps cannot be edited. Commons photos (`commons:` keys) are served from
-`/media/commons/…`, their WebP variants rendered once into `STATE_DIR/variants/`. Pull and
-reload in the admin cover both repositories (`COMMONS_GIT_ENABLED=true` lets pull fetch the
-commons; it is never committed to). Tests: `packages/server/tests/fixtures/commons` in the
-monorepo.
+The log layers on the shared site commons (`../divelog-sites`): every site resolves to the origin
+`log`, `commons` (with an optional overlay in `sites/<id>.md`) or `fork`
+(`forked_from: commons@<revision>`). The format is in
+[FORMAT.md](../../divelog/docs/FORMAT.md), the admin side (origin badges, stale chips, _Fork to
+edit_, _Mark as reviewed_, _pull commons_) in [KIT.md](../../divelog/docs/KIT.md), and proposing
+and adopting sites in [CONTRIBUTING.md](../../divelog/docs/CONTRIBUTING.md). Commons photos are
+served from `/media/commons/…`, their WebP variants rendered once into `STATE_DIR/variants/`.
 
 In dev, `docker-compose.yml` mounts `${COMMONS_REPO:-../divelog-sites}` read-only at
 `/data/commons` and sets `COMMONS_ROOT=/data/commons`, next to `divelog-data` at `/data/repo`.
-Both repositories sit side by side as sibling checkouts; the log's `divelog.yaml` names the
-commons (`path: ../divelog-sites`) and pins the commons commit it was validated against (`ref`).
-Outside compose (the CLI), `uv run divelog validate --kind log ../divelog-data` and
-`uv run divelog sites status ../divelog-data` find the commons through that manifest. After
-changing `COMMONS_REPO`, recreate the backend: `docker compose up -d --force-recreate backend`.
+`COMMONS_GIT_ENABLED` stays `false` in dev, so the CLI does the pull. The log's `divelog.yaml`
+names the commons (`path: ../divelog-sites`) and pins the commit it was validated against
+(`ref`); outside compose the CLI finds the commons through that manifest. After changing
+`COMMONS_REPO`, recreate the backend: `docker compose up -d --force-recreate backend`.
 
 ### Day to day with the commons
 
-All commands run from this repository (`uv run divelog …`, the server package installed from
-the monorepo) with the sibling checkouts `../divelog-data` and `../divelog-sites`. For the
-CLI's `push` subcommands against the dev stack, set the API first (fish):
+All commands run from this repository with the sibling checkouts `../divelog-data` and
+`../divelog-sites`. For the CLI's `push` subcommands against the dev stack, set
+`DIVELOG_API` first (above).
 
 ```fish
-set -x DIVELOG_API http://127.0.0.1:8300
+uv run divelog commons pull --log ../divelog-data --author "Dennis Bakhuis"   # pull, pin, list stale sites
+uv run divelog sites status ../divelog-data            # origin, revision and pin; ends with "… 0 stale"
+uv run divelog validate --kind log ../divelog-data
+uv run divelog sites propose <site-id> --commons ../divelog-sites --log ../divelog-data --dry-run
+uv run divelog sites adopt <site-id> --log ../divelog-data    # or --all, once the PR is merged and pulled
 ```
 
-**Pull.** `uv run divelog commons pull --log ../divelog-data --author "Dennis Bakhuis"` runs
-`git pull --ff-only` in the commons named by `divelog.yaml`, moves the log's `ref` pin to the new
-head, commits `Pin the commons at <sha>` in the log, and lists the sites whose overlay or fork is
-now behind (`site  origin  pinned/current`). A commons checkout without an upstream branch is not
-pulled; its local head is pinned. `--ref <sha>` pins another commit of the commons. In the admin,
-_pull commons_ in the admin bar does the same through `POST /api/v1/admin/commons/pull` (needs
-`COMMONS_GIT_ENABLED=true`; in dev it stays `false` and the CLI does the pull). The backend
-picks up the new pin by itself; otherwise `make data-pull` or _pull_ reloads it.
+The backend picks up a new pin by itself; otherwise `make data-pull` or _pull_ reloads it. Review
+a stale site in its editor (_Mark as reviewed against revision N_), or
+`curl -b <cookies> -X POST http://localhost:8300/api/v1/admin/sites/<id>/pin`; in dev, commit
+the rewritten `base_revision` in the data checkout yourself (`GIT_ENABLED=false`). Without
+`--dry-run`, `propose` writes a branch `propose/<site-id>` in `../divelog-sites`: push it to your
+fork of the commons and open a PR.
 
-**Review what went stale.** Stale sites show up three ways: the `N notices` badge in the admin
-bar (`GET /api/v1/admin/repo/status` → `notices`, one line per site: "overlay pinned to commons
-revision 1, commons is at 2"), a _stale_ tag in the origin column of `/admin/sites` (filter
-"All origins"), and the Revision box of the site editor, which shows the commons changelog.
-Read the new revision against your overlay (notes, summary override, personal body) and adjust
-the overlay if the commons now says something it repeated.
+To change the commons itself (in `../divelog-sites`): edit, raise `revision` by one with a
+changelog entry, then
 
-**Pin.** In the site editor, _Mark as reviewed against revision N_; or
-`curl -b <cookies> -X POST http://localhost:8300/api/v1/admin/sites/<id>/pin`. Either rewrites
-`base_revision` in `../divelog-data/sites/<id>.md` (and commits it when `GIT_ENABLED=true`; in
-dev commit the checkout yourself). `uv run divelog sites status ../divelog-data` ends with
-`… 0 stale` once every site is reviewed.
+```fish
+uv run divelog validate --kind sites --base HEAD ../divelog-sites   # 0 errors; warnings are for the reviewer
+uv run divelog maps changed --base HEAD --root ../divelog-sites
+```
 
-**Propose** a personal site (origin `log`) to the commons:
-`uv run divelog sites propose <site-id> --commons ../divelog-sites --log ../divelog-data`
-writes the core record and its drawn maps (minus `--skip-map <map-id>`) to a branch
-`propose/<site-id>` of the commons checkout, validated and signed off; push that branch to your
-fork of the commons and open a PR. `--dry-run` prints the plan.
+commit with `git commit -s`, and pull into the log as above.
 
-**Adopt** once the PR is merged and pulled:
-`uv run divelog sites adopt <site-id> --log ../divelog-data` (or `--all`) turns the log's full
-record into an overlay on the merged commons record; copied maps are dropped unless
-`--keep-maps`.
-
-**Change the commons itself** (as a maintainer, in `../divelog-sites`): edit, raise `revision`
-by one with a changelog entry, run
-`uv run divelog validate --kind sites --base HEAD ../divelog-sites` (0 errors; warnings are for
-the reviewer) and `uv run divelog maps changed --base HEAD --root ../divelog-sites`, commit with
-`git commit -s`, then pull into the log as above.
-
-## One-off scripts and the CLI
+## The CLI
 
 The site tooling is the `divelog` CLI of the server package (`uv run divelog --help`):
 
@@ -228,9 +201,6 @@ The site tooling is the `divelog` CLI of the server package (`uv run divelog --h
 - `divelog sitemap-osm` — starter site map from OpenStreetMap, check, render, merge, recentre, push (below).
 - `divelog sites access` — add access points to sites; `divelog import shearwater-pnf` — decode
   Shearwater Cloud profiles.
-
-The workbook one-offs stay in `scripts/` (`export_divelog.py`, the original workbook → files
-export, kept for reference; `fill_*`, `fix_*`, `link_*`, `rebuild_split_profiles.py`, …).
 
 ## Locator maps
 

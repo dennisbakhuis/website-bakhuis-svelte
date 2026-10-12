@@ -8,7 +8,7 @@ as `website-voorvoet-svelte`, `website-stouwdamschilders-svelte` and
 running on `operator-infra`.
 
 This is a brief design contract, not an implementation plan. Sections marked
-**TBD** are decisions still to be taken by Dennis (collected in §11).
+**TBD** are decisions still to be taken by Dennis (collected in §12).
 
 ---
 
@@ -35,26 +35,25 @@ content, blog editing in the browser (blog stays in git).
 
 ## 2. Locked decisions
 
-| Decision        | Value                                                                                                             |
-| --------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Frontend        | SvelteKit 2 + Svelte 5 (runes) + TypeScript strict, `@sveltejs/adapter-node`, port 3000                           |
-| Package manager | pnpm, Node 22 (`.nvmrc`), `VERSION` file + `scripts/sync-version.mjs`                                             |
-| Backend         | `divelog-server` (Python 3.13 + FastAPI + Pydantic v2) from the divelog monorepo, port 8000, `/api/*`, `/media/*` |
-| Data            | Files in the private `divelog-data` git repo (Markdown + JSON), loaded into memory; git is the history            |
-| Media           | Hetzner Object Storage (S3) buckets `bakhuis-{prod,dev}-media`; served via the backend under `/media/*`           |
-| Auth            | Single owner. Passkey (WebAuthn) login + magic-link e-mail fallback, session cookie, rate-limited                 |
-| Content         | Blog/TIL as Markdown in `src/content/{blog,til}/`, compiled by `@blog/kit` — git is the CMS for writing           |
-| Animation       | anime.js v4 (front page + a few tasteful touches elsewhere), `prefers-reduced-motion` honoured                    |
-| Public maps     | MapLibre globe + site locators from self-hosted PMTiles under `/media/tiles`; SVG (Natural Earth) fallback        |
-| Admin maps      | MapLibre GL + vector tiles from a single allow-listed origin, only under `/admin` (route-scoped CSP)              |
-| Styling         | Plain CSS custom properties (`src/lib/styles/tokens.css`), self-hosted fonts via `@fontsource`                    |
-| Analytics       | Umami, server-side relay as in the other sites; no cookies for visitors, no consent banner                        |
-| Site language   | English UI and content (**TBD** — see §11)                                                                        |
-| Domain          | `dennisbakhuis.nl` (prod, from `main`), `dev.dennisbakhuis.nl` (from `dev`)                                       |
-| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend, no database)            |
-| Backups         | The data repo is the backup (git, pushed after every edit), S3 versioning on media buckets                        |
-| Quality gates   | eslint `--max-warnings 0`, prettier, svelte-check, vitest with coverage; server gates run in the monorepo         |
-| Commits         | No AI co-author trailers or footers, authored solely by Dennis                                                    |
+| Decision        | Value                                                                                                                       |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Frontend        | SvelteKit 2 + Svelte 5 (runes) + TypeScript strict, `@sveltejs/adapter-node`, port 3000                                     |
+| Package manager | pnpm, Node 22 (`.nvmrc`), `VERSION` file + `scripts/sync-version.mjs`                                                       |
+| Backend         | `divelog-server` (Python 3.13 + FastAPI + Pydantic v2) from the divelog monorepo, port 8000, `/api/*`, `/media/*`           |
+| Data            | Files in the private `divelog-data` git repo (Markdown + JSON), loaded into memory; git is the history                      |
+| Media           | S3 (Hetzner Object Storage) in prod, a local directory in dev; served via the backend under `/media/*`                      |
+| Auth            | Single owner. Magic-link e-mail → session cookie; link requests rate-limited                                                |
+| Content         | Blog/TIL as Markdown in `src/content/{blog,til}/`, compiled by `@blog/kit` — git is the CMS for writing                     |
+| Animation       | anime.js v4 (front page + a few tasteful touches elsewhere), `prefers-reduced-motion` honoured                              |
+| Maps            | MapLibre globe, site locators and the admin location picker from self-hosted PMTiles under `/media/tiles`; SVG fallback     |
+| Styling         | Plain CSS custom properties (`src/lib/styles/theme.css`, the kits' tokens map onto it), self-hosted fonts via `@fontsource` |
+| Analytics       | Umami, server-side relay as in the other sites; no cookies for visitors, no consent banner                                  |
+| Site language   | English UI and content                                                                                                      |
+| Domain          | `dennisbakhuis.nl` (prod, from `main`), `dev.dennisbakhuis.nl` (from `dev`)                                                 |
+| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend, no database)                      |
+| Backups         | The data repo is the backup (git, pushed after every edit), S3 versioning on the media bucket                               |
+| Quality gates   | eslint `--max-warnings 0`, prettier, svelte-check, vitest with coverage; server gates run in the monorepo                   |
+| Commits         | No AI co-author trailers or footers, authored solely by Dennis                                                              |
 
 Why files and not Postgres (decided 2026-09-27, replacing the earlier
 Postgres design): the log is ~700 records that change a few times a week, the
@@ -63,28 +62,16 @@ a second copy for free. The backend keeps FastAPI for auth, uploads and imports
 but reads and writes the data repository directly; every admin edit is one
 commit. See `docs/RUNBOOK.md` for the layout.
 
-Two repositories, one store (decided 2026-10-09): the dive log is being split
-into a reusable module with a shared dive-site **commons**. Sites, regions,
-drawn maps and CC photos are community data; dives, people, trips, gear,
-profiles, scans and private reference maps stay personal. The backend store
-layers a read-only commons checkout (`COMMONS_ROOT`) under the personal log
-and resolves every site to one of three origins: `log` (a full personal
-record), `commons` (the commons record merged with an optional overlay file
-`sites/<id>.md` carrying `extends: commons`) or `fork` (a personal copy that
-shadows a commons id, `forked_from: commons@<revision>`). Objective fields of a
-commons site cannot be edited in place: the editor writes an overlay for
-personal material or a fork. Site files and drawn maps carry their own
-`revision` and newest-first `changelog` in the file; overlays (`base_revision`)
-and forks stay pinned to the commons revision they were written against until
-the owner marks them reviewed. Personal maps on a commons site get ids
-`<site>-p<n>`. Provenance (`verified`, `geo_source`) is public. Markdown
-bodies are rendered by the backend into `*_html` fields. The frontend reaches
-every page, API, media and tile path through one config and URL builder
-(`createUrls` in `@divelog/kit/core`, configured in `src/lib/divelog-config.ts`),
-styles the log through a `--dl-*` token contract and `.dl-*` classes, and mounts
-the public and admin pages through two catch-all routes backed by the kit's
-route tables (`@divelog/kit/routes`); kit and server live in the divelog monorepo. The full plan, with the data split, the
-commons repository and the later phases, is `docs/MODULE.md`.
+The dive log is a module (decided 2026-10-09): its pages are `@divelog/kit` and
+its backend is `divelog-server`, both from the divelog monorepo (`../divelog`).
+Dive sites can come from a shared site **commons** (`divelog-sites`) layered
+under the personal log; dives, people, trips, gear, profiles, scans and
+reference maps stay personal. This site supplies only the personal config
+(`src/lib/divelog-config.ts`), the theme and two catch-all routes. The file
+format, the commons with its overlays and forks, and mounting the kit are
+documented in the divelog repo: [FORMAT.md](../../divelog/docs/FORMAT.md),
+[KIT.md](../../divelog/docs/KIT.md) and
+[DEPLOY.md](../../divelog/docs/DEPLOY.md).
 
 ---
 
@@ -93,16 +80,18 @@ commons repository and the later phases, is `docs/MODULE.md`.
 ```
 /                     Front page — profile / visitekaartje (§4)
 /dive                 Dive log: stats + map + searchable list (§5)
-/dive/[number]        Single dive: details, profile graph, text, photos, maps, logbook scan
-/dive/sites/[slug]    Dive site: description, location, all dives there
+/dive/[number]        Single dive: details, profile graph, text, photos, route on the site map, logbook scan
 /dive/sites           Site index by country, with map badges
+/dive/sites/[id]      Dive site: description, location, drawn maps, all dives there
+/dive/regions/[id]    Region: shared context for a group of sites
+/dive/trips[/slug]    Trips grouping dives, e.g. "Mexico 2027"
+/dive/people[/slug]   Buddies (first name or alias on the public site)
 /dive/gear            Gear page: current setups, item list, dives per item (§6)
-/dive/trips/[slug]    (optional) Trip page grouping dives, e.g. "Mexico 2027"
 /blog, /blog/[slug]   Blog
 /til,  /til/[slug]    301 → /blog?kind=til and /blog/[slug] (TIL notes are a blog filter)
 /projects             (optional) Selected work / open-source cards
 /uses                 (optional) Dev setup — desk, editor, tools (dive gear lives under /dive/gear)
-/contact              Contact form (Cap + rate limit + SMTP as in the other sites) — or mailto only
+/contact              Contact form (Cap + rate limit + SMTP as in the other sites)
 /admin/**             Owner-only editing UI (§7). Not linked from the public site, `noindex`
 /api/**               FastAPI (proxied by Caddy to the backend container)
 /media/**             Media delivery (resized image variants, PDFs), backend-served with long cache headers
@@ -121,16 +110,16 @@ socials, version, RSS. Dark-first design; light mode supported via tokens.
 1. **Intro / hero** — name, one-line role, location + live local time, current
    availability. Full-viewport, animated (§4.2).
 2. **About** — short bio in three beats: physics PhD (turbulence) → data
-   science & ML engineering → what drives him now. Portrait photo. Skill tags.
-   Source text: `personal-website/CONTENT.md`.
+   science & ML engineering → what drives him now. Skill tags; a portrait
+   photo is **TBD** (§12).
 3. **Things I like** — the personal part. A bento-style grid of "tiles", each
    a small live widget rather than a static card:
    - **Diving** — live counters from the API (dives, hours underwater,
      countries, deepest, last dive), link to `/dive`.
    - **Writing** — three most recent posts / TILs.
-   - **Open source** — pinned projects (pigeonXT, …) with stars pulled at
-     build time.
-   - **TBD** further hobby tiles (photography, music, travel, home automation…).
+   - **Open source** — link to GitHub (later: pinned projects with stars
+     pulled at build time).
+   - **Home automation** (a static tile, no live data).
 4. **Work** — 3–4 selected projects or roles (cards, optional link).
 5. **Contact** — email, LinkedIn, GitHub, other; optional form.
 
@@ -167,7 +156,7 @@ Guard rails:
 - Total front-page JS budget including anime.js: ≤ 60 kB gzipped.
 
 Alternative considered (kept as a fallback): the **three-stripe photo intro**
-from the old `personal-website/DESIGN.md` — three bands slide in and together
+from the old site's design — three bands slide in and together
 form one B&W portrait, then the palette inverts. Fits an anime timeline well
 and can be layered on top of the Descent hero if desired.
 
@@ -175,43 +164,24 @@ and can be layered on top of the Descent hero if desired.
 
 ## 5. Dive log — `/dive`
 
-### 5.1 Data model (files in `divelog-data`; the Pydantic records in `divelog_server/store/models.py` of the divelog monorepo are the schema)
+### 5.1 Data model
 
-```
-dive          id, number, date, time_in, duration_min, max_depth_m, avg_depth_m,
-              water_temp_c, air_temp_c, visibility_m, site_id, trip_id,
-              tags[] (cave, cavern, mine, wreck, night, drift, deco, dpv, boat,
-                      training — properties of the dive; water type and depth are
-                      not tags: see site.water and max_depth_m), gas (air|nitrox|trimix), o2_pct, he_pct,
-              mode (OC|CCR|sidemount), suit, weights_kg, rating 1–5,
-              gear_setup_id, buddies[] (→ person), guide (→ person),
-              body_md (free text, markdown), visibility (public|private),
-              computer_import_id, created_at, updated_at
-site          id, slug, name, country, region, lat, lon, type (sea|lake|quarry|cave|river|pool),
-              description_md, max_depth_m, access_notes_md, visibility (exact|region_only),
-site_map      id, site_id, sort — a drawn map; the drawing lives in immutable revisions
-site_map_revision id, map_id, number, note, created_at,
-              data {kind (stickmap|sitemap), title, nodes[], edges[], areas[], notes}
-              — nodes are stations/objects in metres, edges the line between
-              them, areas shore/shallows/wreck outlines; every save appends a
-              revision, restore copies an old one forward
-dive.map_annotation {map_id, revision, route[] (legs swum), turn (station),
-              pins[] {x, y, note}, note} — pinned to the revision it was drawn on
-trip          id, slug, name, start, end, description_md
-person        id, name, display (full|first|initials|hidden)
-gear_item     id, name, category (regulator|BCD|wing|computer|DPV|light|suit|cylinder|…),
-              brand, model, acquired, retired, notes_md, photo_id
-gear_setup    id, name (e.g. "sidemount cave"), items[] (→ gear_item), description_md
-attachment    id, dive_id | site_id | gear_item_id, kind (photo|scan|map|export|video),
-              s3_key, mime, bytes, width, height, caption, sort, taken_at, variants{}
-profile       dive_id, samples[] {t_s, depth_m, temp_c?, ppo2?, ndl?} (downsampled), source
-computer_import id, uploaded_at, format (subsurface-xml|uddf|fit|csv|shearwater),
-              s3_key, status, dives_created[]
-```
+The log is files in the private `divelog-data` repository: one Markdown file per
+dive (`dives/<nnnnn>.md`, frontmatter for the numbers, body for the story),
+site, region, person and trip override, and JSON for gear, dive-computer
+profiles, import records and drawn maps (stick maps for caves, site maps for
+open water, each with its own `revision` and changelog). A dive's
+`map_annotation` records the route swum on one of its site's maps, pinned to the
+map revision. Photos and scans live in the media store and are referenced by key
+from each record's `media` list. The format is specified in
+[FORMAT.md](../../divelog/docs/FORMAT.md) in the divelog repo; the Pydantic
+records in `divelog_server/store/models.py` are the schema.
 
-`visibility=private` dives are hidden from lists, detail and map but still
-count in stats ("dives: 412 (3 private)"). Persons default to first name only
-on the public site; sites can be set to region-only to hide sensitive spots.
+`visibility: private` dives are hidden from lists, detail and map but still
+count in stats ("dives: 412 (3 private)"); `draft` dives (from an import) are
+not counted until published. People show by first name or alias on the public
+site; sites can be set to `location_visibility: region_only` to hide sensitive
+spots.
 
 ### 5.2 Public page layout
 
@@ -220,10 +190,9 @@ on the public site; sites can be set to region-only to hide sensitive spots.
    cave dives, scooter dives, wreck dives, night dives, deepest, longest,
    coldest. Computed by the API (`GET /api/v1/dive/stats`), cached; numbers
    animate on entry (shared counter component with the front page).
-2. **World map**: self-hosted SVG world (Natural Earth 110m → TopoJSON), dots
-   sized by dive count per site, colour by dominant type. Hover = tooltip
-   with site + count, click = filters the list to that site. Region insets
-   for dense areas (NL/Belgium quarries, Red Sea, …) — v2.
+2. **World map**: MapLibre globe on the self-hosted `world.pmtiles` with a
+   dot per site; a static SVG world map until that archive exists. Region
+   insets for dense areas (NL/Belgium quarries, Red Sea, …) — v2.
 3. **Charts**: dives per year, depth histogram, dives by tag. Static SVG,
    tokens-driven colours.
 4. **Search & filter** — the list index (all public dives, ~100 bytes each) is
@@ -238,28 +207,28 @@ on the public site; sites can be set to region-only to hide sensitive spots.
 5. **Dive detail** `/dive/[number]`: header (number, date, site, country
    flag), key numbers, depth + temperature profile chart (SVG line drawn in
    with anime on load, only if a computer export exists), gas/mode/suit/gear
-   setup, buddies, the markdown body, photo gallery (lightbox), maps
-   (uploaded site/cave maps as images), **logbook tab** showing the scanned
+   setup, buddies, the markdown body, photo gallery (lightbox), the site's
+   drawn map with the dive's route, **logbook tab** showing the scanned
    paper page, prev/next dive, "other dives at this site", trip link.
 
 ### 5.3 Dive-computer imports
 
-- Upload a Subsurface XML / UDDF / Garmin FIT / Shearwater CSV export in
-  `/admin/dive/import`. The backend parses it (Python is the right tool here),
-  matches dives to existing ones by date+time (±10 min) and either attaches
-  the profile to a matching dive or creates **draft** dives with the numeric
-  fields pre-filled. Dennis then enriches drafts (site, buddies, text, photos)
-  and publishes.
-- The raw file is kept as an `attachment(kind=export)` so re-parsing is always
-  possible when the parser improves.
-- A **bulk backfill** of the historic log uses the same import endpoint plus a
-  CSV/Excel for the paper years; scans of the paper pages are attached per
-  dive afterwards (drag-and-drop, one page can be linked to several dives).
+- Upload a Subsurface XML or Shearwater (Perdix) XML export in
+  `/admin/import`; a dry run shows what would happen. The backend matches
+  dives to existing ones by start time or dive number (Shearwater: within ten
+  minutes) and either attaches the profile or creates **draft** dives with the
+  numeric fields filled in; a Subsurface import also matches or creates its
+  sites. Dennis then enriches drafts (site, buddies, text, photos) and
+  publishes.
+- The raw file is kept in the media store under `imports/` and every run is
+  recorded in `imports/<id>.json` in the data repo, so re-parsing is possible
+  when the parser improves.
+- The paper years were backfilled once from the retired workbook (kept in the
+  data repo under `archive/`); logbook scans are attached per dive.
 
 ### 5.4 Later ideas (not v1)
 
-- Per-site auto-generated map images for social sharing; trip pages.
-- Cave dives: line-map overlays; DPV distance/runtime tracking.
+- DPV distance/runtime tracking.
 - GPX/KML export; public read-only JSON API documented at `/api/docs`.
 - OCR of logbook scans to pre-fill drafts (Claude vision) — nice to have.
 
@@ -268,44 +237,42 @@ on the public site; sites can be set to region-only to hide sensitive spots.
 ## 6. Gear — `/dive/gear`
 
 - **Setups**: named configurations ("single tank recreational", "sidemount
-  cave", "CCR + DPV") each listing its items with a photo of the rigged kit.
+  cave", "CCR + DPV") each listing its items.
   A dive references one setup, so the page can show _dives with this setup_.
 - **Items**: card per item — photo, brand/model, category, since/retired,
   notes ("why I chose it"), and a computed _dives with this item_ count.
 - Retired gear stays visible in a "past gear" section: it's part of the story.
-- Everything here is edited in `/admin/dive/gear`; item photos go through the
-  same attachment flow.
+- Everything here is edited in `/admin/gear`; item photos go through the
+  same upload flow.
 
 ---
 
 ## 7. Admin — `/admin`
 
-Owner-only UI, built in SvelteKit (superforms + zod, same as the contact
-forms on the other sites), talking to the backend through `/api/v1/admin/*`.
-Must work well on a phone: adding a dive the same evening on a boat with bad
-Wi-Fi is the primary use case.
+Owner-only UI: the kit's admin pages, mounted through the `admin/[...path]`
+catch-all, talking to the backend through `/api/v1/admin/*`. Must work well on
+a phone: adding a dive the same evening on a boat with bad Wi-Fi is the
+primary use case. The pages are described in
+[KIT.md](../../divelog/docs/KIT.md) in the divelog repo.
 
-- **Login**: passkey (WebAuthn, Face ID on the phone) with magic-link e-mail
-  as fallback via the existing SMTP setup; only the configured owner e-mail
-  can log in. Session cookie `HttpOnly; Secure; SameSite=Lax`, 30 days,
-  rotated on use. Login endpoints rate-limited; failed attempts logged.
-- **Dive editor**: one form, sections collapsible: numbers → site (search
-  existing / create new with map pin) → people/gear → text (markdown with
-  preview) → attachments. Autosave draft every few seconds; explicit
-  _Publish_. Duplicate-from-previous-dive to speed up repetitive entry.
-- **Attachments**: drag-and-drop or camera; direct-to-S3 upload with a
-  presigned URL, then the backend generates image variants (thumb / 800 /
-  1600 / original, WebP + original format, EXIF stripped except date). PDFs
-  and scans are kept as-is plus a preview image. Reorder by drag, caption
-  inline, mark one photo as cover.
-- **Site editor** with a MapLibre map for placing the pin (tiles from one
-  allow-listed origin, CSP relaxed for `/admin` only), country/region derived
-  from the pin offline (Natural Earth polygons) and editable.
+- **Login**: magic-link e-mail via the existing SMTP setup to the configured
+  owner address only (`/admin/login`). Session cookie `HttpOnly; SameSite=Lax`
+  (`Secure` in prod), 30 days, extended on use past halfway. Link requests are
+  rate-limited.
+- **Dive editor**: one form; _Same as previous dive_ fills site, buddies,
+  tanks and trip; explicit _Save_; drafts from an import are published from
+  the list.
+- **Attachments**: photos and scans upload through the backend, which strips
+  metadata (the date taken is kept), caps the original and renders WebP
+  variants (480 / 800 / 1600). Scans are private by default. Reorder, mark one
+  photo as cover.
+- **Site editor** with a MapLibre location picker on the self-hosted tiles,
+  country and region derived from the pin offline and editable; a map editor
+  for stick maps and site maps.
 - **Import** page (§5.3) with a review list of drafts.
-- **Gear** editor (§6). **People** list with display preference.
+- **Gear**, **People**, **Trips** and **Regions** editors.
 - Everything the admin can do is also available through the API with the same
-  session, so a future CLI/bulk script (`uv run bakhuis-cli import …`) needs no
-  extra work.
+  session; the `divelog` CLI's `push` subcommands use it with a cookie jar.
 
 ---
 
@@ -316,10 +283,10 @@ Wi-Fi is the primary use case.
 - Markdown with frontmatter (`title, date, updated, tags, summary, words, draft,
 external`; dates `YYYY-MM-DD`), compiled by the kit's `blogPreprocess` (mdsvex). TIL notes
   use the compact list layout: title, date, tags — no summary or reading time.
-- Syntax highlighting at build time (Shiki), copy button, dark/light themes
-  from tokens. Math via KaTeX. Footnotes, callouts, image captions.
+- Syntax highlighting at build time (Shiki). Later: copy button, math
+  (KaTeX), footnotes, callouts.
 - Index pages: reverse-chronological, tag filter, year grouping, reading time.
-- RSS/Atom feed (blog + TIL), OG image per post (build-time template — v2).
+- RSS feed (blog + TIL), OG image per post (build-time template — v2).
 - Existing Towards Data Science articles listed on `/blog` as external
   entries with canonical links (**TBD**: which).
 - TIL is deliberately low-friction: one file, five lines, ship it. Adding a
@@ -335,19 +302,18 @@ external`; dates `YYYY-MM-DD`), compiled by the kit's `blogPreprocess` (mdsvex).
   images via responsive variants from `/media`, fonts self-hosted and subset.
 - **Accessibility**: keyboard-navigable filters and map (list is the
   accessible fallback for the map), visible focus, AA contrast, reduced-motion
-  aware, axe checks in Playwright; admin forms fully labelled.
+  aware; admin forms fully labelled.
 - **SEO**: per-page meta + OG, JSON-LD `Person` on `/`, `Article` on posts,
   sitemap including public dives/sites, canonical URLs; `/admin` `noindex`.
-- **Security/privacy**: strict CSP (`mode: 'auto'`, no third-party origins
-  outside `/admin`), security headers in `hooks.server.ts` + Caddy, HSTS,
-  Umami server-side, no visitor cookies, contact form behind Cap + rate
-  limiter, `/csp-report`. Uploads: type sniffing, size limits, EXIF GPS
-  stripped from public variants, private buckets — nothing served straight
-  from S3.
+- **Security/privacy**: strict CSP (`mode: 'auto'`, no third-party
+  origins), security headers in `hooks.server.ts` + Caddy, HSTS, Umami
+  server-side, no visitor cookies, contact form behind Cap + rate limiter.
+  Uploads: size limits, image metadata (GPS included) stripped, private
+  bucket — nothing served straight from S3.
 - **Backups/DR**: the data repo is the backup (pushed after every admin
   write; `git checkout <sha> -- dives/00457.md` restores a record), media
   bucket versioning; documented restore procedure in `docs/RUNBOOK.md`.
-- **Operations**: `/health` on both services, JSON logs (pino / structlog),
+- **Operations**: `/health` on both services, JSON logs on the backend,
   read-only containers, non-root, same compose hardening as the other sites,
   one uvicorn worker (the store is in-process), `prune-images.yml`.
 
@@ -355,12 +321,12 @@ external`; dates `YYYY-MM-DD`), compiled by the kit's `blogPreprocess` (mdsvex).
 
 ## 10. Repository layout
 
-The site is a consumer of the divelog module (see `docs/MODULE.md`): the dive log's frontend is
+The site is a consumer of the divelog module: the dive log's frontend is
 the `@divelog/kit` package and the backend is the `divelog-server` package, both from the
 divelog monorepo (`../divelog` in dev). The data lives in two more repositories.
 
 ```
-docs/                SPEC.md (this), RUNBOOK.md (kit, server, data, scripts), WORKFLOW.md, MODULE.md
+docs/                SPEC.md (this), RUNBOOK.md (kit, server, data, commands)
 src/                 SvelteKit
   content/blog/      *.md
   content/til/       *.md
@@ -378,13 +344,14 @@ src/                 SvelteKit
                      blog/ (thin @blog/kit wrappers), til/ (redirects), contact, privacy, api/cap/,
                      feed.xml, sitemap.xml, robots.txt, go/, health
 vendor/              divelog-kit-<version>.tgz (make kit-vendor) and blog-kit-<version>.tgz (make blog-vendor)
-scripts/             personal workbook one-offs (uv project in pyproject.toml, imports divelog_server)
+scripts/             sync-version.mjs (VERSION → package.json)
 static/              favicons, og default
 .github/workflows/   ci.yml (frontend gates), docker-publish.yml (frontend image; deploy names the
                      divelog-server tag), pr-source-gate.yml, prune-images.yml
 Dockerfile           frontend image only
 docker-compose.yml   dev: divelog-server built from ../divelog/packages/server + mailpit
-Makefile, VERSION, pyproject.toml + uv.lock (site tools), svelte.config.js, vite.config.ts
+Makefile, VERSION, svelte.config.js, vite.config.ts
+pyproject.toml, uv.lock  uv project that installs divelog-server for the `divelog` CLI
 data/                raw dive-log sources (git-ignored; the curated set lives in ../divelog-data)
 ```
 
@@ -401,36 +368,20 @@ tests, `Dockerfile`, published as `ghcr.io/<owner>/divelog-server`), `../divelog
 | ----- | ------------------------------------------------------------------------------------------------------ |
 | 0     | Repo scaffold from the sibling template: CI, Docker, tokens, nav/footer, `/health`, `/privacy`         |
 | 1     | Front page with content and the Descent animation; contact                                             |
-| 2     | Backend skeleton: FastAPI, Postgres, Alembic, auth (passkey + magic link), `/admin` login              |
+| 2     | Backend: `divelog-server` over the data files, magic-link auth, `/admin` login                         |
 | 3     | Dive model + admin editor + attachments (S3, variants); public `/dive`, `/dive/[number]`, sites, stats |
 | 4     | World map, charts, search/filter; gear pages; dive-computer import + draft review; backfill of the log |
 | 5     | Blog + TIL + RSS; migrate/link existing articles                                                       |
-| 6     | Infra change set for `operator-infra` (Caddy, compose, buckets, DNS, backups), first deploy to `dev` |
+| 6     | Infra change set for `operator-infra` (Caddy, compose, bucket, DNS, backups), first deploy to `dev`  |
 | 7     | Polish: OG images, `/projects`, `/uses`, region map insets, Lighthouse pass                            |
 
 ---
 
 ## 12. Open questions for Dennis
 
-1. **Dive computer / app** — which one(s) do you export from (Subsurface,
-   Shearwater Cloud, Garmin, …)? One sample export in `backend/tests/fixtures/`
-   lets the importer be designed against real data.
-2. **Historic log** — roughly how many dives, and how far back does the paper
-   logbook go? Do you want to backfill everything before launch, or launch
-   with recent dives and add the paper years over time?
-3. **Privacy defaults** — buddies shown by first name? Exact GPS for all
-   sites, or region-only for some (private cave systems)? Any dives private?
-4. **Login** — passkey + magic-link OK, or would you rather put `/admin`
-   behind the NetBird mesh (zero auth code, but needs NetBird on the phone)?
-5. **Language** — English only, or English + Dutch UI (Paraglide available
-   from the template but doubles the content work)?
-6. **Hobby tiles** — which "things I like" get a tile besides diving, writing
-   and open source?
-7. **Contact** — full form with Cap/SMTP like the other sites, or mailto +
-   socials only?
-8. **Domain** — `dennisbakhuis.nl` only, or also `dennisbakhuis.com`
+1. **Domain** — `dennisbakhuis.nl` only, or also `dennisbakhuis.com`
    redirecting (the old Reflex site targeted `.com`)?
-9. **Hero photo(s)** — portrait and/or underwater photo for the hero; do you
+2. **Hero photo(s)** — portrait and/or underwater photo for the hero; do you
    want the three-stripe B&W intro layered on the Descent concept?
-10. **Existing writing** — list of TDS/Medium articles to import as external
-    entries; any existing TIL collection?
+3. **Existing writing** — list of TDS/Medium articles to import as external
+   entries; any existing TIL collection?

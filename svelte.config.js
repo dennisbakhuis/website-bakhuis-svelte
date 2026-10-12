@@ -33,9 +33,8 @@ const config = {
     adapter: adapter(),
     version: { name: APP_VERSION },
     // CSP: `mode: 'auto'` hashes SvelteKit's own inline bootstrap script in
-    // production builds. Everything else on the public site is first-party;
-    // the admin's map tiles are the only third-party origin and are appended
-    // per-route in hooks.server.ts.
+    // production builds. Everything else, the map tiles included, is
+    // first-party.
     csp: {
       mode: 'auto',
       directives: {

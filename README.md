@@ -5,11 +5,12 @@ SvelteKit frontend, same conventions as the other Dinkellabs sites. The dive
 log is the divelog module: `@divelog/kit` (vendored in `vendor/`) for the pages
 and `divelog-server` for the backend, both from the divelog monorepo checked out
 next to this one (`../divelog`). The blog is the blog module: `@blog/kit`
-(vendored in `vendor/`) from the blog repo in `../blog`; the posts stay here. The design contract lives in
-[docs/SPEC.md](docs/SPEC.md); how the pieces fit in [docs/RUNBOOK.md](docs/RUNBOOK.md).
+(vendored in `vendor/`) from the blog repo in `../blog`; the posts stay here.
+The design contract lives in [docs/SPEC.md](docs/SPEC.md); how the pieces fit
+in [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ```fish
-make install   # pnpm install + uv sync (site tools on the server package)
+make install   # pnpm install + uv sync (the divelog CLI from ../divelog)
 make run       # divelog-server + Mailpit in Docker, SvelteKit dev server on :5373
 ```
 
@@ -73,8 +74,10 @@ src/
   lib/server/       cap, e-mail, rate limiter, umami
   routes/           /, dive/ + admin/ (kit catch-alls), blog/ + feed.xml (thin kit wrappers), til/ (redirects), contact, …
 vendor/             @divelog/kit and @blog/kit tarballs
-scripts/            personal data one-offs (uv project, imports divelog_server)
+scripts/            sync-version.mjs (VERSION → package.json)
 docs/SPEC.md        the spec
+docs/RUNBOOK.md     how the pieces fit, the data, the commands
+pyproject.toml / uv.lock  uv project that installs divelog-server for the `divelog` CLI
 ```
 
 ## Adding content
