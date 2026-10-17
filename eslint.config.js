@@ -30,6 +30,13 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['node_modules/**', '.svelte-kit/**', 'build/**', 'coverage/**', '.claude/**'],
+    ignores: [
+      'node_modules/**',
+      '.svelte-kit/**',
+      'build/**',
+      'coverage/**',
+      '.claude/**',
+      'website-bakhuis-content/**',
+    ],
   },
 );

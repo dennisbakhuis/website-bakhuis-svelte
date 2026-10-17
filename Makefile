@@ -2,6 +2,13 @@
 
 COMPOSE ?= docker compose
 
+# The private content repository: the dive log (DATA_REPO, mounted into the backend)
+# and the blog posts under posts/ (CONTENT_DIR, read by the frontend build).
+CONTENT_REPO ?= ../website-bakhuis-content
+DATA_REPO ?= $(CONTENT_REPO)
+CONTENT_DIR ?= $(CONTENT_REPO)/posts
+export CONTENT_DIR
+
 .PHONY: help install run dev up down logs data-pull data-status shell-backend tiles tiles-upload \
 	build preview lint format format-check check test test-coverage ci kit-vendor kit-check \
 	blog-vendor blog-check \
@@ -38,18 +45,18 @@ down:  ## Stop the docker services
 logs:  ## Tail docker logs
 	$(COMPOSE) logs -f --tail=100
 
-data-pull:  ## Pull the divelog-data checkout and reload the running backend
-	git -C $${DATA_REPO:-../divelog-data} pull --ff-only
+data-pull:  ## Pull the content checkout (log + posts) and reload the running backend
+	git -C $(DATA_REPO) pull --ff-only
 	curl -fsS -X POST http://localhost:8300/api/v1/admin/repo/reload >/dev/null || true
 
-data-status:  ## Show the divelog-data checkout status
-	git -C $${DATA_REPO:-../divelog-data} status --short --branch
+data-status:  ## Show the content checkout status
+	git -C $(DATA_REPO) status --short --branch
 
 tiles:  ## Cut the locator-map basemap tiles into $(MEDIA_DIR)/tiles (needs `brew install pmtiles`)
-	uv run divelog tiles --log $${DATA_REPO:-../divelog-data} --media $${MEDIA_DIR:-../divelog-media}
+	uv run divelog tiles --log $(DATA_REPO) --media $${MEDIA_DIR:-../divelog-media}
 
 tiles-upload:  ## Cut the tiles and push tiles/ to the S3 bucket (S3_* from .env)
-	uv run divelog tiles --log $${DATA_REPO:-../divelog-data} --media $${MEDIA_DIR:-../divelog-media} --upload
+	uv run divelog tiles --log $(DATA_REPO) --media $${MEDIA_DIR:-../divelog-media} --upload
 
 shell-backend:  ## Shell in the backend container
 	$(COMPOSE) exec backend bash
@@ -161,6 +168,6 @@ release:  ## Bump version, commit, tag (usage: make release VERSION=0.2.0)
 
 ## Docker
 
-docker-build:  ## Build the frontend production image (tags :VERSION and :latest); the backend is ghcr.io/<owner>/divelog-server
+docker-build:  ## Build the frontend production image with the posts from $(CONTENT_DIR) (tags :VERSION and :latest)
 	@v=$$(cat VERSION); \
-	docker build -t bakhuis-frontend:$$v -t bakhuis-frontend:latest .
+	docker build --build-context content=$(CONTENT_DIR) -t bakhuis-frontend:$$v -t bakhuis-frontend:latest .

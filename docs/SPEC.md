@@ -40,10 +40,10 @@ content, blog editing in the browser (blog stays in git).
 | Frontend        | SvelteKit 2 + Svelte 5 (runes) + TypeScript strict, `@sveltejs/adapter-node`, port 3000                                     |
 | Package manager | pnpm, Node 22 (`.nvmrc`), `VERSION` file + `scripts/sync-version.mjs`                                                       |
 | Backend         | `divelog-server` (Python 3.13 + FastAPI + Pydantic v2) from the divelog monorepo, port 8000, `/api/*`, `/media/*`           |
-| Data            | Files in the private `divelog-data` git repo (Markdown + JSON), loaded into memory; git is the history                      |
+| Data            | Files in the private `website-bakhuis-content` git repo (Markdown + JSON), loaded into memory; git is the history           |
 | Media           | S3 (Hetzner Object Storage) in prod, a local directory in dev; served via the backend under `/media/*`                      |
 | Auth            | Single owner. Magic-link e-mail → session cookie; link requests rate-limited                                                |
-| Content         | Blog/TIL as Markdown in `src/content/{blog,til}/`, compiled by `@blog/kit` — git is the CMS for writing                     |
+| Content         | Blog/TIL as Markdown in the content repo's `posts/{blog,til}/` (`CONTENT_DIR`), compiled by `@blog/kit` at build time       |
 | Animation       | anime.js v4 (front page + a few tasteful touches elsewhere), `prefers-reduced-motion` honoured                              |
 | Maps            | MapLibre globe, site locators and the admin location picker from self-hosted PMTiles under `/media/tiles`; SVG fallback     |
 | Styling         | Plain CSS custom properties (`src/lib/styles/theme.css`, the kits' tokens map onto it), self-hosted fonts via `@fontsource` |
@@ -166,7 +166,7 @@ and can be layered on top of the Descent hero if desired.
 
 ### 5.1 Data model
 
-The log is files in the private `divelog-data` repository: one Markdown file per
+The log is files in the private `website-bakhuis-content` repository: one Markdown file per
 dive (`dives/<nnnnn>.md`, frontmatter for the numbers, body for the story),
 site, region, person and trip override, and JSON for gear, dive-computer
 profiles, import records and drawn maps (stick maps for caves, site maps for
@@ -328,12 +328,10 @@ divelog monorepo (`../divelog` in dev). The data lives in two more repositories.
 ```
 docs/                SPEC.md (this), RUNBOOK.md (kit, server, data, commands)
 src/                 SvelteKit
-  content/blog/      *.md
-  content/til/       *.md
   lib/divelog-config.ts   the log's personal config: names, site URL, title suffix, page copy, home tile
   lib/divelog.server.ts   createDivelog bound to BACKEND_URL
   lib/blog-config.ts      the blog's personal config: names, site URL, copy, kinds
-  lib/blog.ts        createBlog over the lazily globbed src/content (@blog/kit)
+  lib/blog.ts        createBlog over the lazily globbed $content (CONTENT_DIR, @blog/kit)
   lib/components/    home/ (Hero, Bubbles, Fish, DepthGauge), ContactForm
   lib/anim/          site-only anime.js helpers: descent scroll, fish
   lib/server/        email, cap, umami, rate limiter
@@ -351,14 +349,16 @@ static/              favicons, og default
 Dockerfile           frontend image only
 docker-compose.yml   dev: divelog-server built from ../divelog/packages/server + mailpit
 Makefile, VERSION, svelte.config.js, vite.config.ts
+content.config.js    CONTENT_DIR: the posts, default ../website-bakhuis-content/posts
 pyproject.toml, uv.lock  uv project that installs divelog-server for the `divelog` CLI
-data/                raw dive-log sources (git-ignored; the curated set lives in ../divelog-data)
+data/                raw dive-log sources (git-ignored; the curated set lives in ../website-bakhuis-content)
 ```
 
 Elsewhere: `../divelog/packages/kit` (components, page routes, server helpers, OG cards, styles;
 its tests and the API-type drift check), `../divelog/packages/server` (FastAPI app, store, CLI,
-tests, `Dockerfile`, published as `ghcr.io/<owner>/divelog-server`), `../divelog-data` (the log),
-`../divelog-sites` (the sites commons), `../blog` (`@blog/kit` and its reference app).
+tests, `Dockerfile`, published as `ghcr.io/<owner>/divelog-server`), `../website-bakhuis-content`
+(the log and the posts), `../divelog-sites` (the sites commons), `../blog` (`@blog/kit` and its
+reference app).
 
 ---
 

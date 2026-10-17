@@ -7,6 +7,11 @@ name: Publish Docker image to GHCR
 # (ghcr.io/<owner>/divelog-server), and the deploy step names the tag to run
 # next to this frontend (DIVELOG_SERVER_TAG, default `latest`).
 #
+# The blog posts come from the private website-bakhuis-content repository
+# (secret CONTENT_REPO_TOKEN) and enter the image as the `content` build
+# context. A push there does not trigger this workflow: a new post ships with
+# the next website build.
+#
 # Tagging by branch:
 #   main → ghcr.io/<owner>/website-bakhuis-svelte-frontend:<VERSION>
 #         ghcr.io/<owner>/website-bakhuis-svelte-frontend:latest
@@ -103,6 +108,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Checkout content (posts)
+        # The blog posts live in the private content repository (repo variable
+        # CONTENT_REPO overrides the name). CONTENT_REPO_TOKEN is a fine-grained
+        # PAT with read access to that one repository. Sparse: posts/ and the
+        # top-level files only, not the dive log.
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.CONTENT_REPO || 'dennisbakhuis/website-bakhuis-content' }}
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          path: website-bakhuis-content
+          sparse-checkout: posts
+          persist-credentials: false
+
       - name: Read VERSION file
         id: version
         run: echo "value=$(cat VERSION)" >> "$GITHUB_OUTPUT"
@@ -184,6 +202,8 @@ jobs:
           context: ${{ matrix.image.context }}
           file: ${{ matrix.image.file }}
           target: ${{ matrix.image.target }}
+          build-contexts: |
+            content=website-bakhuis-content/posts
           push: true
           build-args: |
             APP_VERSION=${{ steps.version.outputs.value }}

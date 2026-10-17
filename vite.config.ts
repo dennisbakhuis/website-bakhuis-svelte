@@ -1,5 +1,38 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
+import { CONTENT_DIR, CONTENT_KINDS } from './content.config.js';
+
+/**
+ * The posts come from outside this tree (CONTENT_DIR): refuse to start or
+ * build without them rather than ship an empty blog, and watch the directory
+ * so a new post shows up in `pnpm dev`.
+ */
+function content(): Plugin {
+  return {
+    name: 'site-content',
+    configResolved() {
+      const missing = CONTENT_KINDS.filter((kind) => !existsSync(join(CONTENT_DIR, kind)));
+      const posts = CONTENT_KINDS.flatMap((kind) =>
+        missing.includes(kind)
+          ? []
+          : readdirSync(join(CONTENT_DIR, kind)).filter((f) => f.endsWith('.md')),
+      );
+      if (missing.length === 0 && posts.length > 0) return;
+      throw new Error(
+        `No blog content in ${CONTENT_DIR} (${
+          missing.length ? `missing ${missing.map((k) => `${k}/`).join(', ')}` : 'no posts'
+        }). Check out the content repository next to this one ` +
+          `(../website-bakhuis-content) or point CONTENT_DIR at its posts/ directory.`,
+      );
+    },
+    configureServer(server) {
+      server.watcher.add(CONTENT_DIR);
+    },
+  };
+}
 
 // In development the SvelteKit dev server fronts the FastAPI backend the same
 // way Caddy does in production, so `/api/*` and `/media/*` are same-origin and
@@ -7,10 +40,11 @@ import { defineConfig } from 'vitest/config';
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:8300';
 
 export default defineConfig({
-  plugins: [sveltekit()],
+  plugins: [content(), sveltekit()],
   server: {
     port: 5373,
     strictPort: true,
+    fs: { allow: [CONTENT_DIR] },
     proxy: {
       '/api/v1': { target: BACKEND_URL, changeOrigin: false },
       '/media': { target: BACKEND_URL, changeOrigin: false },

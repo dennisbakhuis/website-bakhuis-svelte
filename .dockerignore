@@ -32,6 +32,9 @@ docs
 *.md
 !README.md
 
+# The content repository's CI checkout; the posts arrive as the `content` build context
+website-bakhuis-content
+
 # Misc
 .prettier*
 .editorconfig

@@ -5,6 +5,7 @@ import { DEFAULT_CONFIG, createUrls } from '@divelog/kit/core';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { CONTENT_DIR } from './content.config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -32,6 +33,7 @@ const config = {
   kit: {
     adapter: adapter(),
     version: { name: APP_VERSION },
+    alias: { $content: CONTENT_DIR },
     // CSP: `mode: 'auto'` hashes SvelteKit's own inline bootstrap script in
     // production builds. Everything else, the map tiles included, is
     // first-party.

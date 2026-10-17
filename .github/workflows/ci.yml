@@ -7,7 +7,8 @@ name: CI
 # merge are produced by docker-publish.yml. The backend and the dive-log
 # kit (with its API types) are built and tested in the divelog monorepo,
 # the blog kit in the blog repo; both arrive here as vendored tarballs in
-# vendor/.
+# vendor/. The posts come from the private website-bakhuis-content repository
+# (CONTENT_REPO_TOKEN), checked out inside the workspace and named by CONTENT_DIR.
 on:
   pull_request:
     branches: [main, dev]
@@ -17,10 +18,25 @@ jobs:
   ci:
     name: Frontend — lint, test & build
     runs-on: ubuntu-latest
+    env:
+      CONTENT_DIR: website-bakhuis-content/posts
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Checkout content (posts)
+        # The blog posts live in the private content repository (repo variable
+        # CONTENT_REPO overrides the name). CONTENT_REPO_TOKEN is a fine-grained
+        # PAT with read access to that one repository. Sparse: posts/ and the
+        # top-level files only, not the dive log.
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.CONTENT_REPO || 'dennisbakhuis/website-bakhuis-content' }}
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          path: website-bakhuis-content
+          sparse-checkout: posts
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

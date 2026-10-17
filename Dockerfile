@@ -1,5 +1,15 @@
+# syntax=docker/dockerfile:1
 # Frontend image (SvelteKit, adapter-node). The backend is the divelog-server
 # image, built from the divelog monorepo.
+#
+# The blog posts are not in this repository: pass the content repository's
+# posts/ directory as the named build context `content`, e.g.
+#   docker build --build-context content=../website-bakhuis-content/posts .
+# (`make docker-build`; CI passes its checkout the same way). Without it this
+# empty stage stands in and `pnpm build` stops with "No blog content in /content".
+
+# Stage 0: the posts (replaced by --build-context content=…)
+FROM scratch AS content
 
 # Stage 1: Builder
 FROM node:22-slim AS builder
@@ -13,7 +23,9 @@ COPY vendor ./vendor
 RUN pnpm install --frozen-lockfile
 
 COPY . .
+COPY --from=content / /content/
 
+ENV CONTENT_DIR=/content
 RUN pnpm build
 RUN pnpm prune --prod --config.confirmModulesPurge=false
 RUN node -e "const p=require('./package.json'); delete p.devDependencies; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2));"

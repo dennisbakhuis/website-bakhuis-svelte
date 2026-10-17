@@ -15,5 +15,7 @@ node_modules
 __pycache__/
 *.pyc
 
-# raw dive-log sources; the curated set lives in ../divelog-data
+# raw dive-log sources; the curated set lives in ../website-bakhuis-content
 /data/
+# CI's checkout of the content repository (CONTENT_DIR)
+/website-bakhuis-content/

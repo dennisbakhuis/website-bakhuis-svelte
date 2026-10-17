@@ -1,11 +1,12 @@
 # Runbook — the dive log
 
-The dive log is a directory of files: the private **divelog-data** repository. The backend loads
-it into memory, serves it, and writes every admin edit back as one git commit. The file format is
+The dive log is a directory of files in the private **website-bakhuis-content** repository,
+which also holds the blog posts. The backend loads the log into memory, serves it, and writes
+every admin edit back as one git commit. The file format is
 [FORMAT.md](../../divelog/docs/FORMAT.md) in the divelog repo; this checkout holds:
 
 ```
-divelog-data/
+website-bakhuis-content/
   divelog.yaml              manifest: format, kind, the commons it layers on
   dives/00457.md            one dive: YAML frontmatter + the story as Markdown
   sites/<site_id>.md        one site: frontmatter (coordinates, type, prices, maps…) + prose
@@ -21,6 +22,7 @@ divelog-data/
   media/sites/*.jpg         CC-licensed site photos (credits in media/manifest.json)
   imports/*.json            what each dive-computer import did
   archive/divelog_index.xlsx the retired workbook
+  posts/{blog,til}/*.md     the blog posts and TIL notes (not part of the log; see below)
 ```
 
 Binary media (photos, logbook scans, avatars) is **not** in git: it lives in the media store —
@@ -95,17 +97,18 @@ make ci                               # lint, format, svelte-check, vitest + cov
 
 ### Five checkouts
 
-This repository is the personal site only. The dive log itself is two packages in the divelog
-monorepo, the data is two git repositories and the blog's code is the blog repository; all five
-are sibling checkouts:
+This repository is the personal site's wiring only. The dive log itself is two packages in the
+divelog monorepo, the blog's code is the blog repository, and the content is two git
+repositories: the personal one (log and posts) and the sites commons. All five are sibling
+checkouts:
 
-| Checkout                 | What                                                                            |
-| ------------------------ | ------------------------------------------------------------------------------- |
-| `website-bakhuis-svelte` | this site: home, blog, contact, the personal config of the log                  |
-| `../divelog`             | monorepo: `packages/kit` (`@divelog/kit`), `packages/server` (`divelog-server`) |
-| `../divelog-data`        | the log (`DATA_REPO`), mounted at `/data/repo`                                  |
-| `../divelog-sites`       | the sites commons (`COMMONS_REPO`), mounted read-only at `/data/commons`        |
-| `../blog`                | `packages/kit` (`@blog/kit`): blog pages, feed, markdown pipeline; no server    |
+| Checkout                     | What                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| `website-bakhuis-svelte`     | this site: home, blog, contact, the personal config of the log                  |
+| `../divelog`                 | monorepo: `packages/kit` (`@divelog/kit`), `packages/server` (`divelog-server`) |
+| `../website-bakhuis-content` | the log (`DATA_REPO`, mounted at `/data/repo`) and the posts (`CONTENT_DIR`)    |
+| `../divelog-sites`           | the sites commons (`COMMONS_REPO`), mounted read-only at `/data/commons`        |
+| `../blog`                    | `packages/kit` (`@blog/kit`): blog pages, feed, markdown pipeline; no server    |
 
 **The kit** is consumed as a packed tarball, `vendor/divelog-kit-<version>.tgz`, referenced from
 `package.json` as `file:vendor/…`. The committed tarball _is_ the pin until the kit is published
@@ -118,10 +121,31 @@ copy, the home tile's text); the kit's defaults are neutral.
 
 **The blog kit** works the same way: `vendor/blog-kit-<version>.tgz`, `make blog-vendor` builds
 and packs it from `$BLOG_DIR/packages/kit` (default `../blog`) and `make blog-check` compares the
-versions. The posts stay in `src/content/{blog,til}`; `src/lib/blog.ts` globs them and hands them
-to `createBlog`, `src/lib/blog-config.ts` holds the personal config (names, URL, copy, kinds),
+versions. `src/lib/blog.ts` globs the posts from `$content/{blog,til}` and hands them to
+`createBlog`, `src/lib/blog-config.ts` holds the personal config (names, URL, copy, kinds),
 and `svelte.config.js` passes the `[[dive:…]]` / `[[site:…]]` resolvers to `blogPreprocess`.
 The `blog/`, `feed.xml` and `til/` routes are a few lines each around the kit's helpers.
+
+**The posts** are compiled into the frontend at build time from `CONTENT_DIR` (default
+`../website-bakhuis-content/posts`, relative to this repository; a shell variable, not `.env`).
+`content.config.js` resolves it, `svelte.config.js` maps `$content` to it, and `vite.config.ts`
+lets the dev server serve and watch that directory, nothing else of the content repo.
+`pnpm dev`, `pnpm build`, `pnpm test` and `pnpm check` stop with `No blog content in …` when
+`blog/` or `til/` is missing or holds no posts; only lint runs without it. A post ships with the next build of this site:
+push it in the content repo, then deploy here as usual (on `dev` that needs a new commit here,
+the image tag being this repo's sha). The image gets the posts as a named build context,
+`docker build --build-context content=../website-bakhuis-content/posts .` (`make docker-build`),
+copied to `/content`; without it the Dockerfile's empty `content` stage stands in and the build
+fails with the same message.
+
+In GitHub Actions, `ci.yml` and `docker-publish.yml` check out `posts/` of
+`dennisbakhuis/website-bakhuis-content` (repo variable `CONTENT_REPO` overrides the name) into
+`website-bakhuis-content/` in the workspace, ignored by git, Prettier, ESLint and Docker; `ci.yml`
+points `CONTENT_DIR` there, `docker-publish.yml` passes it as the `content` context. Both need the
+repository secret **`CONTENT_REPO_TOKEN`**: a fine-grained personal access token with access to
+that one repository only and _Contents: read-only_. Create it under Settings → Developer settings
+→ Fine-grained tokens, add it under this repo's Settings → Secrets and variables → Actions, and
+renew it before it expires; without it both workflows fail at _Checkout content (posts)_.
 
 **The server** is the `divelog-server` package. In dev, `docker-compose.yml` builds its `dev`
 image from `${DIVELOG_SERVER_DIR:-../divelog/packages/server}` and mounts that source for
@@ -138,9 +162,9 @@ which installs the server package editable from the monorepo: `uv sync`, then
 `uv run divelog …`. The CLI's `push` subcommands talk to `DIVELOG_API` (default
 `http://localhost:8000`); for the dev stack, `set -x DIVELOG_API http://127.0.0.1:8300`.
 
-Production mounts a clone of divelog-data at `DATA_ROOT`, a deploy key at `GIT_SSH_KEY_PATH`,
-`STATE_DIR` for sessions, and sets `GIT_ENABLED=true`. Run one uvicorn worker: the store is
-in-process.
+Production mounts a clone of website-bakhuis-content at `DATA_ROOT`, a deploy key at
+`GIT_SSH_KEY_PATH`, `STATE_DIR` for sessions, and sets `GIT_ENABLED=true`. Run one uvicorn
+worker: the store is in-process.
 
 ### The commons
 
@@ -153,24 +177,24 @@ and adopting sites in [CONTRIBUTING.md](../../divelog/docs/CONTRIBUTING.md). Com
 served from `/media/commons/…`, their WebP variants rendered once into `STATE_DIR/variants/`.
 
 In dev, `docker-compose.yml` mounts `${COMMONS_REPO:-../divelog-sites}` read-only at
-`/data/commons` and sets `COMMONS_ROOT=/data/commons`, next to `divelog-data` at `/data/repo`.
-`COMMONS_GIT_ENABLED` stays `false` in dev, so the CLI does the pull. The log's `divelog.yaml`
+`/data/commons` and sets `COMMONS_ROOT=/data/commons`, next to `website-bakhuis-content` at
+`/data/repo`. `COMMONS_GIT_ENABLED` stays `false` in dev, so the CLI does the pull. The log's `divelog.yaml`
 names the commons (`path: ../divelog-sites`) and pins the commit it was validated against
 (`ref`); outside compose the CLI finds the commons through that manifest. After changing
 `COMMONS_REPO`, recreate the backend: `docker compose up -d --force-recreate backend`.
 
 ### Day to day with the commons
 
-All commands run from this repository with the sibling checkouts `../divelog-data` and
-`../divelog-sites`. For the CLI's `push` subcommands against the dev stack, set
+All commands run from this repository with the sibling checkouts `../website-bakhuis-content`
+and `../divelog-sites`. For the CLI's `push` subcommands against the dev stack, set
 `DIVELOG_API` first (above).
 
 ```fish
-uv run divelog commons pull --log ../divelog-data --author "Dennis Bakhuis"   # pull, pin, list stale sites
-uv run divelog sites status ../divelog-data            # origin, revision and pin; ends with "… 0 stale"
-uv run divelog validate --kind log ../divelog-data
-uv run divelog sites propose <site-id> --commons ../divelog-sites --log ../divelog-data --dry-run
-uv run divelog sites adopt <site-id> --log ../divelog-data    # or --all, once the PR is merged and pulled
+uv run divelog commons pull --log ../website-bakhuis-content --author "Dennis Bakhuis"   # pull, pin, list stale sites
+uv run divelog sites status ../website-bakhuis-content   # origin, revision and pin; ends with "… 0 stale"
+uv run divelog validate --kind log ../website-bakhuis-content
+uv run divelog sites propose <site-id> --commons ../divelog-sites --log ../website-bakhuis-content --dry-run
+uv run divelog sites adopt <site-id> --log ../website-bakhuis-content   # or --all, once the PR is merged and pulled
 ```
 
 The backend picks up a new pin by itself; otherwise `make data-pull` or _pull_ reloads it. Review
