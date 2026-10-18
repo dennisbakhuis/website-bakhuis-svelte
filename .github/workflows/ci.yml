@@ -6,9 +6,10 @@ name: CI
 # so the `push` trigger is intentionally omitted. Release artefacts on
 # merge are produced by docker-publish.yml. The backend and the dive-log
 # kit (with its API types) are built and tested in the divelog monorepo,
-# the blog kit in the blog repo; both arrive here as vendored tarballs in
-# vendor/. The posts come from the private website-bakhuis-content repository
-# (CONTENT_REPO_TOKEN), checked out inside the workspace and named by CONTENT_DIR.
+# the blog kit in the blog repo; both arrive here as git dependencies pinned
+# by tag (the lockfile holds the commit). The posts come from the private
+# website-bakhuis-content repository (deploy key CONTENT_DEPLOY_KEY), checked
+# out inside the workspace and named by CONTENT_DIR.
 on:
   pull_request:
     branches: [main, dev]
@@ -27,13 +28,13 @@ jobs:
 
       - name: Checkout content (posts)
         # The blog posts live in the private content repository (repo variable
-        # CONTENT_REPO overrides the name). CONTENT_REPO_TOKEN is a fine-grained
-        # PAT with read access to that one repository. Sparse: posts/ and the
+        # CONTENT_REPO overrides the name). CONTENT_DEPLOY_KEY is the private half
+        # of a read-only deploy key on that repository. Sparse: posts/ and the
         # top-level files only, not the dive log.
         uses: actions/checkout@v4
         with:
           repository: ${{ vars.CONTENT_REPO || 'dennisbakhuis/website-bakhuis-content' }}
-          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          ssh-key: ${{ secrets.CONTENT_DEPLOY_KEY }}
           path: website-bakhuis-content
           sparse-checkout: posts
           persist-credentials: false

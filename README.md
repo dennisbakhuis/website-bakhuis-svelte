@@ -2,9 +2,11 @@
 
 Personal website of Dennis Bakhuis: profile, online dive log, blog and TIL.
 SvelteKit frontend with a small FastAPI backend. The dive log is the divelog
-module: `@divelog/kit` (vendored in `vendor/`) for the pages and `divelog-server` for the backend, both from the divelog monorepo checked out
-next to this one (`../divelog`). The blog is the blog module: `@blog/kit`
-(vendored in `vendor/`) from the blog repo in `../blog`. Everything personal that
+module: `@divelog/kit` for the pages and `divelog-server` for the backend, both from the
+[divelog](https://github.com/dennisbakhuis/divelog) monorepo; the kit is a git dependency
+pinned by tag, the server runs from a checkout next to this one (`../divelog`). The blog is
+the blog module: `@blog/kit` from the [blog](https://github.com/dennisbakhuis/blog) repo,
+also a git dependency pinned by tag. Everything personal that
 is content — the dive log and the posts — lives in the private
 `website-bakhuis-content` repo next to this one; this repo is the wiring.
 The design contract lives in [docs/SPEC.md](docs/SPEC.md); how the pieces fit
@@ -32,12 +34,12 @@ repository, checked out next to this one. The backend mounts it (`DATA_REPO` in
 | Layer     | Technology                                                                     |
 | --------- | ------------------------------------------------------------------------------ |
 | Frontend  | SvelteKit 2 + Svelte 5 (runes), TypeScript, adapter-node                       |
-| Dive log  | `@divelog/kit` (packed tarball in `vendor/`, `make kit-vendor`)                |
+| Dive log  | `@divelog/kit` (git dependency on `dennisbakhuis/divelog`, pinned by tag)      |
 | Backend   | `divelog-server` (Python 3.13, FastAPI) from `../divelog/packages/server`      |
 | Data      | Files in the private `website-bakhuis-content` repo, loaded into memory        |
 | Media     | Local files in dev (`MEDIA_ROOT`), S3 (Hetzner Object Storage) in prod         |
 | Auth      | Owner-only magic link → session cookie                                         |
-| Blog      | `@blog/kit` (packed tarball in `vendor/`, `make blog-vendor`) from `../blog`   |
+| Blog      | `@blog/kit` (git dependency on `dennisbakhuis/blog`, pinned by tag)            |
 | Content   | Markdown in `$CONTENT_DIR/{blog,til}`, compiled by the kit (mdsvex, Shiki)     |
 | Animation | anime.js v4 (front page "Descent", reveals, counters, profile)                 |
 | Map       | MapLibre on self-hosted PMTiles (in the kit)                                   |
@@ -46,22 +48,18 @@ repository, checked out next to this one. The backend mounts it (`DATA_REPO` in
 
 ## Common commands
 
-| Command                 | Purpose                           |
-| ----------------------- | --------------------------------- |
-| `make run`              | Everything for local dev          |
-| `make up` / `make down` | Just the Docker services          |
-| `make data-pull`        | Pull the content repo and reload  |
-| `make data-status`      | Status of the data checkout       |
-| `make check`            | svelte-check                      |
-| `make lint`             | ESLint (zero warnings)            |
-| `make test`             | Vitest                            |
-| `make kit-vendor`       | Re-pack the kit from ../divelog   |
-| `make kit-check`        | Vendored kit = monorepo kit       |
-| `make blog-vendor`      | Re-pack the blog kit from ../blog |
-| `make blog-check`       | Vendored blog kit = repo kit      |
-| `make ci`               | Everything CI runs                |
-| `make build`            | Production frontend build         |
-| `make docker-build`     | Frontend production image         |
+| Command                 | Purpose                          |
+| ----------------------- | -------------------------------- |
+| `make run`              | Everything for local dev         |
+| `make up` / `make down` | Just the Docker services         |
+| `make data-pull`        | Pull the content repo and reload |
+| `make data-status`      | Status of the data checkout      |
+| `make check`            | svelte-check                     |
+| `make lint`             | ESLint (zero warnings)           |
+| `make test`             | Vitest                           |
+| `make ci`               | Everything CI runs               |
+| `make build`            | Production frontend build        |
+| `make docker-build`     | Frontend production image        |
 
 ## Project structure
 
@@ -75,7 +73,6 @@ src/
   lib/server/       cap, e-mail, rate limiter, umami
   routes/           /, dive/ + admin/ (kit catch-alls), blog/ + feed.xml (thin kit wrappers), til/ (redirects), contact, …
 content.config.js   CONTENT_DIR: where the posts are
-vendor/             @divelog/kit and @blog/kit tarballs
 scripts/            sync-version.mjs (VERSION → package.json)
 docs/SPEC.md        the spec
 docs/RUNBOOK.md     how the pieces fit, the data, the commands
@@ -100,5 +97,5 @@ pyproject.toml / uv.lock  uv project that installs divelog-server for the `divel
 `package.json` in step and CI fails on drift. Branch flow: feature → `dev`
 (auto-deploys to dev.dennisbakhuis.nl) → PR to `main` (must bump `VERSION`).
 `docker-publish.yml` builds the frontend image with the posts from the content
-repo (secret `CONTENT_REPO_TOKEN`, see the runbook); the deploy runs it next to
+repo (secret `CONTENT_DEPLOY_KEY`, see the runbook); the deploy runs it next to
 `ghcr.io/<owner>/divelog-server:<DIVELOG_SERVER_TAG>` (default `latest`).

@@ -110,21 +110,27 @@ checkouts:
 | `../divelog-sites`           | the sites commons (`COMMONS_REPO`), mounted read-only at `/data/commons`        |
 | `../blog`                    | `packages/kit` (`@blog/kit`): blog pages, feed, markdown pipeline; no server    |
 
-**The kit** is consumed as a packed tarball, `vendor/divelog-kit-<version>.tgz`, referenced from
-`package.json` as `file:vendor/…`. The committed tarball _is_ the pin until the kit is published
-on npm. After changing the kit in the monorepo, `make kit-vendor` builds and packs it from
-`$DIVELOG_DIR/packages/kit` (default `../divelog`), replaces the tarball and reinstalls;
-`make kit-check` (local only, not in CI) fails when the tarball's version differs from the
-monorepo's. Bump the kit's version when its contents change, or `kit-check` cannot tell. The
-site sets everything personal in `src/lib/divelog-config.ts` (names, URL, title suffix, page
-copy, the home tile's text); the kit's defaults are neutral.
+The site installs both kits from GitHub (below), so the `../divelog` and `../blog` checkouts
+are for working on the kits; `../divelog` also serves the dev backend and the `divelog` CLI.
 
-**The blog kit** works the same way: `vendor/blog-kit-<version>.tgz`, `make blog-vendor` builds
-and packs it from `$BLOG_DIR/packages/kit` (default `../blog`) and `make blog-check` compares the
-versions. `src/lib/blog.ts` globs the posts from `$content/{blog,til}` and hands them to
-`createBlog`, `src/lib/blog-config.ts` holds the personal config (names, URL, copy, kinds),
+**The kit** is a git dependency on the public monorepo, pinned by tag:
+`"@divelog/kit": "github:dennisbakhuis/divelog#v<version>&path:packages/kit"` in `package.json`.
+pnpm fetches that subdirectory and runs the kit's `prepare` script (`svelte-kit sync &&
+svelte-package`), which builds `dist/`; `pnpm-workspace.yaml` allows that script under
+`onlyBuiltDependencies`. The lockfile pins the tag's commit, so `--frozen-lockfile` installs
+the same code everywhere. The site sets everything personal in `src/lib/divelog-config.ts`
+(names, URL, title suffix, page copy, the home tile's text); the kit's defaults are neutral.
+
+**The blog kit** works the same way:
+`"@blog/kit": "github:dennisbakhuis/blog#v<version>&path:packages/kit"`. `src/lib/blog.ts` globs
+the posts from `$content/{blog,til}` and hands them to `createBlog`, `src/lib/blog-config.ts` holds the personal config (names, URL, copy, kinds),
 and `svelte.config.js` passes the `[[dive:…]]` / `[[site:…]]` resolvers to `blogPreprocess`.
 The `blog/`, `feed.xml` and `til/` routes are a few lines each around the kit's helpers.
+
+**Updating the kits**: tag a release in the kit's repository, bump the tag in `package.json`
+(`#v0.4.0` → `#v0.5.0`), run `pnpm install` and commit `package.json` with the changed
+`pnpm-lock.yaml`. Builds need network access to GitHub for the install, and git in the image
+that installs (the Dockerfile's builder stage has it).
 
 **The posts** are compiled into the frontend at build time from `CONTENT_DIR` (default
 `../website-bakhuis-content/posts`, relative to this repository; a shell variable, not `.env`).
@@ -142,10 +148,10 @@ In GitHub Actions, `ci.yml` and `docker-publish.yml` check out `posts/` of
 `dennisbakhuis/website-bakhuis-content` (repo variable `CONTENT_REPO` overrides the name) into
 `website-bakhuis-content/` in the workspace, ignored by git, Prettier, ESLint and Docker; `ci.yml`
 points `CONTENT_DIR` there, `docker-publish.yml` passes it as the `content` context. Both need the
-repository secret **`CONTENT_REPO_TOKEN`**: a fine-grained personal access token with access to
-that one repository only and _Contents: read-only_. Create it under Settings → Developer settings
-→ Fine-grained tokens, add it under this repo's Settings → Secrets and variables → Actions, and
-renew it before it expires; without it both workflows fail at _Checkout content (posts)_.
+repository secret **`CONTENT_DEPLOY_KEY`**: the private half of a read-only deploy key on the
+content repository (its Settings → Deploy keys, _Allow write access_ off). Add the private key
+under this repo's Settings → Secrets and variables → Actions; it does not expire, and it opens
+that one repository only. Without it both workflows fail at _Checkout content (posts)_.
 
 **The server** is the `divelog-server` package. In dev, `docker-compose.yml` builds its `dev`
 image from `${DIVELOG_SERVER_DIR:-../divelog/packages/server}` and mounts that source for
@@ -182,7 +188,7 @@ job stops at _Check deploy settings_ when a variable is empty.
 | `CONTENT_REPO`       | variable | optional: the content repository (default `dennisbakhuis/website-bakhuis-content`) |
 | `NETBIRD_SETUP_KEY`  | secret   | a reusable NetBird setup key with _Ephemeral peers_ enabled                        |
 | `DEPLOY_SSH_KEY`     | secret   | the private half of the forced-command deploy key                                  |
-| `CONTENT_REPO_TOKEN` | secret   | the read-only token for the content repository (above)                             |
+| `CONTENT_DEPLOY_KEY` | secret   | the private half of the content repository's read-only deploy key (above)          |
 
 The running frontend container reads the site's own addresses from its environment, and the code
 has no fallback for them; the operator sets them in the server's environment for the service:

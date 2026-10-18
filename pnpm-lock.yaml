@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@blog/kit':
-        specifier: file:vendor/blog-kit-0.2.0.tgz
-        version: file:vendor/blog-kit-0.2.0.tgz(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))
+        specifier: github:dennisbakhuis/blog#v0.2.0&path:packages/kit
+        version: https://codeload.github.com/dennisbakhuis/blog/tar.gz/b0368ce2cbef9701b7d0053c731ae56bc997d02b#path:packages/kit(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       '@cap.js/wasm':
         specifier: ^0.0.7
         version: 0.0.7
       '@divelog/kit':
-        specifier: file:vendor/divelog-kit-0.3.0.tgz
-        version: file:vendor/divelog-kit-0.3.0.tgz(@resvg/resvg-js@2.6.2)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(maplibre-gl@6.11.2)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
+        specifier: github:dennisbakhuis/divelog#v0.4.0&path:packages/kit
+        version: https://codeload.github.com/dennisbakhuis/divelog/tar.gz/20596d1816d5b08c3874ec4e58b203bc0aefe60a#path:packages/kit(@resvg/resvg-js@2.6.2)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(maplibre-gl@6.11.2)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       '@fontsource-variable/inter':
         specifier: ^5.3.0
         version: 5.3.0
@@ -166,8 +166,8 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@blog/kit@file:vendor/blog-kit-0.2.0.tgz':
-    resolution: {integrity: sha512-NchxF0epMXxlweeDzAkhVR/3tNWGFkZilHIsUEzisG3ggAwNxbd8bLVVn4//sxxdvM05O6WGtk2tZHhZrc7ttQ==, tarball: file:vendor/blog-kit-0.2.0.tgz}
+  '@blog/kit@https://codeload.github.com/dennisbakhuis/blog/tar.gz/b0368ce2cbef9701b7d0053c731ae56bc997d02b#path:packages/kit':
+    resolution: {path: packages/kit, tarball: https://codeload.github.com/dennisbakhuis/blog/tar.gz/b0368ce2cbef9701b7d0053c731ae56bc997d02b}
     version: 0.2.0
     engines: {node: '>=22'}
     peerDependencies:
@@ -223,9 +223,9 @@ packages:
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
 
-  '@divelog/kit@file:vendor/divelog-kit-0.3.0.tgz':
-    resolution: {integrity: sha512-wkgm0U3i92YBcVmLSzxaQeMLUAvuW+fcPUHf/BvBV7yafVMTWiI1ZCXI8mQZ3jIylBN6k1fQXp7x5nYEb+QDVA==, tarball: file:vendor/divelog-kit-0.3.0.tgz}
-    version: 0.3.0
+  '@divelog/kit@https://codeload.github.com/dennisbakhuis/divelog/tar.gz/20596d1816d5b08c3874ec4e58b203bc0aefe60a#path:packages/kit':
+    resolution: {path: packages/kit, tarball: https://codeload.github.com/dennisbakhuis/divelog/tar.gz/20596d1816d5b08c3874ec4e58b203bc0aefe60a}
+    version: 0.4.0
     engines: {node: '>=22'}
     peerDependencies:
       '@resvg/resvg-js': ^2.6.2
@@ -2818,7 +2818,7 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@blog/kit@file:vendor/blog-kit-0.2.0.tgz(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))':
+  '@blog/kit@https://codeload.github.com/dennisbakhuis/blog/tar.gz/b0368ce2cbef9701b7d0053c731ae56bc997d02b#path:packages/kit(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))':
     dependencies:
       '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2))
       mdsvex: 0.12.8(svelte@5.57.0(@typescript-eslint/types@8.70.0))
@@ -2867,7 +2867,7 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
-  '@divelog/kit@file:vendor/divelog-kit-0.3.0.tgz(@resvg/resvg-js@2.6.2)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(maplibre-gl@6.11.2)(svelte@5.57.0(@typescript-eslint/types@8.70.0))':
+  '@divelog/kit@https://codeload.github.com/dennisbakhuis/divelog/tar.gz/20596d1816d5b08c3874ec4e58b203bc0aefe60a#path:packages/kit(@resvg/resvg-js@2.6.2)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(maplibre-gl@6.11.2)(svelte@5.57.0(@typescript-eslint/types@8.70.0))':
     dependencies:
       '@protomaps/basemaps': 5.7.2
       '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2))

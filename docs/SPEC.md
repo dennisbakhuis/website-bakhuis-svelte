@@ -277,7 +277,7 @@ primary use case. The pages are described in
 
 ## 8. Blog and TIL
 
-- Served by the blog module `@blog/kit` (repo `../blog`, vendored in `vendor/`); the markdown
+- Served by the blog module `@blog/kit` (git dependency on `dennisbakhuis/blog`, pinned by tag); the markdown
   and the personal config (`src/lib/blog-config.ts`) stay in this site.
 - Markdown with frontmatter (`title, date, updated, tags, summary, words, draft,
 external`; dates `YYYY-MM-DD`), compiled by the kit's `blogPreprocess` (mdsvex). TIL notes
@@ -340,7 +340,6 @@ src/                 SvelteKit
                      dive/[...path] + dive/og (kit routes and diveOg), admin/[...path] + admin/login,
                      blog/ (thin @blog/kit wrappers), til/ (redirects), contact, privacy, api/cap/,
                      feed.xml, sitemap.xml, robots.txt, go/, health
-vendor/              divelog-kit-<version>.tgz (make kit-vendor) and blog-kit-<version>.tgz (make blog-vendor)
 scripts/             sync-version.mjs (VERSION → package.json)
 static/              favicons, og default
 .github/workflows/   ci.yml (frontend gates), docker-publish.yml (frontend image; deploy names the

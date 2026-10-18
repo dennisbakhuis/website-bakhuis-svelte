@@ -7,6 +7,10 @@
 #   docker build --build-context content=../website-bakhuis-content/posts .
 # (`make docker-build`; CI passes its checkout the same way). Without it this
 # empty stage stands in and `pnpm build` stops with "No blog content in /content".
+#
+# @divelog/kit and @blog/kit are git dependencies (GitHub, pinned by tag): the
+# builder needs git and network access, and pnpm-workspace.yaml allows their
+# `prepare` scripts, which build the kits' dist/ during the install.
 
 # Stage 0: the posts (replaced by --build-context content=…)
 FROM scratch AS content
@@ -16,10 +20,13 @@ FROM node:22-slim AS builder
 
 WORKDIR /app
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN corepack enable
 
-COPY package.json pnpm-lock.yaml ./
-COPY vendor ./vendor
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .

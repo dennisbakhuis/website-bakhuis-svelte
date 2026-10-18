@@ -8,7 +8,7 @@ name: Publish Docker image to GHCR
 # next to this frontend (DIVELOG_SERVER_TAG, default `latest`).
 #
 # The blog posts come from the private website-bakhuis-content repository
-# (secret CONTENT_REPO_TOKEN) and enter the image as the `content` build
+# (deploy key secret CONTENT_DEPLOY_KEY) and enter the image as the `content` build
 # context. A push there does not trigger this workflow: a new post ships with
 # the next website build.
 #
@@ -110,13 +110,13 @@ jobs:
 
       - name: Checkout content (posts)
         # The blog posts live in the private content repository (repo variable
-        # CONTENT_REPO overrides the name). CONTENT_REPO_TOKEN is a fine-grained
-        # PAT with read access to that one repository. Sparse: posts/ and the
+        # CONTENT_REPO overrides the name). CONTENT_DEPLOY_KEY is the private half
+        # of a read-only deploy key on that repository. Sparse: posts/ and the
         # top-level files only, not the dive log.
         uses: actions/checkout@v4
         with:
           repository: ${{ vars.CONTENT_REPO || 'dennisbakhuis/website-bakhuis-content' }}
-          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          ssh-key: ${{ secrets.CONTENT_DEPLOY_KEY }}
           path: website-bakhuis-content
           sparse-checkout: posts
           persist-credentials: false

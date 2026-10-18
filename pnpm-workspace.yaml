@@ -1,0 +1,3 @@
+onlyBuiltDependencies:
+  - '@blog/kit'
+  - '@divelog/kit'
