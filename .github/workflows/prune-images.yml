@@ -11,10 +11,9 @@ name: Prune old container versions
 #     semver release (e.g. `0.1.2`), nor tags ending in `.sig`/`.att`/`.sbom`
 #     (Sigstore attestations).
 #
-# Only the frontend package is published from this repo. The backend is the
-# divelog-server image, published and pruned by the divelog monorepo; the old
-# website-bakhuis-svelte-backend package is no longer pushed and can be
-# deleted by hand once no deploy references it.
+# Only the site package (website-bakhuis-svelte) is published from this repo.
+# The dive-log server is the divelog-server image, published by the divelog
+# monorepo.
 #
 # Safety: the grace window protects in-flight publishes whose sub-manifests
 # briefly appear untagged before the parent index commits.
@@ -44,7 +43,7 @@ permissions:
   packages: write
 
 env:
-  PACKAGE: website-bakhuis-svelte-frontend
+  PACKAGE: website-bakhuis-svelte
 
 jobs:
   prune:

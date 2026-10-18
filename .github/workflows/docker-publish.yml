@@ -1,11 +1,11 @@
 name: Publish Docker image to GHCR
 
-# Builds the SvelteKit app image and pushes it to GitHub Container Registry.
-# TLS termination and request routing happen at the host's reverse proxy —
-# this image is the app only. The backend is not built here: it is the
-# divelog-server image published from the divelog monorepo
-# (ghcr.io/<owner>/divelog-server), and the deploy step names the tag to run
-# next to this frontend (DIVELOG_SERVER_TAG, default `latest`).
+# Builds the SvelteKit app image and pushes it to GitHub Container Registry,
+# then deploys it. TLS termination and request routing happen at the host's
+# reverse proxy — this image is the app only. The dive-log server is not
+# built here: it is the divelog-server image published from the divelog
+# monorepo (ghcr.io/<owner>/divelog-server:<version>), deployed by the same
+# server-side script as the `divelog-prod` / `divelog-dev` services.
 #
 # The blog posts come from the private website-bakhuis-content repository
 # (deploy key secret CONTENT_DEPLOY_KEY) and enter the image as the `content` build
@@ -13,11 +13,16 @@ name: Publish Docker image to GHCR
 # the next website build.
 #
 # Tagging by branch:
-#   main → ghcr.io/<owner>/website-bakhuis-svelte-frontend:<VERSION>
-#         ghcr.io/<owner>/website-bakhuis-svelte-frontend:latest
+#   main → ghcr.io/<owner>/website-bakhuis-svelte:<VERSION>
+#         ghcr.io/<owner>/website-bakhuis-svelte:latest
 #         (build fails if <VERSION> already exists — bump VERSION per release)
-#   dev  → …:dev          (rolling)
-#         …:dev-<sha7>   (immutable)
+#   dev  → ghcr.io/<owner>/website-bakhuis-svelte:dev          (rolling)
+#         ghcr.io/<owner>/website-bakhuis-svelte:dev-<sha7>   (immutable)
+#
+# Deploys: main → bakhuis-prod <VERSION>, dev → bakhuis-dev dev-<sha7>. When
+# the DIVELOG_SERVER_TAG repository variable (or the dispatch input) names a
+# server version, the matching divelog-prod / divelog-dev service is brought
+# to it first; the call is a no-op when that tag already runs.
 
 on:
   push:
@@ -47,24 +52,26 @@ on:
   workflow_dispatch:
     inputs:
       deploy_service:
-        description: 'Service to deploy. Leave blank for a build-only test run. Setting this switches to deploy-only mode — the build job is skipped and the tag below is deployed as-is.'
+        description: 'Service to deploy. Leave blank for a build-only test run. Setting this switches to deploy-only mode — the build job is skipped and the tag below is deployed as-is. divelog-* deploys a divelog-server version.'
         required: false
         type: choice
         options:
           - ''
           - bakhuis-prod
           - bakhuis-dev
+          - divelog-prod
+          - divelog-dev
         default: ''
       deploy_tag:
-        description: 'Image tag to deploy (must already exist in GHCR). Required when deploy_service is set.'
+        description: 'Image tag to deploy (must already exist in GHCR; immutable, e.g. 1.2.3 or dev-abc1234). Required when deploy_service is set.'
         required: false
         type: string
         default: ''
       divelog_server_tag:
-        description: 'Tag of ghcr.io/<owner>/divelog-server to run as the backend.'
+        description: 'With a bakhuis-* deploy: also bring the matching divelog-* server to this version first (overrides the DIVELOG_SERVER_TAG variable; blank = the variable, or leave the server as it is).'
         required: false
         type: string
-        default: 'latest'
+        default: ''
 
 permissions:
   contents: read
@@ -87,16 +94,6 @@ jobs:
     # Skip entirely in deploy-only workflow_dispatch mode. The deploy
     # job runs the explicit (existing) image tag from the inputs.
     if: github.event_name == 'push' || inputs.deploy_service == ''
-    # One image, the frontend; the backend image comes from the divelog repo.
-    strategy:
-      fail-fast: true
-      matrix:
-        image:
-          - name: frontend
-            context: .
-            file: ./Dockerfile
-            target: runtime
-            title: dennisbakhuis.nl frontend (SvelteKit)
     outputs:
       # Exposed for the `deploy` job: the *immutable* tag we just pushed
       # (VERSION on main, dev-<sha7> on dev) and the matching service name
@@ -127,7 +124,7 @@ jobs:
 
       - name: Lowercase image namespace
         id: image
-        run: echo "name=$(echo '${{ env.IMAGE_NAME }}-${{ matrix.image.name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        run: echo "name=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -189,7 +186,7 @@ jobs:
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
             type=sha,prefix=dev-,format=short,enable=${{ github.ref == 'refs/heads/dev' }}
           labels: |
-            org.opencontainers.image.title=${{ matrix.image.title }}
+            org.opencontainers.image.title=dennisbakhuis.nl (SvelteKit)
             org.opencontainers.image.description=Personal website, dive log and blog of Dennis Bakhuis
             org.opencontainers.image.version=${{ steps.version.outputs.value }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
@@ -199,9 +196,9 @@ jobs:
         if: steps.existing.outputs.skip != 'true'
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.image.context }}
-          file: ${{ matrix.image.file }}
-          target: ${{ matrix.image.target }}
+          context: .
+          file: ./Dockerfile
+          target: runtime
           build-contexts: |
             content=website-bakhuis-content/posts
           push: true
@@ -209,21 +206,25 @@ jobs:
             APP_VERSION=${{ steps.version.outputs.value }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.image.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
-    # Triggers the server to pull + restart only the affected service.
-    # Deploys over NetBird with a forced-command SSH key; the server side
-    # lives in the operator's infrastructure repo. Needs the DEPLOY_HOST and
-    # DEPLOY_USER repository variables and the NETBIRD_SETUP_KEY and
-    # DEPLOY_SSH_KEY secrets (docs/RUNBOOK.md).
+    # Triggers the server to pull + restart only the affected service. The
+    # forced-command SSH key on the server makes the only thing this job
+    # can do `/opt/bakhuis/deploy.sh <service> <tag>` — the server side lives
+    # in the operator's infrastructure repo. The script's service allowlist
+    # accepts only `bakhuis-prod`, `bakhuis-dev`, `divelog-prod` and
+    # `divelog-dev`, and only immutable tags. The runner reaches the server
+    # over NetBird. Needs the DEPLOY_HOST and DEPLOY_USER repository variables
+    # and the NETBIRD_SETUP_KEY and DEPLOY_SSH_KEY secrets (docs/RUNBOOK.md).
     #
     # Two trigger paths:
     #   - push: deploys what build-and-push just produced.
     #   - workflow_dispatch with deploy_service + deploy_tag: deploys an
     #     existing GHCR tag without rebuilding (e.g. to re-run a failed
-    #     deploy step after the workflow itself was updated).
+    #     deploy step after the workflow itself was updated, or to roll the
+    #     divelog server forward or back).
     needs: build-and-push
     if: |
       always() &&
@@ -239,9 +240,10 @@ jobs:
       # so the || falls back to the build-job outputs.
       SERVICE: ${{ inputs.deploy_service || needs.build-and-push.outputs.deploy_service }}
       TAG: ${{ inputs.deploy_tag || needs.build-and-push.outputs.deploy_tag }}
-      # The backend image: an explicit dispatch input, else the repo variable,
-      # else `latest`.
-      DIVELOG_SERVER_TAG: ${{ inputs.divelog_server_tag || vars.DIVELOG_SERVER_TAG || 'latest' }}
+      # The divelog-server version to run next to a site deploy: the dispatch
+      # input, else the repository variable, else none (the server is left
+      # alone). Never a floating tag — the server-side script rejects those.
+      DIVELOG_SERVER_TAG: ${{ inputs.divelog_server_tag || vars.DIVELOG_SERVER_TAG }}
       DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
       DEPLOY_USER: ${{ vars.DEPLOY_USER }}
     steps:
@@ -317,20 +319,27 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
 
           # The server's authorized_keys forces the deploy script
-          # regardless of what we send. The args below (service, frontend
-          # tag, backend image) land in the script's $SSH_ORIGINAL_COMMAND
-          # for validation + execution. The script is
-          # itself idempotent — if `$TAG` matches the value already in the
+          # regardless of what we send. The args below land in the script's
+          # $SSH_ORIGINAL_COMMAND for validation + execution. The script is
+          # itself idempotent — if the tag matches the value already in the
           # server-side .env and the image hasn't changed, `docker
           # compose up -d` is a no-op and no container restart happens.
           # UserKnownHostsFile=/dev/null because GHA runners are ephemeral;
           # accept-new pins host key for this run only.
-          SERVER_IMAGE="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/divelog-server:${DIVELOG_SERVER_TAG}"
-          echo "::notice::deploying $SERVICE -> frontend $TAG, backend $SERVER_IMAGE"
-          ssh -i ~/.ssh/deploy_key \
-              -o StrictHostKeyChecking=accept-new \
-              -o UserKnownHostsFile=/dev/null \
-              -o ConnectTimeout=10 \
-              -o ServerAliveInterval=30 \
-              "$DEPLOY_USER@$DEPLOY_HOST" \
-              "$SERVICE $TAG $SERVER_IMAGE"
+          deploy() {
+            echo "::notice::deploying $1 -> $2"
+            ssh -i ~/.ssh/deploy_key \
+                -o StrictHostKeyChecking=accept-new \
+                -o UserKnownHostsFile=/dev/null \
+                -o ConnectTimeout=10 \
+                -o ServerAliveInterval=30 \
+                "$DEPLOY_USER@$DEPLOY_HOST" \
+                "$1 $2"
+          }
+
+          # The server first, so a site release that needs a newer server
+          # API never runs against the old one.
+          if [[ "$SERVICE" == bakhuis-* && -n "${DIVELOG_SERVER_TAG:-}" ]]; then
+            deploy "divelog-${SERVICE#bakhuis-}" "$DIVELOG_SERVER_TAG"
+          fi
+          deploy "$SERVICE" "$TAG"

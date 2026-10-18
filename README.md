@@ -96,6 +96,9 @@ pyproject.toml / uv.lock  uv project that installs divelog-server for the `divel
 `VERSION` is the single source of truth; `pnpm version:sync` keeps
 `package.json` in step and CI fails on drift. Branch flow: feature → `dev`
 (auto-deploys to dev.dennisbakhuis.nl) → PR to `main` (must bump `VERSION`).
-`docker-publish.yml` builds the frontend image with the posts from the content
-repo (secret `CONTENT_DEPLOY_KEY`, see the runbook); the deploy runs it next to
-`ghcr.io/<owner>/divelog-server:<DIVELOG_SERVER_TAG>` (default `latest`).
+`docker-publish.yml` builds the site image `ghcr.io/<owner>/website-bakhuis-svelte`
+with the posts from the content repo (secret `CONTENT_DEPLOY_KEY`, see the runbook)
+and deploys it: `dev` → `dev-<sha7>` on `bakhuis-dev`, `main` → `<VERSION>` on
+`bakhuis-prod`. The `divelog-server` image runs next to it as `divelog-dev` /
+`divelog-prod`, deployed by the same script at the version in the
+`DIVELOG_SERVER_TAG` variable (runbook, _Deploy_).

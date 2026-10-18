@@ -26,7 +26,9 @@ website-bakhuis-content/
 ```
 
 Binary media (photos, logbook scans, avatars) is **not** in git: it lives in the media store —
-`MEDIA_DIR` on disk in dev, S3 in prod — and each record's `media:` list points at it by key.
+`MEDIA_DIR` on disk in dev, a directory on the server's persistent volume in prod
+(`STORAGE_BACKEND=local`; S3 is supported but not used) — and each record's `media:` list points
+at it by key.
 
 ## Everyday
 
@@ -85,7 +87,9 @@ The data repo _is_ the backup: `git log dives/00457.md` is the history of a dive
 bar shows `unpushed` when the remote is unreachable and `conflict` when a rebase failed — resolve
 that in the checkout and _pull_.
 
-Media: bucket versioning in prod; in dev it is just a directory.
+Media: not in git, so not covered by the data repo; in prod it is a directory on the server's
+persistent volume (the dev site mounts the same store read-only), in dev just a directory. Keep
+your local `MEDIA_DIR` as the copy you sync up from, or back the server directory up separately.
 
 ## Running it
 
@@ -160,8 +164,7 @@ package's defaults are generic, so compose sets this site's `SITE_NAME`, `OWNER_
 `OWNER_EMAIL`, `HOME_COUNTRIES`, mail templates, `SESSION_COOKIE_NAME`, sender, git author and
 S3 region explicitly (each overridable from `.env`). Its tests run in the monorepo
 (`cd ../divelog; uv run pytest packages/server`). Production runs the published image
-`ghcr.io/<owner>/divelog-server:<tag>`; the deploy passes `DIVELOG_SERVER_TAG` (default `latest`)
-next to the frontend tag.
+`ghcr.io/<owner>/divelog-server:<version>` as its own service next to the site (_Deploy_, below).
 
 **The `divelog` CLI** runs from this repository's uv project (`pyproject.toml`, `uv.lock`),
 which installs the server package editable from the monorepo: `uv sync`, then
@@ -174,9 +177,46 @@ worker: the store is in-process.
 
 ### Deploy
 
-`docker-publish.yml` builds both images on a push to `dev` or `main`, then deploys over NetBird
-with a forced-command SSH key: the runner joins the mesh as an ephemeral peer and asks the server
-to pull and restart one service. The server side lives in the operator's infrastructure repo.
+The server runs four containers from two images, all deployed by one forced-command script
+(`/opt/<stack>/deploy.sh <service> <tag>`, in the operator's infrastructure repo):
+
+| Service        | Image                                    | Serves                                      |
+| -------------- | ---------------------------------------- | ------------------------------------------- |
+| `bakhuis-prod` | `ghcr.io/<owner>/website-bakhuis-svelte` | `dennisbakhuis.nl` (and `www.`, 301)        |
+| `bakhuis-dev`  | same                                     | `dev.dennisbakhuis.nl`                      |
+| `divelog-prod` | `ghcr.io/<owner>/divelog-server`         | `/api/v1/*` and `/media/*` of the prod site |
+| `divelog-dev`  | same                                     | the same paths of the dev site              |
+
+The reverse proxy sends `/api/v1/*` and `/media/*` straight to the matching `divelog-*`
+container (same origin for the admin cookie, as the Vite proxy does in dev) and everything else
+to the site, which reaches its server over the container network (`BACKEND_URL`).
+`divelog-prod` commits and pushes every admin edit to the content repository; `divelog-dev`
+runs on its own checkout with `GIT_ENABLED=false`, so edits on the dev site never leave the
+server.
+
+`docker-publish.yml` follows the same dev/prod model as the other sites on the server:
+
+- **push to `dev`** builds `website-bakhuis-svelte:dev-<sha7>` (and the rolling `:dev`) and
+  deploys `bakhuis-dev dev-<sha7>`;
+- **push to `main`** builds `website-bakhuis-svelte:<VERSION>` (and `:latest`) and deploys
+  `bakhuis-prod <VERSION>`; the build fails when that version already exists, so every release
+  bumps `VERSION`;
+- **workflow_dispatch** with _deploy_service_ and _deploy_tag_ deploys an existing tag without
+  building: a re-run, a rollback (`bakhuis-prod 0.1.0`), or a server version
+  (`divelog-dev 0.5.0`).
+
+Only immutable tags deploy; the script refuses `latest`, `dev` and the like.
+
+**The server version.** The `divelog-server` image is published by the divelog monorepo when a
+`server-v<version>` tag is pushed there (image tag `<version>`). Set the repository variable
+`DIVELOG_SERVER_TAG` to that version: every deploy above then first brings the matching
+`divelog-dev` / `divelog-prod` to it (a no-op when it already runs). Promotion follows the
+site's: change the variable, push to `dev` (dev runs the new server), release to `main` (prod
+does). To move one environment on its own, dispatch with _deploy_service_ `divelog-dev` or
+`divelog-prod` and the version as _deploy_tag_, or pass _divelog_server_tag_ with a site deploy.
+Upgrade the server and the site together when the server's `api` major changes (the kit refuses
+a different major), and run `divelog validate` on the log first.
+
 The workflow needs these settings under Settings → Secrets and variables → Actions; the deploy
 job stops at _Check deploy settings_ when a variable is empty.
 
@@ -184,14 +224,15 @@ job stops at _Check deploy settings_ when a variable is empty.
 | -------------------- | -------- | ---------------------------------------------------------------------------------- |
 | `DEPLOY_HOST`        | variable | the server's NetBird FQDN                                                          |
 | `DEPLOY_USER`        | variable | the SSH user on the server whose `authorized_keys` holds the forced-command key    |
-| `DIVELOG_SERVER_TAG` | variable | optional: the `divelog-server` image tag to deploy (default `latest`)              |
+| `DIVELOG_SERVER_TAG` | variable | optional: the `divelog-server` version to run (unset: deploys leave it alone)      |
 | `CONTENT_REPO`       | variable | optional: the content repository (default `dennisbakhuis/website-bakhuis-content`) |
 | `NETBIRD_SETUP_KEY`  | secret   | a reusable NetBird setup key with _Ephemeral peers_ enabled                        |
 | `DEPLOY_SSH_KEY`     | secret   | the private half of the forced-command deploy key                                  |
 | `CONTENT_DEPLOY_KEY` | secret   | the private half of the content repository's read-only deploy key (above)          |
 
-The running frontend container reads the site's own addresses from its environment, and the code
-has no fallback for them; the operator sets them in the server's environment for the service:
+The running containers read the site's own addresses from their environment, and the code has
+no fallback for them; the operator sets them in the server's environment file per environment
+(one file serves both containers of an environment):
 
 | Variable               | What it holds                                                        |
 | ---------------------- | -------------------------------------------------------------------- |
@@ -199,9 +240,11 @@ has no fallback for them; the operator sets them in the server's environment for
 | `SMTP_FROM_EMAIL`      | the sender of contact-form mail; required for the form               |
 | `SMTP_TO_EMAIL`        | the mailbox the contact form delivers to; required for the form      |
 
-The backend's `OWNER_EMAIL` (the only address that can log in) and `BACKEND_SMTP_FROM` (the sender
-of magic links) are set the same way; `.env.example` and `docker-compose.yml` carry `example.org`
-placeholders only.
+The backend's `OWNER_EMAIL` (the only address that can log in), `BACKEND_SMTP_FROM` (the sender
+of magic links) and the git committer identity of its commits are set the same way;
+`.env.example` and `docker-compose.yml` carry `example.org` placeholders only. The server side
+(compose file, environment templates, data checkouts, the content repository's read-write
+deploy key) is documented in the infrastructure repo.
 
 ### The commons
 
@@ -274,8 +317,11 @@ media store under `tiles/` and are served at `/media/tiles/` with byte-range req
 ```fish
 brew install pmtiles
 make tiles                            # rebuild changed clusters into $MEDIA_DIR/tiles
-make tiles-upload                     # same, then push tiles/ to the S3 bucket
+make tiles-upload                     # same, then push tiles/ to the S3 bucket (S3 setups only)
 ```
+
+With the local media store in prod, `make tiles` is followed by syncing `$MEDIA_DIR/tiles/` up to
+the server's media directory (the infrastructure repo's runbook has the command).
 
 Run it after adding a site outside every existing cluster (the site page falls back to the SVG
 globe until its archive exists; `/dive` shows the static SVG map until `world.pmtiles` is there).
