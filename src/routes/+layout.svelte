@@ -5,7 +5,7 @@
   import '@blog/kit/styles/tokens.css';
   import '@blog/kit/styles/blog.css';
   import { page } from '$app/state';
-  import { site } from '$lib/site';
+  import { contactEmail, site } from '$lib/site';
   import { metaFor, canonicalUrl, personLD, jsonLdScript, ogImageFor } from '$lib/seo';
   import { urls } from '$lib/divelog-config';
   import { blogConfig, blogUrls } from '$lib/blog-config';
@@ -35,6 +35,7 @@
   const canonical = $derived(canonicalUrl(page.url.pathname));
   const ogImage = $derived(ogImageFor(page.url.pathname, meta));
   const jsonLd = jsonLdScript(personLD());
+  const email = contactEmail();
 
   const nav = [
     { href: urls.log(), label: 'Dive log' },
@@ -151,7 +152,9 @@
         <a href={goHref('github', 'footer')} data-sveltekit-reload rel="me">GitHub</a>
         <a href={goHref('linkedin', 'footer')} data-sveltekit-reload rel="me">LinkedIn</a>
         <a href={goHref('medium', 'footer')} data-sveltekit-reload rel="me">Medium</a>
-        <a href={goHref('email', 'footer')} data-sveltekit-reload>{site.email}</a>
+        {#if email}
+          <a href={goHref('email', 'footer')} data-sveltekit-reload>{email}</a>
+        {/if}
         <p class="footer-copyright">
           © {new Date().getFullYear()}
           {site.name} · <a href="/privacy">Privacy</a>

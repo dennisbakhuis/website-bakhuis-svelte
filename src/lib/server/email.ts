@@ -2,9 +2,6 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import { env } from '$env/dynamic/private';
 import type { ContactFormData } from '$lib/forms/contact-schema';
 
-const DEFAULT_TO_EMAIL = 'owner@example.org';
-const DEFAULT_FROM_EMAIL = 'website@example.org';
-
 export function sanitizeHeader(value: string): string {
   return value
     .replace(/[\r\n\t]/g, ' ')
@@ -28,6 +25,12 @@ export function singleAddressOrThrow(raw: string): string {
     throw new Error('reply-to must be a single address');
   }
   return raw;
+}
+
+function requiredAddress(name: 'SMTP_FROM_EMAIL' | 'SMTP_TO_EMAIL'): string {
+  const value = env[name]?.trim();
+  if (!value) throw new Error(`${name} is not set`);
+  return value;
 }
 
 let cachedTransport: Transporter | null = null;
@@ -64,9 +67,9 @@ export function formatTimestamp(dt: Date): string {
 }
 
 export async function sendContactEmail(data: ContactFormData): Promise<void> {
+  const fromEmail = requiredAddress('SMTP_FROM_EMAIL');
+  const toEmail = requiredAddress('SMTP_TO_EMAIL');
   const transport = getTransport();
-  const fromEmail = env.SMTP_FROM_EMAIL ?? DEFAULT_FROM_EMAIL;
-  const toEmail = env.SMTP_TO_EMAIL ?? DEFAULT_TO_EMAIL;
   const safeReplyTo = singleAddressOrThrow(sanitizeHeader(data.email));
   const safeName = sanitizeHeader(data.name);
   const timestamp = formatTimestamp(new Date());

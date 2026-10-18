@@ -11,6 +11,6 @@ describe('go targets', () => {
 
   it('builds labelled hrefs', () => {
     expect(goHref('linkedin', 'footer')).toBe('/go/linkedin?from=footer');
-    expect(GO_TARGETS.email.href.startsWith('mailto:')).toBe(true);
+    expect(GO_TARGETS.email.href).toBe('mailto:owner@example.org');
   });
 });

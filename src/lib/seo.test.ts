@@ -46,6 +46,7 @@ describe('seo', () => {
   it('describes the person', () => {
     expect(personLD()['@type']).toBe('Person');
     expect(personLD().url).toBe('https://dennisbakhuis.nl/');
+    expect(personLD().email).toBe('owner@example.org');
   });
 
   it('keeps the blog list meta', () => {

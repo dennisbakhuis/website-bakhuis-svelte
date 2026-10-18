@@ -1,3 +1,4 @@
+import { env } from '$env/dynamic/public';
 import { urls } from '$lib/divelog-config';
 
 export const SITE_URL = 'https://dennisbakhuis.nl';
@@ -9,7 +10,6 @@ export const site = {
   location: 'Enschede, the Netherlands',
   timezone: 'Europe/Amsterdam',
   availability: 'Open to interesting projects',
-  email: 'owner@example.org',
   social: {
     linkedin: 'https://linkedin.com/in/dennisbakhuis',
     github: 'https://github.com/dennisbakhuis',
@@ -18,7 +18,15 @@ export const site = {
   },
 } as const;
 
-export const emailHref = `mailto:${site.email}`;
+/** The public contact address, from `PUBLIC_CONTACT_EMAIL`; empty when unset. */
+export function contactEmail(): string {
+  return env.PUBLIC_CONTACT_EMAIL?.trim() ?? '';
+}
+
+/** A `mailto:` link to the contact address. */
+export function emailHref(): string {
+  return `mailto:${contactEmail()}`;
+}
 
 export const skills = [
   'Python',

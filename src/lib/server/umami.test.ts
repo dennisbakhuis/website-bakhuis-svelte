@@ -48,7 +48,7 @@ afterEach(() => {
 describe('referrerHost', () => {
   it('extracts the hostname from a referrer URL', async () => {
     const { referrerHost } = await loadModule();
-    expect(referrerHost('https://www.google.com/search?q=schilder')).toBe('www.google.com');
+    expect(referrerHost('https://www.google.com/search?q=diving')).toBe('www.google.com');
   });
 
   it('returns an empty string for missing or unparseable referrers', async () => {

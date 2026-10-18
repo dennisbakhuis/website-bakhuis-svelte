@@ -2,10 +2,9 @@
 
 Personal website of Dennis Bakhuis: a visual "visitekaartje" on the front page,
 an online dive log at `/dive` that Dennis maintains himself from the browser,
-and a blog + TIL archive. Built on the same stack, repo layout and deploy path
-as `website-voorvoet-svelte`, `website-stouwdamschilders-svelte` and
-`operator-website`; the backend follows the `voetlink` pattern already
-running on `operator-infra`.
+and a blog + TIL archive. Built on the operator's usual SvelteKit stack, repo
+layout and deploy path; the backend is a small FastAPI service next to the
+frontend, deployed from the operator's infrastructure repo.
 
 This is a brief design contract, not an implementation plan. Sections marked
 **TBD** are decisions still to be taken by Dennis (collected in §12).
@@ -50,7 +49,7 @@ content, blog editing in the browser (blog stays in git).
 | Analytics       | Umami, server-side relay as in the other sites; no cookies for visitors, no consent banner                                  |
 | Site language   | English UI and content                                                                                                      |
 | Domain          | `dennisbakhuis.nl` (prod, from `main`), `dev.dennisbakhuis.nl` (from `dev`)                                                 |
-| Infra           | `operator-infra` Hetzner box, Caddy vhost, compose stack `bakhuis` (frontend + backend, no database)                      |
+| Infra           | One server with a reverse proxy on the host, a compose stack (frontend + backend, no database)                              |
 | Backups         | The data repo is the backup (git, pushed after every edit), S3 versioning on the media bucket                               |
 | Quality gates   | eslint `--max-warnings 0`, prettier, svelte-check, vitest with coverage; server gates run in the monorepo                   |
 | Commits         | No AI co-author trailers or footers, authored solely by Dennis                                                              |
@@ -364,16 +363,16 @@ reference app).
 
 ## 11. Phases
 
-| Phase | Deliverable                                                                                            |
-| ----- | ------------------------------------------------------------------------------------------------------ |
-| 0     | Repo scaffold from the sibling template: CI, Docker, tokens, nav/footer, `/health`, `/privacy`         |
-| 1     | Front page with content and the Descent animation; contact                                             |
-| 2     | Backend: `divelog-server` over the data files, magic-link auth, `/admin` login                         |
-| 3     | Dive model + admin editor + attachments (S3, variants); public `/dive`, `/dive/[number]`, sites, stats |
-| 4     | World map, charts, search/filter; gear pages; dive-computer import + draft review; backfill of the log |
-| 5     | Blog + TIL + RSS; migrate/link existing articles                                                       |
-| 6     | Infra change set for `operator-infra` (Caddy, compose, bucket, DNS, backups), first deploy to `dev`  |
-| 7     | Polish: OG images, `/projects`, `/uses`, region map insets, Lighthouse pass                            |
+| Phase | Deliverable                                                                                                          |
+| ----- | -------------------------------------------------------------------------------------------------------------------- |
+| 0     | Repo scaffold from the sibling template: CI, Docker, tokens, nav/footer, `/health`, `/privacy`                       |
+| 1     | Front page with content and the Descent animation; contact                                                           |
+| 2     | Backend: `divelog-server` over the data files, magic-link auth, `/admin` login                                       |
+| 3     | Dive model + admin editor + attachments (S3, variants); public `/dive`, `/dive/[number]`, sites, stats               |
+| 4     | World map, charts, search/filter; gear pages; dive-computer import + draft review; backfill of the log               |
+| 5     | Blog + TIL + RSS; migrate/link existing articles                                                                     |
+| 6     | Infra change set in the operator's infrastructure repo (proxy, compose, bucket, DNS, backups), first deploy to `dev` |
+| 7     | Polish: OG images, `/projects`, `/uses`, region map insets, Lighthouse pass                                          |
 
 ---
 

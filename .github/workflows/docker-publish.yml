@@ -213,13 +213,11 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
 
   deploy:
-    # Triggers the server to pull + restart only the affected service. The
-    # forced-command SSH key on the server makes the only thing this job
-    # can do `/opt/bakhuis/deploy.sh <service> <tag>` — see
-    # operator-infra. The script's service allowlist accepts only
-    # `bakhuis-prod` and `bakhuis-dev`. The runner reaches the server
-    # over NetBird (the Hetzner Cloud Firewall locks public 22 to the
-    # operator's home IP).
+    # Triggers the server to pull + restart only the affected service.
+    # Deploys over NetBird with a forced-command SSH key; the server side
+    # lives in the operator's infrastructure repo. Needs the DEPLOY_HOST and
+    # DEPLOY_USER repository variables and the NETBIRD_SETUP_KEY and
+    # DEPLOY_SSH_KEY secrets (docs/RUNBOOK.md).
     #
     # Two trigger paths:
     #   - push: deploys what build-and-push just produced.
@@ -244,7 +242,24 @@ jobs:
       # The backend image: an explicit dispatch input, else the repo variable,
       # else `latest`.
       DIVELOG_SERVER_TAG: ${{ inputs.divelog_server_tag || vars.DIVELOG_SERVER_TAG || 'latest' }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
     steps:
+      - name: Check deploy settings
+        run: |
+          set -euo pipefail
+
+          missing=0
+          if [[ -z "${DEPLOY_HOST:-}" ]]; then
+            echo "::error::DEPLOY_HOST is not set (should be the server's NetBird FQDN, set as the DEPLOY_HOST repository variable)"
+            missing=1
+          fi
+          if [[ -z "${DEPLOY_USER:-}" ]]; then
+            echo "::error::DEPLOY_USER is not set (should be the server's deploy SSH user, set as the DEPLOY_USER repository variable)"
+            missing=1
+          fi
+          exit "$missing"
+
       - name: Join NetBird mesh
         env:
           NETBIRD_SETUP_KEY: ${{ secrets.NETBIRD_SETUP_KEY }}
@@ -274,12 +289,12 @@ jobs:
           # NetBird is misconfigured. Uses the full peer FQDN so we
           # don't depend on a search-domain trick.
           for i in $(seq 1 12); do
-            if ping -c1 -W2 deploy.example.org >/dev/null 2>&1; then
-              echo "::notice::NetBird up; 'deploy.example.org' reachable"
+            if ping -c1 -W2 "$DEPLOY_HOST" >/dev/null 2>&1; then
+              echo "::notice::NetBird up; '$DEPLOY_HOST' reachable"
               break
             fi
             if [[ $i -eq 12 ]]; then
-              echo "::error::NetBird connected but 'deploy.example.org' is not reachable — check the access-control policy in the NetBird UI (gha-runners → servers must allow ICMP/SSH)"
+              echo "::error::NetBird connected but '$DEPLOY_HOST' is not reachable — check the access-control policy in the NetBird UI (gha-runners → servers must allow ICMP/SSH)"
               sudo netbird status || true
               exit 1
             fi
@@ -289,15 +304,9 @@ jobs:
       - name: SSH deploy (forced-command)
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: operator
         run: |
           set -euo pipefail
 
-          if [[ -z "${DEPLOY_HOST:-}" ]]; then
-            echo "::error::DEPLOY_HOST repo variable not set (should be 'deploy.example.org' — the server's NetBird FQDN)"
-            exit 1
-          fi
           if [[ -z "${DEPLOY_SSH_KEY:-}" ]]; then
             echo "::error::DEPLOY_SSH_KEY repo secret not set"
             exit 1

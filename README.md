@@ -1,9 +1,8 @@
 # dennisbakhuis.nl
 
 Personal website of Dennis Bakhuis: profile, online dive log, blog and TIL.
-SvelteKit frontend, same conventions as the other Dinkellabs sites. The dive
-log is the divelog module: `@divelog/kit` (vendored in `vendor/`) for the pages
-and `divelog-server` for the backend, both from the divelog monorepo checked out
+SvelteKit frontend with a small FastAPI backend. The dive log is the divelog
+module: `@divelog/kit` (vendored in `vendor/`) for the pages and `divelog-server` for the backend, both from the divelog monorepo checked out
 next to this one (`../divelog`). The blog is the blog module: `@blog/kit`
 (vendored in `vendor/`) from the blog repo in `../blog`. Everything personal that
 is content — the dive log and the posts — lives in the private
@@ -43,7 +42,7 @@ repository, checked out next to this one. The backend mounts it (`DATA_REPO` in
 | Animation | anime.js v4 (front page "Descent", reveals, counters, profile)                 |
 | Map       | MapLibre on self-hosted PMTiles (in the kit)                                   |
 | Tests     | Vitest here; the kit and the server are tested in the monorepo                 |
-| Deploy    | Frontend image from here + `divelog-server` image, Caddy on `operator-infra` |
+| Deploy    | Frontend image from here + `divelog-server` image, a reverse proxy on the host |
 
 ## Common commands
 

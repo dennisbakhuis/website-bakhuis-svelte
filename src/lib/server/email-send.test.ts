@@ -4,7 +4,14 @@ const sendMail = vi.fn();
 const createTransport = vi.fn(() => ({ sendMail }));
 
 vi.mock('nodemailer', () => ({ default: { createTransport } }));
-vi.mock('$env/dynamic/private', () => ({ env: { SMTP_HOST: 'mail.test', SMTP_PORT: '2525' } }));
+const privateEnv = vi.hoisted((): Record<string, string | undefined> => ({
+  SMTP_HOST: 'mail.test',
+  SMTP_PORT: '2525',
+  SMTP_FROM_EMAIL: 'website@example.org',
+  SMTP_TO_EMAIL: 'owner@example.org',
+}));
+
+vi.mock('$env/dynamic/private', () => ({ env: privateEnv }));
 
 const { formatTimestamp, resetTransportForTests, sendContactEmail } = await import('./email');
 
@@ -28,6 +35,7 @@ describe('sendContactEmail', () => {
     const mail = sendMail.mock.calls[0][0];
     expect(mail.replyTo).toBe('ann@example.org');
     expect(mail.subject).toBe('dennisbakhuis.nl: message from Ann Other');
+    expect(mail.from).toBe('website@example.org');
     expect(mail.to).toBe('owner@example.org');
     expect(mail.html).toContain('Hi &lt;there&gt;<br>second line');
     expect(mail.text).toContain('Hi <there>\nsecond line');
@@ -44,6 +52,18 @@ describe('sendContactEmail', () => {
     const data = { name: 'A', email: 'a@b.co, c@d.co', message: 'm', capToken: 'x' } as never;
     await expect(sendContactEmail(data)).rejects.toThrow('single address');
     expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it.each(['SMTP_FROM_EMAIL', 'SMTP_TO_EMAIL'])('refuses to send without %s', async (name) => {
+    const saved = privateEnv[name];
+    privateEnv[name] = '';
+    try {
+      const data = { name: 'A', email: 'a@b.co', message: 'm', capToken: 'x' } as never;
+      await expect(sendContactEmail(data)).rejects.toThrow(`${name} is not set`);
+      expect(sendMail).not.toHaveBeenCalled();
+    } finally {
+      privateEnv[name] = saved;
+    }
   });
 
   it('formats timestamps in Amsterdam time', () => {

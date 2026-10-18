@@ -61,6 +61,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],
+    setupFiles: ['src/test-setup.ts'],
     // Vite's SSR transform of the kit drops the JSON import attribute, so
     // world-atlas must go through Vite too instead of Node's own loader.
     server: { deps: { inline: ['world-atlas'] } },

@@ -166,6 +166,37 @@ Production mounts a clone of website-bakhuis-content at `DATA_ROOT`, a deploy ke
 `GIT_SSH_KEY_PATH`, `STATE_DIR` for sessions, and sets `GIT_ENABLED=true`. Run one uvicorn
 worker: the store is in-process.
 
+### Deploy
+
+`docker-publish.yml` builds both images on a push to `dev` or `main`, then deploys over NetBird
+with a forced-command SSH key: the runner joins the mesh as an ephemeral peer and asks the server
+to pull and restart one service. The server side lives in the operator's infrastructure repo.
+The workflow needs these settings under Settings → Secrets and variables → Actions; the deploy
+job stops at _Check deploy settings_ when a variable is empty.
+
+| Name                 | Kind     | What it holds                                                                      |
+| -------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `DEPLOY_HOST`        | variable | the server's NetBird FQDN                                                          |
+| `DEPLOY_USER`        | variable | the SSH user on the server whose `authorized_keys` holds the forced-command key    |
+| `DIVELOG_SERVER_TAG` | variable | optional: the `divelog-server` image tag to deploy (default `latest`)              |
+| `CONTENT_REPO`       | variable | optional: the content repository (default `dennisbakhuis/website-bakhuis-content`) |
+| `NETBIRD_SETUP_KEY`  | secret   | a reusable NetBird setup key with _Ephemeral peers_ enabled                        |
+| `DEPLOY_SSH_KEY`     | secret   | the private half of the forced-command deploy key                                  |
+| `CONTENT_REPO_TOKEN` | secret   | the read-only token for the content repository (above)                             |
+
+The running frontend container reads the site's own addresses from its environment, and the code
+has no fallback for them; the operator sets them in the server's environment for the service:
+
+| Variable               | What it holds                                                        |
+| ---------------------- | -------------------------------------------------------------------- |
+| `PUBLIC_CONTACT_EMAIL` | the contact address shown on the site; unset hides every e-mail link |
+| `SMTP_FROM_EMAIL`      | the sender of contact-form mail; required for the form               |
+| `SMTP_TO_EMAIL`        | the mailbox the contact form delivers to; required for the form      |
+
+The backend's `OWNER_EMAIL` (the only address that can log in) and `BACKEND_SMTP_FROM` (the sender
+of magic links) are set the same way; `.env.example` and `docker-compose.yml` carry `example.org`
+placeholders only.
+
 ### The commons
 
 The log layers on the shared site commons (`../divelog-sites`): every site resolves to the origin
