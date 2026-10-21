@@ -31,6 +31,7 @@
   );
   let descent = $state<DescentState>({
     progress: 0,
+    scroll: 0,
     depth: 0,
     background: '#eaf4fb',
     ink: '#0b2a4a',
@@ -58,10 +59,10 @@
 <div
   class="descent"
   bind:this={root}
-  style="--descent-bg: {descent.background}; --descent-ink: {descent.ink}; --descent-progress: {descent.progress}"
+  style="--descent-bg: {descent.background}; --descent-ink: {descent.ink}; --descent-progress: {descent.progress}; --descent-scroll: {descent.scroll}"
 >
   <Bubbles progress={descent.progress} />
-  <Fish progress={descent.progress} />
+  <Fish progress={descent.progress} scroll={descent.scroll} />
   <DepthGauge depth={descent.depth} progress={descent.progress} {maxDepth} />
 
   <Hero />
