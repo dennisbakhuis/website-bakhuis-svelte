@@ -245,6 +245,26 @@ of magic links) and the git committer identity of its commits are set the same w
 (compose file, environment templates, data checkouts, the content repository's read-write
 deploy key) is documented in the infrastructure repo.
 
+**Base images and trust stores.** The `Dockerfile` pins `node:<version>-slim` by digest in both
+stages and installs Debian's `ca-certificates` in both, so a CA distrust (such as the eMudhra
+intermediate compromise of 17 October 2026, fixed in Node 22.23.4 and `ca-certificates`
+20250419~deb12u2) reaches the site only through a new pin and a rebuild. Node's outbound TLS
+(nodemailer SMTP, the Umami API, Cap) uses Node's bundled root store; curl and git use Debian's.
+To upgrade, take the index digest from `docker buildx imagetools inspect node:<version>-slim`
+(it must list manifests: a freshly pushed tag can be an empty index for a few hours), update
+both `FROM` lines, `.nvmrc` and `engines.node`, then build and probe the image:
+
+```sh
+make docker-build
+docker run --rm bakhuis-frontend:latest node -e "fetch('https://dv-g3b-emudhra.we-have-a-problem.com').then(r=>{console.log('TRUSTED',r.status);process.exit(2)},e=>{console.log('refused:',e.cause?.code||e.message);process.exit(0)})"
+docker run --rm bakhuis-frontend:latest sh -c 'node --version; dpkg -s ca-certificates | grep Version'
+```
+
+The probe must print `refused:` with a certificate error (`CERT_REVOKED`,
+`UNABLE_TO_GET_ISSUER_CERT_LOCALLY`) and exit 0; repeat it with
+`dv-g3b-aaa-emudhra.we-have-a-problem.com`. The probe hosts are slow at times: a timeout
+(`UND_ERR_CONNECT_TIMEOUT`) proves nothing, so run it again.
+
 ### The commons
 
 The log layers on the shared site commons (`../divelog-sites`): every site resolves to the origin
