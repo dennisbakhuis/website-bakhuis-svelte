@@ -1,7 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { GO_TARGETS, isGoTarget } from '$lib/go-targets';
-import { contactEmail } from '$lib/site';
 import { trackEvent, referrerHost } from '$lib/server/umami';
 import type { RequestHandler } from './$types';
 
@@ -10,7 +9,7 @@ export const prerender = false;
 export const GET: RequestHandler = (event) => {
   const target = event.params.target ?? '';
 
-  if (!isGoTarget(target) || (target === 'email' && !contactEmail())) {
+  if (!isGoTarget(target)) {
     redirect(302, '/contact');
   }
 

@@ -16,7 +16,14 @@ export const INK_STOPS = [
   { at: 1, color: '#e8eef6' },
 ];
 
-export type DescentState = { progress: number; depth: number; background: string; ink: string };
+export type DescentState = {
+  progress: number;
+  /** How far the page is scrolled, in CSS pixels: the hero's seabed fades on it. */
+  scroll: number;
+  depth: number;
+  background: string;
+  ink: string;
+};
 
 /**
  * Drive the front page "dive": as the visitor scrolls, the page background
@@ -40,6 +47,7 @@ export function startDescent(
     const depth = Math.round(progress * maxDepth * 10) / 10;
     onChange({
       progress,
+      scroll: Math.max(0, window.scrollY),
       depth,
       background: gradientAt(DESCENT_STOPS, progress),
       ink: gradientAt(INK_STOPS, progress),

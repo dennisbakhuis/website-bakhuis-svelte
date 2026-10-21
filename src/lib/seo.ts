@@ -1,4 +1,4 @@
-import { SITE_URL, contactEmail, site } from '$lib/site';
+import { SITE_URL, site } from '$lib/site';
 import { diveMetaFor, diveOgImageFor, type PageMeta } from '@divelog/kit/server';
 import { blogPageMeta, jsonLdScript } from '@blog/kit/core';
 import { urls } from '$lib/divelog-config';
@@ -46,14 +46,12 @@ export function ogImageFor(pathname: string, meta?: PageMeta): string {
 }
 
 export function personLD(): Record<string, unknown> {
-  const email = contactEmail();
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: site.name,
     url: `${SITE_URL}/`,
     jobTitle: site.role,
-    ...(email ? { email } : {}),
     address: { '@type': 'PostalAddress', addressLocality: 'Enschede', addressCountry: 'NL' },
     sameAs: Object.values(site.social).filter(Boolean),
   };
