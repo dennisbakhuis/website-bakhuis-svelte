@@ -11,12 +11,17 @@
 # @divelog/kit and @blog/kit are git dependencies (GitHub, pinned by tag): the
 # builder needs git and network access, and pnpm-workspace.yaml allows their
 # `prepare` scripts, which build the kits' dist/ during the install.
+#
+# Both stages pin node:22.23.4-slim (bookworm) by index digest, the first Node 22 release that
+# distrusts the compromised eMudhra intermediates (17 October 2026), and install Debian's
+# ca-certificates at the suite's current version (20250419~deb12u2 or later) for curl, git and
+# OpenSSL. Upgrading and the trust probe are in docs/RUNBOOK.md (Deploy).
 
 # Stage 0: the posts (replaced by --build-context content=…)
 FROM scratch AS content
 
 # Stage 1: Builder
-FROM node:22-slim AS builder
+FROM node:22.23.4-slim@sha256:5991875dfb80938dd8a6ba3fe3e96fd04929e70792762b3319d8caadbbe229bc AS builder
 
 WORKDIR /app
 
@@ -38,9 +43,13 @@ RUN pnpm prune --prod --config.confirmModulesPurge=false
 RUN node -e "const p=require('./package.json'); delete p.devDependencies; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2));"
 
 # Stage 2: Runtime
-FROM node:22-slim AS runtime
+FROM node:22.23.4-slim@sha256:5991875dfb80938dd8a6ba3fe3e96fd04929e70792762b3319d8caadbbe229bc AS runtime
 
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 sveltekit
