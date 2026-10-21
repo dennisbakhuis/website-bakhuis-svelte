@@ -3,7 +3,11 @@
   import { reducedMotion } from '@divelog/kit';
   import { createSchool, headingDeg, stepSchool, type Predator } from '$lib/anim/fish';
 
-  let { progress }: { progress: number } = $props();
+  let { progress, scroll = 0 }: { progress: number; scroll?: number } = $props();
+
+  /** The cave is part of the surface scene: gone after the first 360 px of scrolling. */
+  const CAVE_FADE_PX = 360;
+  const caveFade = $derived(Math.max(0, Math.min(1, 1 - scroll / CAVE_FADE_PX)));
 
   type Visitor = 'diver' | 'grouper';
   type Event = 'shark' | Visitor;
@@ -99,7 +103,8 @@
     const reach = Math.min(CAVE_REACH, bounds.width * 0.7);
     const target = Math.max(0, Math.min(1, 1 - distance / reach));
     prominence += (target - prominence) * Math.min(1, dt * (target > prominence ? 2.5 : 0.7));
-    if (caveEl) caveEl.style.opacity = String(CAVE_BASE + (1 - CAVE_BASE) * prominence);
+    if (caveEl)
+      caveEl.style.opacity = String((CAVE_BASE + (1 - CAVE_BASE) * prominence) * caveFade);
   }
 
   onMount(() => {

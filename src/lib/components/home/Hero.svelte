@@ -177,6 +177,10 @@
     width: 100%;
     height: 80px;
     color: var(--descent-ink, #0b2a4a);
+    /* The seabed belongs to the surface: it is gone after the first 240 px of
+       scrolling, before the page colour turns and it would read as a pale bar. */
+    opacity: calc(1 - min(1, var(--descent-scroll, 0) / 240));
+    pointer-events: none;
     animation: drift 14s ease-in-out infinite alternate;
   }
   @keyframes drift {

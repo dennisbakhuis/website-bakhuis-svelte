@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { contactEmail, site, skills, work, likes } from '$lib/site';
+  import { site, skills, work, likes } from '$lib/site';
   import { goHref } from '$lib/go-targets';
   import { startDescent, type DescentState } from '$lib/anim/descent';
   import { DivelogProvider, reveal } from '@divelog/kit';
@@ -16,8 +16,6 @@
 
   let { data } = $props();
 
-  const email = contactEmail();
-
   const maxDepth = $derived(data.summary?.max_depth_m ?? 40);
   const lastDiveText = $derived(
     data.summary?.last_dive
@@ -31,6 +29,7 @@
   );
   let descent = $state<DescentState>({
     progress: 0,
+    scroll: 0,
     depth: 0,
     background: '#eaf4fb',
     ink: '#0b2a4a',
@@ -58,10 +57,10 @@
 <div
   class="descent"
   bind:this={root}
-  style="--descent-bg: {descent.background}; --descent-ink: {descent.ink}; --descent-progress: {descent.progress}"
+  style="--descent-bg: {descent.background}; --descent-ink: {descent.ink}; --descent-progress: {descent.progress}; --descent-scroll: {descent.scroll}"
 >
   <Bubbles progress={descent.progress} />
-  <Fish progress={descent.progress} />
+  <Fish progress={descent.progress} scroll={descent.scroll} />
   <DepthGauge depth={descent.depth} progress={descent.progress} {maxDepth} />
 
   <Hero />
@@ -157,11 +156,6 @@
       </p>
       <div class="cta-row">
         <a class="btn btn-warm" href="/contact">Send a message</a>
-        {#if email}
-          <a class="btn btn-ghost" href={goHref('email', 'home-cta')} data-sveltekit-reload
-            >{email}</a
-          >
-        {/if}
         <a class="btn btn-ghost" href={goHref('linkedin', 'home-cta')} data-sveltekit-reload
           >LinkedIn</a
         >
