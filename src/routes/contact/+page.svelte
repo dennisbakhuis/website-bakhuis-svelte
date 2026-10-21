@@ -1,11 +1,8 @@
 <script lang="ts">
   import ContactForm from '$lib/components/ContactForm.svelte';
-  import { contactEmail } from '$lib/site';
   import { goHref } from '$lib/go-targets';
 
   let { data } = $props();
-
-  const email = contactEmail();
 </script>
 
 <section class="page container">
@@ -17,9 +14,6 @@
       — all welcome. I usually answer within a day or two.
     </p>
     <ul class="methods">
-      {#if email}
-        <li><a href={goHref('email', 'contact')} data-sveltekit-reload>{email}</a></li>
-      {/if}
       <li><a href={goHref('linkedin', 'contact')} data-sveltekit-reload>LinkedIn</a></li>
       <li><a href={goHref('github', 'contact')} data-sveltekit-reload>GitHub</a></li>
     </ul>

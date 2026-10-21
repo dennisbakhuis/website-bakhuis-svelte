@@ -234,11 +234,10 @@ The running containers read the site's own addresses from their environment, and
 no fallback for them; the operator sets them in the server's environment file per environment
 (one file serves both containers of an environment):
 
-| Variable               | What it holds                                                        |
-| ---------------------- | -------------------------------------------------------------------- |
-| `PUBLIC_CONTACT_EMAIL` | the contact address shown on the site; unset hides every e-mail link |
-| `SMTP_FROM_EMAIL`      | the sender of contact-form mail; required for the form               |
-| `SMTP_TO_EMAIL`        | the mailbox the contact form delivers to; required for the form      |
+| Variable          | What it holds                                                   |
+| ----------------- | --------------------------------------------------------------- |
+| `SMTP_FROM_EMAIL` | the sender of contact-form mail; required for the form          |
+| `SMTP_TO_EMAIL`   | the mailbox the contact form delivers to; required for the form |
 
 The backend's `OWNER_EMAIL` (the only address that can log in), `BACKEND_SMTP_FROM` (the sender
 of magic links) and the git committer identity of its commits are set the same way;

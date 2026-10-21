@@ -1,4 +1,3 @@
-import { env } from '$env/dynamic/public';
 import { urls } from '$lib/divelog-config';
 
 export const SITE_URL = 'https://dennisbakhuis.nl';
@@ -17,16 +16,6 @@ export const site = {
     bluesky: '',
   },
 } as const;
-
-/** The public contact address, from `PUBLIC_CONTACT_EMAIL`; empty when unset. */
-export function contactEmail(): string {
-  return env.PUBLIC_CONTACT_EMAIL?.trim() ?? '';
-}
-
-/** A `mailto:` link to the contact address. */
-export function emailHref(): string {
-  return `mailto:${contactEmail()}`;
-}
 
 export const skills = [
   'Python',

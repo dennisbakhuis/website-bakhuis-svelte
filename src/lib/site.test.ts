@@ -1,23 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { personLD } from './seo';
 
-describe('contact address', () => {
-  afterEach(() => {
-    vi.doUnmock('$env/dynamic/public');
-    vi.resetModules();
-  });
-
-  it('comes from PUBLIC_CONTACT_EMAIL', async () => {
-    const { contactEmail, emailHref } = await import('./site');
-    expect(contactEmail()).toBe('owner@example.org');
-    expect(emailHref()).toBe('mailto:owner@example.org');
-  });
-
-  it('is empty when the variable is unset, and the person carries no e-mail', async () => {
-    vi.resetModules();
-    vi.doMock('$env/dynamic/public', () => ({ env: {} }));
-    const { contactEmail } = await import('./site');
-    const { personLD } = await import('./seo');
-    expect(contactEmail()).toBe('');
+describe('the person record', () => {
+  it('carries no e-mail address: contact goes through the form', () => {
     expect(personLD()).not.toHaveProperty('email');
   });
 });

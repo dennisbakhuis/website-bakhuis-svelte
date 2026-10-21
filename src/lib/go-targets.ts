@@ -1,18 +1,13 @@
-import { site, emailHref } from '$lib/site';
+import { site } from '$lib/site';
 
 /**
  * Outbound destinations reachable through /go/[target].
  *
- * Contact and social links point at `/go/<target>?from=<placement>` so the
- * click is counted server-side (survives ad-blockers) before the 302.
+ * Social links point at `/go/<target>?from=<placement>` so the click is
+ * counted server-side (survives ad-blockers) before the 302. Contact goes
+ * through the form only: the site shows no e-mail address anywhere.
  */
 export const GO_TARGETS = {
-  email: {
-    get href() {
-      return emailHref();
-    },
-    event: 'email_click',
-  },
   linkedin: { href: site.social.linkedin, event: 'linkedin_click' },
   github: { href: site.social.github, event: 'github_click' },
   medium: { href: site.social.medium, event: 'medium_click' },

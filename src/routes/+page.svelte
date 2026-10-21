@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { contactEmail, site, skills, work, likes } from '$lib/site';
+  import { site, skills, work, likes } from '$lib/site';
   import { goHref } from '$lib/go-targets';
   import { startDescent, type DescentState } from '$lib/anim/descent';
   import { DivelogProvider, reveal } from '@divelog/kit';
@@ -15,8 +15,6 @@
   import { blogConfig } from '$lib/blog-config';
 
   let { data } = $props();
-
-  const email = contactEmail();
 
   const maxDepth = $derived(data.summary?.max_depth_m ?? 40);
   const lastDiveText = $derived(
@@ -158,11 +156,6 @@
       </p>
       <div class="cta-row">
         <a class="btn btn-warm" href="/contact">Send a message</a>
-        {#if email}
-          <a class="btn btn-ghost" href={goHref('email', 'home-cta')} data-sveltekit-reload
-            >{email}</a
-          >
-        {/if}
         <a class="btn btn-ghost" href={goHref('linkedin', 'home-cta')} data-sveltekit-reload
           >LinkedIn</a
         >
